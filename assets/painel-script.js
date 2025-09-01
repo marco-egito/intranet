@@ -24,26 +24,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- CONTROLE DE AUTENTICAÇÃO ---
     auth.onAuthStateChanged(async (user) => {
         if (!user) {
-            document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Acesso Negado</h2><p>Você precisa estar logado. Redirecionando para a página de login...</p></div>`;
-            setTimeout(() => { window.location.href = './index.html'; }, 3000);
+            document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Acesso Negado</h2><p>Você precisa estar logado. Redirecionando...</p></div>`;
+            setTimeout(() => { window.location.href = './index.html'; }, 2500);
             return;
         }
 
         try {
             const userDoc = await db.collection('usuarios').doc(user.uid).get();
             if (userDoc.exists && (userDoc.data().funcoes?.includes('admin') || userDoc.data().funcoes?.includes('financeiro'))) {
-                // --- CORREÇÃO APLICADA AQUI ---
-                // O código que carrega a view inicial foi movido para cá.
-                // Isso garante que ele só rode APÓS a confirmação do login e das permissões.
-                document.querySelector('.nav-button[data-view="dashboard"]').classList.add('active');
+                // CORREÇÃO: A lógica foi movida para cá.
+                // Agora, o painel é carregado e o botão ativado SOMENTE APÓS a validação.
                 loadView('dashboard');
+                document.querySelector('.nav-button[data-view="dashboard"]').classList.add('active');
             } else {
                 document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Acesso Negado</h2><p>Você não tem permissão para acessar esta área.</p></div>`;
-                return;
             }
         } catch (error) {
-            console.error("Erro ao verificar permissões do usuário:", error);
-            document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Erro</h2><p>Ocorreu um erro ao verificar suas permissões. Tente novamente mais tarde.</p></div>`;
+            console.error("Erro ao verificar permissões:", error);
+            document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Erro</h2><p>Ocorreu um erro ao verificar suas permissões.</p></div>`;
         }
     });
 

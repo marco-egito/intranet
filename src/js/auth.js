@@ -45,7 +45,7 @@ function renderLogin(appContainer, message = "Por favor, faça login para contin
     // Limpa o container e renderiza a tela de login completa
     appContainer.innerHTML = `
         <div id="login-view" class="content-box" style="text-align: center; max-width: 450px; margin: 50px auto;">
-            <img src="https://i.ibb.co/JwdDSZx/Cabe-a-ho.png" alt="Logo EuPsico" style="max-width: 300px;">
+            <img src="/assets/logo-eupsico.png" alt="Logo EuPsico" style="max-width: 300px;">
             <h2>Intranet EuPsico</h2>
             <p>${message}</p>
             <button id="login-button">Login com Google</button>

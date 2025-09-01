@@ -1,46 +1,47 @@
 // /src/js/dashboard.js
 import { getAuth, signOut } from "firebase/auth";
 
-export function loadDashboard(dashboardViewElement, user, funcoes) {
-    // Carrega o HTML do dashboard
+export function loadDashboard(appContainer, user, funcoes) {
+    // Carrega a estrutura HTML do dashboard a partir de um arquivo separado
     fetch('/src/pages/dashboard.html')
         .then(response => {
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`Erro ao carregar o HTML do dashboard! Status: ${response.status}`);
             }
             return response.text();
         })
         .then(html => {
-            dashboardViewElement.innerHTML = `<div class="app-container-inner">${html}</div>`; // Adiciona o container interno
+            // Insere o HTML dentro do container principal da aplicação
+            appContainer.innerHTML = `<div class="app-container-inner">${html}</div>`;
 
-            // Preenche os dados do usuário
+            // Preenche os dados do usuário no cabeçalho
             document.getElementById('user-photo').src = user.photoURL || 'https://i.ibb.co/61Ym24n/default-user.png';
             document.getElementById('user-email').textContent = user.email;
             
-            // Lógica para renderizar os cards de módulos
+            // Chama a função para criar e mostrar os cards dos módulos
             renderModuleCards(funcoes);
 
-            // Adiciona evento ao botão de logout
+            // Adiciona a funcionalidade ao botão de logout
             document.getElementById('logout-button').addEventListener('click', () => {
                 const auth = getAuth();
                 signOut(auth);
             });
         })
         .catch(error => {
-            console.error("Erro ao carregar o dashboard.html:", error);
-            dashboardViewElement.innerHTML = `<p style="color: red;">Erro ao carregar o painel. Por favor, tente novamente.</p>`;
+            console.error("Detalhes do erro:", error);
+            appContainer.innerHTML = `<p style="color: red; text-align:center;">Não foi possível carregar o painel. Verifique o console para mais detalhes.</p>`;
         });
 }
 
 function renderModuleCards(funcoes) {
     const navLinks = document.getElementById('nav-links');
     if (!navLinks) {
-        console.error("Elemento #nav-links não encontrado no dashboard.");
+        console.error("Elemento #nav-links não foi encontrado no HTML do dashboard.");
         return;
     }
-    navLinks.innerHTML = ''; // Limpa antes de adicionar
+    navLinks.innerHTML = ''; // Limpa a área antes de adicionar os novos cards
 
-    // Ícones SVG para cada módulo (mantidos como no último código, para consistência)
+    // Objeto com todos os ícones SVG para fácil acesso
     const icons = {
         intranet: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 12c0-5.25-4.25-9.5-9.5-9.5S2.5 6.75 2.5 12s4.25 9.5 9.5 9.5s9.5-4.25 9.5-9.5Z"/><path d="M12 2.5v19"/><path d="M2.5 12h19"/></svg>`,
         administrativo: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>`,
@@ -55,6 +56,7 @@ function renderModuleCards(funcoes) {
         supervisao: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`,
     };
 
+    // Mapeamento de todas as áreas, suas permissões e metadados
     const areas = {
         intranet: { titulo: 'Intranet Geral', descricao: 'Avisos, notícias e informações para todos.', url: 'URL_DA_INTRANET_GERAL_AQUI', roles: ['todos'], icon: icons.intranet },
         administrativo: { titulo: 'Intranet Administrativo', descricao: 'Processos, documentos e organização.', url: '#', roles: ['admin', 'administrativo'], icon: icons.administrativo },
@@ -71,20 +73,24 @@ function renderModuleCards(funcoes) {
 
     let cardsParaMostrar = [];
 
+    // Filtra os cards que o usuário tem permissão para ver
     for (const key in areas) {
         const area = areas[key];
+        // O usuário vê o link se for admin, se for para 'todos', ou se tiver a role específica
         const temPermissao = funcoes.includes('admin') || area.roles.includes('todos') || area.roles.some(role => funcoes.includes(role));
         if (temPermissao) {
             cardsParaMostrar.push(area);
         }
     }
 
+    // Ordena os cards, mantendo a Intranet Geral no topo
     cardsParaMostrar.sort((a, b) => {
         if (a.titulo.includes('Intranet Geral')) return -1;
         if (b.titulo.includes('Intranet Geral')) return 1;
         return a.titulo.localeCompare(b.titulo);
     });
     
+    // Cria e insere o HTML de cada card na página
     cardsParaMostrar.forEach(config => {
         const card = document.createElement('a');
         card.href = config.url;

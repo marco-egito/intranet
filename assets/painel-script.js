@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const db = firebase.firestore();
     const rtdb = firebase.database();
 
-    // --- ELEMENTOS GLOBAIS DO PAINEL ---
+    // --- ELEMENTOS DO DOM ---
     const contentArea = document.getElementById('content-area');
     const navButtons = document.querySelectorAll('.nav-button');
     const logoutButton = document.getElementById('logout-button');
@@ -29,22 +29,28 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const userDoc = await db.collection('usuarios').doc(user.uid).get();
-        if (!userDoc.exists || !(userDoc.data().funcoes?.includes('admin') || userDoc.data().funcoes?.includes('financeiro'))) {
-            document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Acesso Negado</h2><p>Você não tem permissão para acessar esta área.</p></div>`;
-            return;
+        try {
+            const userDoc = await db.collection('usuarios').doc(user.uid).get();
+            if (!userDoc.exists || !(userDoc.data().funcoes?.includes('admin') || userDoc.data().funcoes?.includes('financeiro'))) {
+                document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Acesso Negado</h2><p>Você não tem permissão para acessar esta área.</p></div>`;
+                return;
+            }
+            
+            // Se o usuário está logado e tem permissão, carrega a view inicial (Dashboard)
+            document.querySelector('.nav-button[data-view="dashboard"]').classList.add('active');
+            loadView('dashboard');
+        } catch (error) {
+            console.error("Erro ao verificar permissões do usuário:", error);
+            document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Erro</h2><p>Ocorreu um erro ao verificar suas permissões. Tente novamente mais tarde.</p></div>`;
         }
-        
-        // Se o usuário está logado e tem permissão, carrega a view inicial (Dashboard)
-        loadView('dashboard'); 
     });
 
-    // --- LÓGICA DE NAVEGAÇÃO E CARREGAMENTO DE PÁGINAS ---
+    // --- LÓGICA DE NAVEGAÇÃO ---
     navButtons.forEach(button => {
         button.addEventListener('click', (e) => {
             navButtons.forEach(btn => btn.classList.remove('active'));
             e.target.classList.add('active');
-            const viewName = e.target.dataset.view; // Pega o nome da view do atributo data-view
+            const viewName = e.target.dataset.view;
             loadView(viewName);
         });
     });
@@ -55,42 +61,52 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    /**
-     * Carrega o conteúdo de um módulo na área principal.
-     * @param {string} viewName O nome da view a ser carregada (ex: 'gestao_profissionais').
-     */
+    // --- FUNÇÃO DE CARREGAMENTO DINÂMICO ---
     async function loadView(viewName) {
         contentArea.innerHTML = '<h2>Carregando...</h2>';
+        
+        // Remove o stylesheet do módulo anterior, se existir
+        const oldStyleSheet = document.getElementById('module-stylesheet');
+        if (oldStyleSheet) {
+            oldStyleSheet.remove();
+        }
 
-        // O Dashboard é um caso especial, pois seu conteúdo é simples e pode ficar aqui.
+        // Se o módulo tiver um CSS específico, carrega-o
+        if (viewName !== 'dashboard') {
+            const link = document.createElement('link');
+            link.id = 'module-stylesheet';
+            link.rel = 'stylesheet';
+            link.href = `./assets/css/${viewName}.css`;
+            document.head.appendChild(link);
+        }
+
+        // O Dashboard é um caso especial, pois seu conteúdo é simples e fica aqui.
         if (viewName === 'dashboard') {
             renderDashboard();
             return;
         }
-
+        
+        // Carrega o HTML do módulo da pasta /pages/
         try {
-            // Para todos os outros módulos, busca o arquivo HTML correspondente na pasta /pages/
             const response = await fetch(`./pages/${viewName}.html`);
             if (!response.ok) {
-                throw new Error(`Arquivo não encontrado: ${viewName}.html`);
+                throw new Error(`Arquivo não encontrado: ./pages/${viewName}.html`);
             }
             
-            const htmlContent = await response.text();
-            contentArea.innerHTML = htmlContent;
+            contentArea.innerHTML = await response.text();
             
             // Procura e executa qualquer tag <script> dentro do HTML que foi carregado
             const scripts = contentArea.querySelectorAll('script');
             scripts.forEach(script => {
                 const newScript = document.createElement('script');
-                // Garante que o escopo das variáveis (db, auth, etc.) esteja disponível
-                // para os scripts dos módulos.
-                newScript.textContent = `(function(db, auth, rtdb) { ${script.innerText} })(db, auth, rtdb);`;
-                document.body.appendChild(newScript).parentNode.removeChild(newScript);
+                // Passa as instâncias do Firebase para o escopo do script do módulo
+                newScript.textContent = `(function(db, auth, rtdb){ ${script.innerText} })(db, auth, rtdb);`;
+                document.body.appendChild(newScript).remove();
             });
 
         } catch (error) {
             console.error(`Erro ao carregar o módulo ${viewName}:`, error);
-            contentArea.innerHTML = '<h2>Erro ao carregar este módulo.</h2><p>Verifique o console para mais detalhes.</p>';
+            contentArea.innerHTML = '<h2>Erro ao carregar este módulo.</h2><p>Verifique se o arquivo correspondente existe na pasta /pages e se o nome está correto.</p>';
         }
     }
     
@@ -104,7 +120,4 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
         `;
     }
-
-    // A função renderProfissionais() foi removida daqui, pois agora seu código
-    // está totalmente contido dentro de /pages/gestao_profissionais.html
 });

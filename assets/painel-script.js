@@ -32,8 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const userDoc = await db.collection('usuarios').doc(user.uid).get();
             if (userDoc.exists && (userDoc.data().funcoes?.includes('admin') || userDoc.data().funcoes?.includes('financeiro'))) {
-                // Se o usuário tem permissão, apenas carrega a view inicial.
-                // A própria função loadView cuidará de ativar o botão correto.
                 loadView('dashboard');
             } else {
                 document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Acesso Negado</h2><p>Você não tem permissão para acessar esta área.</p></div>`;
@@ -44,11 +42,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // --- LÓGICA DE NAVEGAÇÃO ---
+    // --- LÓGICA DE NAVEGAÇÃO (COM CORREÇÃO) ---
     navButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            const viewName = e.target.dataset.view;
-            loadView(viewName); // A função loadView agora também controla o estilo do botão
+        // A variável 'button' aqui sempre se refere ao botão correto.
+        button.addEventListener('click', () => {
+            // Remove a classe 'active' de todos os botões.
+            navButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Adiciona a classe 'active' apenas ao botão que foi clicado.
+            button.classList.add('active');
+            
+            // Pega o nome da view diretamente do 'button', que é mais seguro que 'e.target'.
+            const viewName = button.dataset.view;
+            loadView(viewName);
         });
     });
 
@@ -58,10 +64,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // --- FUNÇÃO DE CARREGAMENTO DINÂMICO (ATUALIZADA) ---
+    // --- FUNÇÃO DE CARREGAMENTO DINÂMICO ---
     async function loadView(viewName) {
-        // --- INÍCIO DA CORREÇÃO ---
-        // 1. Atualiza o estado visual do menu ANTES de carregar o conteúdo.
+        // Atualiza o estado visual do menu
         navButtons.forEach(btn => {
             if (btn.dataset.view === viewName) {
                 btn.classList.add('active');
@@ -69,7 +74,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.classList.remove('active');
             }
         });
-        // --- FIM DA CORREÇÃO ---
 
         contentArea.innerHTML = '<h2>Carregando...</h2>';
         
@@ -105,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         } catch (error) {
             console.error(`Erro ao carregar o módulo ${viewName}:`, error);
-            contentArea.innerHTML = '<h2>Erro ao carregar este módulo.</h2><p>Verifique o console para mais detalhes.</p>';
+            contentArea.innerHTML = `<h2>Erro ao carregar este módulo.</h2><p>${error.message}. Verifique se o arquivo existe na pasta /pages e se o nome em data-view no painel.html está correto.</p>`;
         }
     }
     

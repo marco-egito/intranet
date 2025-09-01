@@ -31,14 +31,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             const userDoc = await db.collection('usuarios').doc(user.uid).get();
-            if (!userDoc.exists || !(userDoc.data().funcoes?.includes('admin') || userDoc.data().funcoes?.includes('financeiro'))) {
+            if (userDoc.exists && (userDoc.data().funcoes?.includes('admin') || userDoc.data().funcoes?.includes('financeiro'))) {
+                // --- CORREÇÃO APLICADA AQUI ---
+                // O código que carrega a view inicial foi movido para cá.
+                // Isso garante que ele só rode APÓS a confirmação do login e das permissões.
+                document.querySelector('.nav-button[data-view="dashboard"]').classList.add('active');
+                loadView('dashboard');
+            } else {
                 document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Acesso Negado</h2><p>Você não tem permissão para acessar esta área.</p></div>`;
                 return;
             }
-            
-            // Se o usuário está logado e tem permissão, carrega a view inicial (Dashboard)
-            document.querySelector('.nav-button[data-view="dashboard"]').classList.add('active');
-            loadView('dashboard');
         } catch (error) {
             console.error("Erro ao verificar permissões do usuário:", error);
             document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Erro</h2><p>Ocorreu um erro ao verificar suas permissões. Tente novamente mais tarde.</p></div>`;
@@ -65,13 +67,11 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadView(viewName) {
         contentArea.innerHTML = '<h2>Carregando...</h2>';
         
-        // Remove o stylesheet do módulo anterior, se existir
         const oldStyleSheet = document.getElementById('module-stylesheet');
         if (oldStyleSheet) {
             oldStyleSheet.remove();
         }
 
-        // Se o módulo tiver um CSS específico, carrega-o
         if (viewName !== 'dashboard') {
             const link = document.createElement('link');
             link.id = 'module-stylesheet';
@@ -80,44 +80,35 @@ document.addEventListener('DOMContentLoaded', function() {
             document.head.appendChild(link);
         }
 
-        // O Dashboard é um caso especial, pois seu conteúdo é simples e fica aqui.
         if (viewName === 'dashboard') {
             renderDashboard();
             return;
         }
         
-        // Carrega o HTML do módulo da pasta /pages/
         try {
             const response = await fetch(`./pages/${viewName}.html`);
-            if (!response.ok) {
-                throw new Error(`Arquivo não encontrado: ./pages/${viewName}.html`);
-            }
+            if (!response.ok) throw new Error(`Arquivo não encontrado: ./pages/${viewName}.html`);
             
             contentArea.innerHTML = await response.text();
             
-            // Procura e executa qualquer tag <script> dentro do HTML que foi carregado
             const scripts = contentArea.querySelectorAll('script');
             scripts.forEach(script => {
                 const newScript = document.createElement('script');
-                // Passa as instâncias do Firebase para o escopo do script do módulo
                 newScript.textContent = `(function(db, auth, rtdb){ ${script.innerText} })(db, auth, rtdb);`;
                 document.body.appendChild(newScript).remove();
             });
-
         } catch (error) {
             console.error(`Erro ao carregar o módulo ${viewName}:`, error);
-            contentArea.innerHTML = '<h2>Erro ao carregar este módulo.</h2><p>Verifique se o arquivo correspondente existe na pasta /pages e se o nome está correto.</p>';
+            contentArea.innerHTML = '<h2>Erro ao carregar este módulo.</h2><p>Verifique o console para mais detalhes.</p>';
         }
     }
     
-    // --- FUNÇÕES DE RENDERIZAÇÃO DE MÓDULOS ESPECÍFICOS (APENAS OS SIMPLES) ---
-
     function renderDashboard() {
         contentArea.innerHTML = `
             <div class="view-container">
                 <h1>Dashboard Financeiro</h1>
                 <p>Bem-vindo ao painel de controle financeiro. Utilize o menu à esquerda para navegar entre as ferramentas.</p>
-                </div>
+            </div>
         `;
     }
 });

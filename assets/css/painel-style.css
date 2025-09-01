@@ -61,7 +61,7 @@ thead th { background-color: #e9ecef; }
 /* Estilo para o botão "Voltar para o Início" */
 .sidebar-footer .back-button {
     display: block;
-    width: 100%;
+    width: 90%;
     padding: 10px 15px;
     margin-bottom: 10px; /* Adiciona um espaço entre os botões */
     

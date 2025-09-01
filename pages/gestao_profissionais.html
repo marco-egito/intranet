@@ -1,10 +1,14 @@
 <div class="view-container">
-    <h1>Gestão de Profissionais</h1>
+    <h1>Configurações Gerais do Financeiro</h1>
+    
     <div class="tab">
-        <button class="tablinks active" data-tab="GestaoProfissionais">Lista de Profissionais</button>
-        </div>
+        <button class="tablinks" data-tab="GestaoProfissionais">Gestão de Profissionais</button>
+        <button class="tablinks" data-tab="ModelosMensagem">Modelos de Mensagem</button>
+        <button class="tablinks" data-tab="ValoresSessao">Valores por Sessão</button>
+    </div>
 
-    <div id="GestaoProfissionais" class="tabcontent" style="display:block;">
+    <div id="GestaoProfissionais" class="tabcontent">
+        <h2>Gestão de Profissionais</h2>
         <p>Adicione ou edite os dados de um profissional. A conta de login deve ser criada separadamente no Firebase Authentication.</p>
         <div class="button-bar">
             <button class="action-button add-row-btn" id="add-profissional-btn">Adicionar Profissional</button>
@@ -21,9 +25,21 @@
                         <th>Ações</th>
                     </tr>
                 </thead>
-                <tbody><tr><td colspan="6">Carregando profissionais...</td></tr></tbody>
+                <tbody>
+                    <tr><td colspan="6">Carregando profissionais...</td></tr>
+                </tbody>
             </table>
         </div>
+    </div>
+    
+    <div id="ModelosMensagem" class="tabcontent">
+        <h2>Modelos de Mensagem</h2>
+        <p>Conteúdo para modelos de mensagem em desenvolvimento.</p>
+    </div>
+    
+    <div id="ValoresSessao" class="tabcontent">
+        <h2>Valores por Sessão</h2>
+        <p>Conteúdo para valores por sessão em desenvolvimento.</p>
     </div>
 </div>
 
@@ -37,13 +53,13 @@
                 <div class="form-group"><label for="prof-email">E-mail (Login)</label><input type="email" id="prof-email" required></div>
                 <div class="form-group"><label for="prof-contato">Telefone</label><input type="text" id="prof-contato"></div>
                 <div class="form-group checkbox-group">
-                    <label style="font-weight:bold; margin-bottom:10px;">Funções:</label><br>
+                    <h4 style="margin: 10px 0;">Funções:</h4>
                     <label><input type="checkbox" name="funcoes" value="admin"> Admin</label>
                     <label><input type="checkbox" name="funcoes" value="financeiro"> Financeiro</label>
                     <label><input type="checkbox" name="funcoes" value="gestor"> Gestor</label>
                 </div>
                  <div class="form-group checkbox-group">
-                    <label style="font-weight:bold; margin-bottom:10px;">Status:</label><br>
+                    <h4 style="margin: 10px 0;">Status:</h4>
                     <label><input type="checkbox" id="prof-inativo"> Inativo?</label>
                 </div>
             </form>
@@ -55,28 +71,43 @@
     </div>
 </div>
 
-
 <script>
-    // Este script só será executado quando esta página for carregada
-    (function() {
-        // As variáveis `db` e `auth` já existem (declaradas no painel.html)
+    (function(db, auth) {
+        // As variáveis `db` e `auth` são passadas pelo painel-script.js
+        if (!db) {
+            console.error("Conexão com o Firestore não foi estabelecida.");
+            return;
+        }
+
         const usuariosCollection = db.collection('usuarios');
         let localUsuariosList = []; 
         
-        // Elementos do DOM específicos deste módulo
         const tableBody = document.querySelector('#profissionais-table tbody');
         const modal = document.getElementById('profissional-modal');
         const addBtn = document.getElementById('add-profissional-btn');
         const cancelBtn = document.getElementById('modal-cancel-btn');
         const saveBtn = document.getElementById('modal-save-btn');
         const form = document.getElementById('profissional-form');
-        
-        // --- Funções Auxiliares (Modal e Toast) ---
+        const tabContainer = document.querySelector('.tab');
+
+        // --- Funções Auxiliares (Modal, Toast, Abas) ---
+        function openTab(evt, tabName) {
+            document.querySelectorAll(".tabcontent").forEach(tc => tc.style.display = "none");
+            document.querySelectorAll(".tablinks").forEach(tl => tl.classList.remove("active"));
+            
+            const tabElement = document.getElementById(tabName);
+            if(tabElement) tabElement.style.display = "block";
+            
+            if (evt && evt.currentTarget) {
+                evt.currentTarget.classList.add("active");
+            }
+        }
+
         function openModal(user = null) {
             form.reset();
             document.getElementById('modal-title').textContent = user ? 'Editar Profissional' : 'Adicionar Profissional';
             document.getElementById('profissional-id').value = user ? user.id : '';
-            document.getElementById('prof-email').disabled = !!user; // Não permite editar e-mail
+            document.getElementById('prof-email').disabled = !!user;
 
             if (user) {
                 document.getElementById('prof-nome').value = user.nome || '';
@@ -96,12 +127,23 @@
         
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
+            if (!container) return;
             const toast = document.createElement('div');
-            toast.className = `toast toast-${type} show`;
+            toast.className = `toast toast-${type}`;
             toast.textContent = message;
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            toast.style.transition = 'all 0.4s ease';
             container.appendChild(toast);
+            
             setTimeout(() => {
-                toast.classList.remove('show');
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(0)';
+            }, 10);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
                 setTimeout(() => toast.remove(), 500);
             }, 3000);
         }
@@ -140,9 +182,17 @@
         });
 
         // --- Event Listeners ---
+        if(tabContainer){
+            tabContainer.addEventListener('click', (e) => {
+                if(e.target.classList.contains('tablinks')) {
+                    openTab(e, e.target.dataset.tab);
+                }
+            });
+        }
+        
         addBtn.addEventListener('click', () => openModal());
         cancelBtn.addEventListener('click', closeModal);
-        
+
         saveBtn.addEventListener('click', async () => {
             const id = document.getElementById('profissional-id').value;
             const funcoesSelecionadas = [];
@@ -163,13 +213,12 @@
 
             saveBtn.disabled = true;
             try {
-                if (id) { // Editando
+                if (id) {
                     await usuariosCollection.doc(id).update(userData);
                     showToast('Profissional atualizado com sucesso!', 'success');
-                } else { // Adicionando
-                    // Nota: Isso NÃO cria o usuário no Firebase Auth, apenas no Firestore.
+                } else {
                     await usuariosCollection.add(userData);
-                    showToast('Profissional adicionado ao banco de dados!', 'success');
+                    showToast('Profissional adicionado ao banco de dados! Lembre-se de criar o login no Firebase Authentication.', 'success');
                 }
                 closeModal();
             } catch (error) {
@@ -198,5 +247,8 @@
             }
         });
         
-    })(); // Fim do escopo seguro do módulo
+        // Inicializa a primeira aba
+        document.querySelector('.tablinks[data-tab="GestaoProfissionais"]').click();
+
+    })(db, auth); // Passa as variáveis globais para o escopo da função
 </script>

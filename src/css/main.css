@@ -1,0 +1,17 @@
+/* /src/css/main.css */
+:root {
+    --primary-blue: #004a7f;
+    --bg-color: #f8f9fa;
+    --white-color: #fff;
+}
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--bg-color);
+    margin: 0;
+}
+#app {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+/* Outros estilos globais podem vir aqui */

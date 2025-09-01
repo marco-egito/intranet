@@ -58,3 +58,26 @@ thead th { background-color: #e9ecef; }
 .modal-footer { padding-top: 15px; border-top: 1px solid #eee; text-align: right; }
 #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; }
 .toast { background-color: #333; color: white; padding: 15px 20px; border-radius: 5px; margin-top: 10px; }
+/* Estilo para o botão "Voltar para o Início" */
+.sidebar-footer .back-button {
+    display: block;
+    width: 100%;
+    padding: 10px 15px;
+    margin-bottom: 10px; /* Adiciona um espaço entre os botões */
+    
+    background-color: #6c757d; /* Um cinza escuro, diferente do Sair */
+    color: white;
+    
+    border: none;
+    border-radius: 4px;
+    text-align: center;
+    text-decoration: none; /* Remove o sublinhado do link */
+    
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.sidebar-footer .back-button:hover {
+    background-color: #5a6268; /* Cor um pouco mais escura ao passar o mouse */
+}

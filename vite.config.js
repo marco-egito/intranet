@@ -1,18 +1,20 @@
 // vite.config.js
-
 import { defineConfig } from 'vite';
+import { resolve } from 'path';
 
 export default defineConfig({
   root: 'src',
   base: '/intranet/',
-
-  // ADICIONE ESTA LINHA:
-  // Isto diz ao Vite para encontrar a pasta 'public'
-  // voltando um nível a partir da 'src'.
   publicDir: '../public', 
-  
   build: {
     outDir: '../docs',
     emptyOutDir: true,
+    rollupOptions: {
+      // ADICIONADO: Informa ao Vite sobre as múltiplas páginas
+      input: {
+        main: resolve(__dirname, 'src/index.html'),
+        painel: resolve(__dirname, 'src/pages/painel.html'),
+      }
+    }
   }
 });

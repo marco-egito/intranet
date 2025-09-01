@@ -70,6 +70,9 @@
 }
 #login-view h2 {
     color: var(--primary-blue);
+    margin-top: 15px; /* Valor padrão para Intranet EuPsico */
+    margin-bottom: 10px; /* Margem para separar do "Por favor, faça login" */
+    font-size: 1.8em; /* Ajuste o tamanho da fonte se desejar */
 }
 #login-button {
     background-color: var(--primary-blue);

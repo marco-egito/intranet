@@ -37,8 +37,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Acesso Negado</h2><p>Você não tem permissão para acessar esta área.</p></div>`;
             }
         } catch (error) {
-            console.error("Erro ao verificar permissões do usuário:", error);
-            document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Erro</h2><p>Ocorreu um erro ao verificar suas permissões.</p></div>`;
+           // console.error("Erro ao verificar permissões do usuário:", error);
+           // document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Erro</h2><p>Ocorreu um erro ao verificar suas permissões.</p></div>`;
+            console.error("ERRO DETALHADO AO VERIFICAR PERMISSÕES:", error);
+             document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Erro</h2><p>Ocorreu um erro ao verificar suas permissões.</p></div>`;
         }
     });
 

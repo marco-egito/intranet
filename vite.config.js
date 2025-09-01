@@ -2,16 +2,17 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  // O servidor de desenvolvimento continua rodando a partir da 'src'
-  root: 'src',
+  // A opção 'root' foi removida para simplificar.
+  
   base: '/intranet/',
-  publicDir: '../public',
+  
   build: {
-    outDir: '../docs',
+    // A pasta de saída agora é relativa à raiz do projeto.
+    outDir: 'docs', 
     emptyOutDir: true,
     rollupOptions: {
-      // ===== CORREÇÃO DEFINITIVA AQUI =====
-      // Os caminhos precisam ser relativos à raiz do projeto (onde o vite.config.js está)
+      // Especificamos nossas duas páginas de entrada,
+      // com caminhos relativos à raiz do projeto.
       input: {
         main: 'src/index.html',
         painel: 'src/pages/painel.html'

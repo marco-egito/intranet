@@ -22,26 +22,37 @@ document.addEventListener('DOMContentLoaded', function() {
     const logoutButton = document.getElementById('logout-button');
 
     // --- CONTROLE DE AUTENTICAÇÃO ---
-    auth.onAuthStateChanged(async (user) => {
-        if (!user) {
-            document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Acesso Negado</h2><p>Você precisa estar logado. Redirecionando...</p></div>`;
-            setTimeout(() => { window.location.href = './index.html'; }, 2500);
-            return;
-        }
+auth.onAuthStateChanged(async (user) => {
+    // ----> PASSO 1: Adicione este log para vermos o status do usuário
+    console.log("onAuthStateChanged foi disparado. Objeto do usuário:", user);
 
-        try {
-            const userDoc = await db.collection('usuarios').doc(user.uid).get();
-            if (userDoc.exists && (userDoc.data().funcoes?.includes('admin') || userDoc.data().funcoes?.includes('financeiro'))) {
-                loadView('dashboard');
-            } else {
-                document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Acesso Negado</h2><p>Você não tem permissão para acessar esta área.</p></div>`;
-            }
-        } catch (error) {
-           // console.error("Erro ao verificar permissões do usuário:", error);
-           // document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Erro</h2><p>Ocorreu um erro ao verificar suas permissões.</p></div>`;
-            console.error("ERRO DETALHADO AO VERIFICAR PERMISSÕES:", error);
-             document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Erro</h2><p>Ocorreu um erro ao verificar suas permissões.</p></div>`;
+    if (!user) {
+        console.log("CAMINHO 1: O usuário é nulo. Acesso negado.");
+        document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Acesso Negado</h2><p>Você precisa estar logado. Redirecionando...</p></div>`;
+        
+        setTimeout(() => { 
+            // ----> PASSO 2: Comente a linha abaixo para impedir o redirecionamento
+            // window.location.href = './index.html'; 
+            console.log("REDIRECIONAMENTO DESATIVADO PARA DEBUG.");
+        }, 2500);
+        return;
+    }
+
+    try {
+        console.log("CAMINHO 2: Usuário detectado. Verificando permissões no Firestore para o UID:", user.uid);
+        const userDoc = await db.collection('usuarios').doc(user.uid).get();
+        
+        if (userDoc.exists && (userDoc.data().funcoes?.includes('admin') || userDoc.data().funcoes?.includes('financeiro'))) {
+            console.log("CAMINHO 3: SUCESSO! Usuário autorizado. Carregando a view...");
+            loadView('dashboard');
+        } else {
+            console.log("CAMINHO 4: PERMISSÃO NEGADA! Documento não encontrado ou sem as funções necessárias.", { existe: userDoc.exists, dados: userDoc.data() });
+            document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Acesso Negado</h2><p>Você não tem permissão para acessar esta área.</p></div>`;
         }
+    } catch (error) {
+        console.error("CAMINHO 5: ERRO FATAL! Falha ao consultar o Firestore.", error);
+        document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Erro</h2><p>Ocorreu um erro ao verificar suas permissões.</p></div>`;
+    }
     });
 
     // --- LÓGICA DE NAVEGAÇÃO ---

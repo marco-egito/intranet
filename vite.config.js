@@ -1,19 +1,20 @@
 // vite.config.js
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
 
+// Não precisamos da biblioteca 'path' nesta versão simplificada
 export default defineConfig({
   root: 'src',
   base: '/intranet/',
-  publicDir: '../public', 
+  publicDir: '../public',
   build: {
     outDir: '../docs',
     emptyOutDir: true,
     rollupOptions: {
-      // ADICIONADO: Informa ao Vite sobre as múltiplas páginas
+      // As entradas agora são caminhos relativos simples
+      // a partir da pasta 'root' que definimos como 'src'
       input: {
-        main: resolve(__dirname, 'src/index.html'),
-        painel: resolve(__dirname, 'src/pages/painel.html'),
+        main: './index.html', // Corresponde a 'src/index.html'
+        painel: './pages/painel.html' // Corresponde a 'src/pages/painel.html'
       }
     }
   }

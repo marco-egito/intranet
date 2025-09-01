@@ -19,49 +19,55 @@ const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 
 export function handleAuth(appContainer) {
-    // Adiciona as views (divs) iniciais ao appContainer
-    appContainer.innerHTML = `
-        <div id="loading-view" class="view visible">
-            <p>Verificando autenticação...</p>
-        </div>
-        <div id="login-view" class="view content-box"></div>
-        <div id="dashboard-view" class="view"></div>
-    `;
+    appContainer.innerHTML = `<p style="text-align:center; margin-top: 50px;">Verificando autenticação...</p>`;
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
+            // Se o usuário estiver logado, busca as permissões
             const userDoc = await getDoc(doc(db, "usuarios", user.uid));
             if (userDoc.exists() && userDoc.data().funcoes?.length > 0) {
                 const funcoes = userDoc.data().funcoes;
-                loadDashboard(document.getElementById('dashboard-view'), user, funcoes);
-                showView('dashboard-view');
+                // Renderiza o dashboard se tiver permissões
+                loadDashboard(appContainer, user, funcoes);
             } else {
-                renderLogin(document.getElementById('login-view'), "Acesso Negado. Contate o administrador.");
-                showView('login-view');
+                // Se não tiver permissões, mostra tela de acesso negado
+                renderAccessDenied(appContainer);
                 signOut(auth);
             }
         } else {
-            renderLogin(document.getElementById('login-view'));
-            showView('login-view');
+            // Se não estiver logado, renderiza a tela de login
+            renderLogin(appContainer);
         }
     });
 }
 
-function renderLogin(loginViewElement, message = "Por favor, faça login para continuar.") {
-    loginViewElement.innerHTML = `
-        <img src="https://i.ibb.co/JwdDSZx/Cabe-a-ho.png" alt="Logo EuPsico" style="max-width: 300px;">
-        <h2>Intranet EuPsico</h2>
-        <p>${message}</p>
-        <button id="login-button">Login com Google</button>
+function renderLogin(appContainer, message = "Por favor, faça login para continuar.") {
+    // Limpa o container e renderiza a tela de login completa
+    appContainer.innerHTML = `
+        <div id="login-view" class="content-box" style="text-align: center; max-width: 450px; margin: 50px auto;">
+            <img src="https://i.ibb.co/JwdDSZx/Cabe-a-ho.png" alt="Logo EuPsico" style="max-width: 300px;">
+            <h2>Intranet EuPsico</h2>
+            <p>${message}</p>
+            <button id="login-button">Login com Google</button>
+        </div>
     `;
     document.getElementById('login-button').addEventListener('click', () => {
+        appContainer.innerHTML = `<p style="text-align:center; margin-top: 50px;">Aguarde...</p>`;
         const provider = new GoogleAuthProvider();
-        signInWithPopup(auth, provider).catch(error => console.error(error));
+        signInWithPopup(auth, provider).catch(error => {
+            console.error(error);
+            renderLogin(appContainer, "Ocorreu um erro ao tentar fazer login.");
+        });
     });
 }
 
-// Função auxiliar para mostrar views, movida para cá
-function showView(viewId) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('visible'));
-    document.getElementById(viewId).classList.add('visible');
+function renderAccessDenied(appContainer) {
+    appContainer.innerHTML = `
+        <div class="content-box" style="max-width: 800px; margin: 50px auto; text-align: center;">
+            <h2>Acesso Negado</h2>
+            <p>Você está autenticado, mas seu usuário não tem permissões definidas. Contate o administrador.</p>
+            <button id="denied-logout">Sair</button>
+        </div>
+    `;
+    document.getElementById('denied-logout').addEventListener('click', () => signOut(auth));
 }

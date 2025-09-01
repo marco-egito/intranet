@@ -4,17 +4,16 @@ import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  // 1. Aponta para a nova raiz do seu projeto de desenvolvimento.
-  // O Vite vai procurar o index.html dentro desta pasta.
+  // A raiz do seu código de desenvolvimento
   root: 'src',
 
+  // IMPORTANTE: Adicione esta linha!
+  // Isso informa ao Vite que seu site será acessado a partir de /intranet/
+  base: '/intranet/',
+
   build: {
-    // 2. Especifica o diretório de saída para o build.
-    // O caminho '../dist' significa "volte uma pasta a partir da raiz ('src')
-    // e crie a pasta 'dist' lá".
+    // Onde a versão final do site será colocada
     outDir: '../dist',
-    
-    // Opcional, mas recomendado: Limpa a pasta 'dist' antes de cada build.
     emptyOutDir: true,
   }
 });

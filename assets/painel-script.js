@@ -32,33 +32,23 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const userDoc = await db.collection('usuarios').doc(user.uid).get();
             if (userDoc.exists && (userDoc.data().funcoes?.includes('admin') || userDoc.data().funcoes?.includes('financeiro'))) {
-                // Carrega a view do dashboard primeiro
+                // Se o usuário tem permissão, apenas carrega a view inicial.
+                // A própria função loadView cuidará de ativar o botão correto.
                 loadView('dashboard');
-                
-                // --- CORREÇÃO APLICADA AQUI ---
-                // Depois que a view principal está no lugar, tentamos encontrar e ativar o botão.
-                const dashboardButton = document.querySelector('.nav-button[data-view="dashboard"]');
-                if (dashboardButton) {
-                    // Remove a classe 'active' de todos os outros botões primeiro
-                    navButtons.forEach(btn => btn.classList.remove('active'));
-                    dashboardButton.classList.add('active');
-                }
             } else {
                 document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Acesso Negado</h2><p>Você não tem permissão para acessar esta área.</p></div>`;
             }
         } catch (error) {
             console.error("Erro ao verificar permissões do usuário:", error);
-            document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Erro</h2><p>Ocorreu um erro ao verificar suas permissões. Tente novamente mais tarde.</p></div>`;
+            document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Erro</h2><p>Ocorreu um erro ao verificar suas permissões.</p></div>`;
         }
     });
 
     // --- LÓGICA DE NAVEGAÇÃO ---
     navButtons.forEach(button => {
         button.addEventListener('click', (e) => {
-            navButtons.forEach(btn => btn.classList.remove('active'));
-            e.target.classList.add('active');
             const viewName = e.target.dataset.view;
-            loadView(viewName);
+            loadView(viewName); // A função loadView agora também controla o estilo do botão
         });
     });
 
@@ -68,8 +58,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // --- FUNÇÃO DE CARREGAMENTO DINÂMICO ---
+    // --- FUNÇÃO DE CARREGAMENTO DINÂMICO (ATUALIZADA) ---
     async function loadView(viewName) {
+        // --- INÍCIO DA CORREÇÃO ---
+        // 1. Atualiza o estado visual do menu ANTES de carregar o conteúdo.
+        navButtons.forEach(btn => {
+            if (btn.dataset.view === viewName) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        // --- FIM DA CORREÇÃO ---
+
         contentArea.innerHTML = '<h2>Carregando...</h2>';
         
         const oldStyleSheet = document.getElementById('module-stylesheet');

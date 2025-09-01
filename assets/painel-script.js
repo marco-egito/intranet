@@ -32,16 +32,23 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const userDoc = await db.collection('usuarios').doc(user.uid).get();
             if (userDoc.exists && (userDoc.data().funcoes?.includes('admin') || userDoc.data().funcoes?.includes('financeiro'))) {
-                // CORREÇÃO: A lógica foi movida para cá.
-                // Agora, o painel é carregado e o botão ativado SOMENTE APÓS a validação.
+                // Carrega a view do dashboard primeiro
                 loadView('dashboard');
-                document.querySelector('.nav-button[data-view="dashboard"]').classList.add('active');
+                
+                // --- CORREÇÃO APLICADA AQUI ---
+                // Depois que a view principal está no lugar, tentamos encontrar e ativar o botão.
+                const dashboardButton = document.querySelector('.nav-button[data-view="dashboard"]');
+                if (dashboardButton) {
+                    // Remove a classe 'active' de todos os outros botões primeiro
+                    navButtons.forEach(btn => btn.classList.remove('active'));
+                    dashboardButton.classList.add('active');
+                }
             } else {
                 document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Acesso Negado</h2><p>Você não tem permissão para acessar esta área.</p></div>`;
             }
         } catch (error) {
-            console.error("Erro ao verificar permissões:", error);
-            document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Erro</h2><p>Ocorreu um erro ao verificar suas permissões.</p></div>`;
+            console.error("Erro ao verificar permissões do usuário:", error);
+            document.body.innerHTML = `<div class="view-container" style="text-align:center; padding-top: 50px;"><h2>Erro</h2><p>Ocorreu um erro ao verificar suas permissões. Tente novamente mais tarde.</p></div>`;
         }
     });
 

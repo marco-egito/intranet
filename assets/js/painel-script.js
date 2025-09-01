@@ -1,182 +1,102 @@
-// src/assets/js/gestao_profissionais.js
+// Envolvemos todo o código em uma função para não poluir o escopo global
+(function() {
+    // A inicialização do Firebase é feita aqui, pois as bibliotecas já foram carregadas pelo HTML.
+    // Essas variáveis se tornarão globais para os outros scripts que carregarmos.
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const rtdb = firebase.database();
 
-// Exportamos uma função 'init' que será chamada pelo painel-script.js
-export function init(db, auth) {
-    if (!db) {
-        console.error("Conexão com o Firestore não foi estabelecida.");
-        return;
-    }
+    // Disponibiliza as variáveis para os scripts carregados dinamicamente
+    window.auth = auth;
+    window.db = db;
+    window.rtdb = rtdb;
 
-    const usuariosCollection = db.collection('usuarios');
-    let localUsuariosList = []; 
-    
-    const tableBody = document.querySelector('#profissionais-table tbody');
-    const modal = document.getElementById('profissional-modal');
-    const addBtn = document.getElementById('add-profissional-btn');
-    const cancelBtn = document.getElementById('modal-cancel-btn');
-    const saveBtn = document.getElementById('modal-save-btn');
-    const form = document.getElementById('profissional-form');
-    const tabContainer = document.querySelector('.tab');
+    // --- ELEMENTOS DO DOM ---
+    const contentArea = document.getElementById('content-area');
+    const navButtons = document.querySelectorAll('.nav-button');
+    const logoutButton = document.getElementById('logout-button');
 
-    // --- Funções Auxiliares (Modal, Toast, Abas) ---
-    function openTab(evt, tabName) {
-        document.querySelectorAll(".tabcontent").forEach(tc => tc.style.display = "none");
-        document.querySelectorAll(".tablinks").forEach(tl => tl.classList.remove("active"));
-        
-        const tabElement = document.getElementById(tabName);
-        if(tabElement) tabElement.style.display = "block";
-        
-        if (evt && evt.currentTarget) {
-            evt.currentTarget.classList.add("active");
-        }
-    }
-
-    function openModal(user = null) {
-        form.reset();
-        document.getElementById('modal-title').textContent = user ? 'Editar Profissional' : 'Adicionar Profissional';
-        document.getElementById('profissional-id').value = user ? user.id : '';
-        document.getElementById('prof-email').disabled = !!user;
-
-        if (user) {
-            document.getElementById('prof-nome').value = user.nome || '';
-            document.getElementById('prof-email').value = user.email || '';
-            document.getElementById('prof-contato').value = user.contato || '';
-            document.getElementById('prof-inativo').checked = user.inativo || false;
-            form.querySelectorAll('input[name="funcoes"]').forEach(checkbox => {
-                checkbox.checked = user.funcoes && user.funcoes.includes(checkbox.value);
-            });
-        }
-        modal.style.display = 'block';
-    }
-
-    function closeModal() {
-        modal.style.display = 'none';
-    }
-    
-    function showToast(message, type = 'success') {
-        const container = document.getElementById('toast-container');
-        if (!container) return;
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.textContent = message;
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(100%)';
-        toast.style.transition = 'all 0.4s ease';
-        container.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.style.opacity = '1';
-            toast.style.transform = 'translateX(0)';
-        }, 10);
-
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateX(100%)';
-            setTimeout(() => toast.remove(), 500);
-        }, 3000);
-    }
-
-    // --- Lógica de Dados (Firestore) ---
-    function renderTable(users) {
-        if (!tableBody) return;
-        tableBody.innerHTML = '';
-        if (users.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="6">Nenhum profissional encontrado.</td></tr>';
-            return;
-        }
-        users.forEach(user => {
-            const row = tableBody.insertRow();
-            const funcoesStr = (user.funcoes || []).join(', ') || 'Nenhuma';
-            row.innerHTML = `
-                <td>${user.nome || ''}</td>
-                <td>${user.email || ''}</td>
-                <td>${user.contato || ''}</td>
-                <td>${funcoesStr}</td>
-                <td>${user.inativo ? 'Sim' : 'Não'}</td>
-                <td>
-                    <button class="action-button edit-row-btn" data-id="${user.id}">Editar</button>
-                    <button class="action-button delete-row-btn" data-id="${user.id}">Excluir</button>
-                </td>
-            `;
+    // --- CONTROLE DE AUTENTICAÇÃO ---
+    const initializePage = async () => {
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                // Se não houver usuário, redireciona para a página inicial
+                window.location.href = '../index.html';
+                return;
+            }
+            // Se o usuário estiver logado, carrega o dashboard inicial
+            loadView('dashboard');
         });
-    }
+    };
 
-    const unsubscribe = usuariosCollection.orderBy("nome").onSnapshot(snapshot => {
-        localUsuariosList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderTable(localUsuariosList);
-    }, error => {
-        console.error("ERRO DETALHADO AO CARREGAR PROFISSIONAIS:", error);
-        showToast("Erro ao carregar dados.", "error");
+    // --- LÓGICA DE NAVEGAÇÃO ---
+    navButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const viewName = button.dataset.view;
+            loadView(viewName);
+        });
     });
 
-    // --- Event Listeners ---
-    if(tabContainer){
-        tabContainer.addEventListener('click', (e) => {
-            if(e.target.classList.contains('tablinks')) {
-                openTab(e, e.target.dataset.tab);
-            }
+    logoutButton.addEventListener('click', () => {
+        auth.signOut().then(() => {
+            window.location.href = '../index.html';
         });
-    }
-    
-    addBtn.addEventListener('click', () => openModal());
-    cancelBtn.addEventListener('click', closeModal);
+    });
 
-    saveBtn.addEventListener('click', async () => {
-        const id = document.getElementById('profissional-id').value;
-        const funcoesSelecionadas = [];
-        form.querySelectorAll('input[name="funcoes"]:checked').forEach(cb => funcoesSelecionadas.push(cb.value));
+    // --- FUNÇÃO DE CARREGAMENTO DINÂMICO (MODIFICADA) ---
+    async function loadView(viewName) {
+        // Marca o botão de navegação ativo
+        navButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === viewName);
+        });
 
-        const userData = {
-            nome: document.getElementById('prof-nome').value.trim(),
-            email: document.getElementById('prof-email').value.trim(),
-            contato: document.getElementById('prof-contato').value.trim(),
-            inativo: document.getElementById('prof-inativo').checked,
-            funcoes: funcoesSelecionadas
-        };
-
-        if (!userData.nome || !userData.email) {
-            showToast('Nome e E-mail são obrigatórios.', 'error');
+        if (viewName === 'dashboard') {
+            renderDashboard();
             return;
         }
-
-        saveBtn.disabled = true;
+        
         try {
-            if (id) {
-                await usuariosCollection.doc(id).update(userData);
-                showToast('Profissional atualizado com sucesso!', 'success');
-            } else {
-                await usuariosCollection.add(userData);
-                showToast('Profissional adicionado ao banco de dados! Lembre-se de criar o login no Firebase Authentication.', 'success');
+            contentArea.innerHTML = '<h2>Carregando...</h2>';
+            
+            // 1. Carrega o HTML da view (caminho relativo a partir de 'pages/painel.html')
+            const response = await fetch(`../pages/${viewName}.html`);
+            if (!response.ok) throw new Error(`Arquivo não encontrado: ${viewName}.html`);
+            contentArea.innerHTML = await response.text();
+
+            // 2. Carrega o JavaScript da view dinamicamente (MÉTODO MODIFICADO)
+            // Remove o script antigo para evitar duplicatas
+            const oldScript = document.getElementById('dynamic-view-script');
+            if (oldScript) {
+                oldScript.remove();
             }
-            closeModal();
+
+            // Cria e anexa a nova tag de script
+            const newScript = document.createElement('script');
+            newScript.id = 'dynamic-view-script';
+            // O caminho precisa voltar de 'pages/' para a raiz, e então entrar em 'assets/js/'
+            newScript.src = `../assets/js/${viewName}.js`;
+            document.body.appendChild(newScript);
+
         } catch (error) {
-            showToast(`Erro ao salvar: ${error.message}`, 'error');
-        } finally {
-            saveBtn.disabled = false;
+            console.error(`Erro ao carregar a view ${viewName}:`, error);
+            contentArea.innerHTML = `<h2>Erro ao carregar este módulo.</h2><p>${error.message}.</p>`;
         }
-    });
-
-    tableBody.addEventListener('click', (e) => {
-        const target = e.target;
-        const userId = target.dataset.id;
-        if (!userId) return;
-
-        if (target.classList.contains('edit-row-btn')) {
-            const userToEdit = localUsuariosList.find(u => u.id === userId);
-            if (userToEdit) openModal(userToEdit);
-        }
-
-        if (target.classList.contains('delete-row-btn')) {
-            if (confirm('Tem certeza que deseja excluir este profissional?')) {
-                usuariosCollection.doc(userId).delete()
-                    .then(() => showToast('Profissional excluído.', 'success'))
-                    .catch(err => showToast(`Erro: ${err.message}`, 'error'));
-            }
-        }
-    });
-    
-    // Inicializa a primeira aba
-    if (document.querySelector('.tablinks[data-tab="GestaoProfissionais"]')) {
-      document.querySelector('.tablinks[data-tab="GestaoProfissionais"]').click();
     }
-}
+    
+    function renderDashboard() {
+        contentArea.innerHTML = `
+            <div class="view-container">
+                <h1>Dashboard Financeiro</h1>
+                <p>Bem-vindo ao painel de controle financeiro. Utilize o menu à esquerda para navegar entre as ferramentas.</p>
+            </div>
+        `;
+        // Remove qualquer script de view dinâmico se voltarmos para o dashboard
+        const oldScript = document.getElementById('dynamic-view-script');
+        if (oldScript) {
+            oldScript.remove();
+        }
+    }
+    
+    // Inicia a verificação de autenticação da página
+    initializePage();
+})();

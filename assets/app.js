@@ -2,13 +2,13 @@
 document.addEventListener('DOMContentLoaded', function() {
     // --- CONFIGURAÇÃO DO FIREBASE ---
     const firebaseConfig = {
-        apiKey: "AIzaSyCLeWW39nqxsdv1YD-CNa9RSTv05lGHJxM",
-        authDomain: "eupsico-agendamentos-d2048.firebaseapp.com",
-        databaseURL: "https://eupsico-agendamentos-d2048-default-rtdb.firebaseio.com",
-        projectId: "eupsico-agendamentos-d2048",
-        storageBucket: "eupsico-agendamentos-d2048.appspot.com",
-        messagingSenderId: "1041518416343",
-        appId: "1:1041518416343:web:3b972c212c52a59ad7bb92"
+          apiKey: "AIzaSyCLeWW39nqxsdv1YD-CNa9RSTv05lGHJxM",
+          authDomain: "eupsico-agendamentos-d2048.firebaseapp.com",
+          databaseURL: "https://eupsico-agendamentos-d2048-default-rtdb.firebaseio.com",
+          projectId: "eupsico-agendamentos-d2048",
+          storageBucket: "eupsico-agendamentos-d2048.firebasestorage.app",
+          messagingSenderId: "1041518416343",
+          appId: "1:1041518416343:web:3a0abc73404ccd51d7bb92"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -25,7 +25,10 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 if (user) {
                     const userDoc = await db.collection("usuarios").doc(user.uid).get();
-                    if (userDoc.exists() && userDoc.data().funcoes?.length > 0) {
+                    
+                    // --- CORREÇÃO APLICADA AQUI ---
+                    // Trocado de userDoc.exists() para userDoc.exists
+                    if (userDoc.exists && userDoc.data().funcoes?.length > 0) {
                         const funcoes = userDoc.data().funcoes;
                         renderDashboard(user, funcoes);
                     } else {

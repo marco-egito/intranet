@@ -1,21 +1,29 @@
-// /assets/app.js
+// src/assets/js/app.js
+import { auth, db } from './firebase-config.js'; // ADICIONADO: Importa a configuração
+
 document.addEventListener('DOMContentLoaded', function() {
-    // --- CONFIGURAÇÃO DO FIREBASE ---
-    const firebaseConfig = {
-        apiKey: "AIzaSyCLeWW39nqxsdv1YD-CNa9RSTv05lGHJxM",
-        authDomain: "eupsico-agendamentos-d2048.firebaseapp.com",
-        databaseURL: "https://eupsico-agendamentos-d2048-default-rtdb.firebaseio.com",
-        projectId: "eupsico-agendamentos-d2048",
-        storageBucket: "eupsico-agendamentos-d2048.appspot.com",
-        messagingSenderId: "1041518416343",
-        appId: "1:1041518416343:web:3b972c212c52a59ad7bb92"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
     const appContainer = document.getElementById('app');
+    let inactivityTimer; // ADICIONADO: Variável para nosso timer
+
+    // ADICIONADO: Função para deslogar por inatividade
+    function resetInactivityTimer() {
+        clearTimeout(inactivityTimer);
+        // Define o tempo para 20 minutos (em milissegundos)
+        inactivityTimer = setTimeout(() => {
+            alert("Você foi desconectado por inatividade.");
+            auth.signOut();
+        }, 20 * 60 * 1000); 
+    }
+
+    // ADICIONADO: Eventos que detectam atividade do usuário e reiniciam o timer
+    function setupInactivityListeners() {
+        window.addEventListener('mousemove', resetInactivityTimer);
+        window.addEventListener('mousedown', resetInactivityTimer);
+        window.addEventListener('keypress', resetInactivityTimer);
+        window.addEventListener('scroll', resetInactivityTimer);
+        window.addEventListener('touchstart', resetInactivityTimer);
+        resetInactivityTimer(); // Inicia o timer pela primeira vez
+    }
 
     // --- LÓGICA DE AUTENTICAÇÃO E RENDERIZAÇÃO ---
     function handleAuth() {
@@ -26,11 +34,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (user) {
                     const userDoc = await db.collection("usuarios").doc(user.uid).get();
                     
-                    // --- CORREÇÃO APLICADA AQUI ---
-                    // Trocado de userDoc.exists() para userDoc.exists
                     if (userDoc.exists && userDoc.data().funcoes?.length > 0) {
                         const funcoes = userDoc.data().funcoes;
                         renderDashboard(user, funcoes);
+                        setupInactivityListeners(); // ADICIONADO: Ativa o monitoramento de inatividade
                     } else {
                         renderAccessDenied();
                         auth.signOut();
@@ -49,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderLogin(message = "Por favor, faça login para continuar.") {
         appContainer.innerHTML = `
             <div id="login-view" class="content-box" style="text-align: center; max-width: 450px; margin: 50px auto;">
-                <img src="./assets/logo-eupsico.png" alt="Logo EuPsico" style="max-width: 300px;">
+                <img src="/logo-eupsico.png" alt="Logo EuPsico" style="max-width: 300px;">
                 <h2>Intranet EuPsico</h2>
                 <p>${message}</p>
                 <button id="login-button">Login com Google</button>
@@ -114,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
             intranet: { titulo: 'Intranet Geral', descricao: 'Avisos, notícias e informações para todos.', url: 'URL_DA_INTRANET_GERAL_AQUI', roles: ['todos'], icon: icons.intranet },
             administrativo: { titulo: 'Intranet Administrativo', descricao: 'Processos, documentos e organização.', url: '#', roles: ['admin', 'administrativo'], icon: icons.administrativo },
             captacao: { titulo: 'Intranet Captação', descricao: 'Ferramentas e informações para captação.', url: '#', roles: ['admin', 'captacao'], icon: icons.captacao },
-            financeiro: { titulo: 'Intranet Financeiro', descricao: 'Painel de controle financeiro e relatórios.', url: './painel.html', roles: ['admin', 'financeiro'], icon: icons.financeiro },
+            financeiro: { titulo: 'Intranet Financeiro', descricao: 'Painel de controle financeiro e relatórios.', url: '/painel.html', roles: ['admin', 'financeiro'], icon: icons.financeiro },
             grupos: { titulo: 'Intranet Grupos', descricao: 'Informações e materiais para grupos.', url: '#', roles: ['admin', 'grupos'], icon: icons.grupos },
             marketing: { titulo: 'Intranet Marketing', descricao: 'Materiais de marketing e campanhas.', url: '#', roles: ['admin', 'marketing'], icon: icons.marketing },
             plantao: { titulo: 'Intranet Plantão', descricao: 'Escalas, contatos e procedimentos.', url: '#', roles: ['admin', 'plantao'], icon: icons.plantao },
@@ -143,9 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const card = document.createElement('a');
             card.href = config.url;
             card.className = 'module-card';
-            if (config.url !== '#') {
-                card.target = '_blank';
-            }
+            // A linha 'card.target = _blank' foi removida para abrir na mesma aba
 
             card.innerHTML = `
                 <div class="card-icon">${config.icon}</div>

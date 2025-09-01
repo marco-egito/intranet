@@ -1,0 +1,39 @@
+[33m644bb33[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: commit: Update .gitignore
+[33mcdc0612[m HEAD@{1}: pull --ff --recurse-submodules --progress origin: Fast-forward
+[33ma02cce0[m HEAD@{2}: pull --ff --recurse-submodules --progress origin: Fast-forward
+[33m0c09a35[m HEAD@{3}: commit: Update auth.js
+[33md671f1f[m HEAD@{4}: commit: Update painel-script.js
+[33mc7b2429[m HEAD@{5}: commit: Update painel-script.js
+[33m25a0c2c[m HEAD@{6}: commit: Update gestao_profissionais.html
+[33m72638be[m HEAD@{7}: commit: Update painel-script.js
+[33m924fa3b[m HEAD@{8}: pull --ff --recurse-submodules --progress origin: Fast-forward
+[33mbb1132d[m HEAD@{9}: pull --ff --recurse-submodules --progress origin: Fast-forward
+[33m2260af7[m HEAD@{10}: pull --ff --recurse-submodules --progress origin: Fast-forward
+[33m29c6a39[m HEAD@{11}: pull --ff --recurse-submodules --progress origin: Fast-forward
+[33m0519b11[m HEAD@{12}: pull --ff --recurse-submodules --progress origin: Fast-forward
+[33m219ebb5[m HEAD@{13}: pull --ff --recurse-submodules --progress origin: Fast-forward
+[33m7d944eb[m HEAD@{14}: pull --ff --recurse-submodules --progress origin: Fast-forward
+[33m5f7bf80[m HEAD@{15}: commit: Update app.js
+[33m69d99db[m HEAD@{16}: commit: s
+[33me4fd717[m HEAD@{17}: commit: Create app.js
+[33m9ec2700[m HEAD@{18}: commit: Create style.css
+[33mbe5a43b[m HEAD@{19}: pull --ff --recurse-submodules --progress origin: Fast-forward
+[33m16c1eee[m HEAD@{20}: commit: Update vite.config.js
+[33m7843c3f[m HEAD@{21}: commit: Create vite.config.js
+[33mff943ab[m HEAD@{22}: commit: Update dashboard.css
+[33m8132ae1[m HEAD@{23}: commit: Update index.html
+[33md266217[m HEAD@{24}: commit: Create favicon.png
+[33mf27ebe8[m HEAD@{25}: commit: Update logo-eupsico.png
+[33m0e323e0[m HEAD@{26}: commit: s
+[33ma1a7e7b[m HEAD@{27}: commit: s
+[33mbddd7c7[m HEAD@{28}: commit: Update index.html
+[33m6d7963b[m HEAD@{29}: commit: Create favicon.ico
+[33mfea9f2d[m HEAD@{30}: commit: Update dashboard.js
+[33m13a39b3[m HEAD@{31}: commit: Update auth.js
+[33mb51e0a1[m HEAD@{32}: commit: Update dashboard.html
+[33mfb64bf4[m HEAD@{33}: commit: Update dashboard.js
+[33md309850[m HEAD@{34}: commit: Update auth.js
+[33m8704681[m HEAD@{35}: commit: Create dashboard.css
+[33m2330a1d[m HEAD@{36}: commit: s
+[33m4495a3c[m HEAD@{37}: commit: f
+[33m6d13817[m HEAD@{38}: commit (initial): Estrutura

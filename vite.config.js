@@ -5,11 +5,14 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   root: 'src',
   base: '/intranet/',
+
+  // ADICIONE ESTA LINHA:
+  // Isto diz ao Vite para encontrar a pasta 'public'
+  // voltando um nível a partir da 'src'.
+  publicDir: '../public', 
+  
   build: {
-    // ALTERAÇÃO CRÍTICA AQUI:
-    // Vamos gerar os arquivos na pasta 'docs' em vez de 'dist'.
-    outDir: '../docs', 
-    
+    outDir: '../docs',
     emptyOutDir: true,
   }
 });

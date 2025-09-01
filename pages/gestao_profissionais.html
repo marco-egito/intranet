@@ -177,7 +177,10 @@
             localUsuariosList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             renderTable(localUsuariosList);
         }, error => {
-            console.error("Erro ao carregar profissionais:", error);
+            //console.error("Erro ao carregar profissionais:", error);
+            //showToast("Erro ao carregar dados.", "error");
+                // ADICIONE ESTA LINHA PARA VER O ERRO EM DETALHES
+            console.error("ERRO DETALHADO AO CARREGAR PROFISSIONAIS:", error);
             showToast("Erro ao carregar dados.", "error");
         });
 

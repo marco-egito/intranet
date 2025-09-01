@@ -2,5 +2,5 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: '/intranet/', // <-- Esta é a linha mais importante!
+  base: '/intranet/', // <-- Esta é a linha mais importante
 });

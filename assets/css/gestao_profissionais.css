@@ -175,3 +175,45 @@ tr:nth-child(even) {
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
 }
+/* Em assets/css/gestao_profissionais.css */
+
+/* --- Estilos para os botões de Ação na Tabela e Modal --- */
+
+/* Corrigindo a cor do botão Editar na tabela */
+#profissionais-table .action-button.edit-row-btn {
+    background-color: #03204c; /* Cor do painel, como solicitado */
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    margin-right: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+#profissionais-table .action-button.edit-row-btn:hover {
+    background-color: #0d2d4e;
+}
+
+/* Estilizando o botão Excluir que estava na tabela (agora será removido pelo JS) */
+#profissionais-table .action-button.delete-row-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+#profissionais-table .action-button.delete-row-btn:hover {
+    background-color: #c82333;
+}
+
+
+/* Estilo para o NOVO botão Excluir no rodapé do modal */
+.modal-footer .delete-btn {
+    background-color: #dc3545; /* Vermelho */
+    margin-right: auto; /* Empurra os botões Cancelar/Salvar para a direita */
+    display: none; /* Escondido por padrão, o JS vai exibi-lo */
+}
+
+.modal-footer .delete-btn:hover {
+    background-color: #c82333;
+}

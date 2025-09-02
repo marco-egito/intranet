@@ -294,6 +294,7 @@
 
     // Carrega os valores assim que o script é executado
     carregarValores();
+    
     // --- NOVO CÓDIGO: LÓGICA PARA MODELOS DE MENSAGEM ---
     
     // Referência para o mesmo documento de configurações
@@ -332,9 +333,9 @@
             saveBtnMensagens.disabled = true;
             
             const novasMensagens = {
-                'mensagens.acordo': inputAcordo.value,
-                'mensagens.cobranca': inputCobranca.value,
-                'mensagens.contrato': inputContrato.value
+                'Mensagens.acordo': inputAcordo.value,
+                'Mensagens.cobranca': inputCobranca.value,
+                'Mensagens.contrato': inputContrato.value
             };
             
             try {
@@ -352,4 +353,9 @@
 
     // Carrega os dados das mensagens assim que o script é executado
     carregarMensagens();
+    // --- INICIALIZAÇÃO DA ABA ---
+    // (O código que inicializa a primeira aba continua no final)
+    if (document.querySelector('.tablinks[data-tab="GestaoProfissionais"]')) {
+      document.querySelector('.tablinks[data-tab="GestaoProfissionais"]').click();
+    }
 })();

@@ -282,10 +282,25 @@
                     return;
                 }
                 saveBtn.disabled = true;
+              // Lógica de saudação
+              let greeting;
+              const hour = new Date().getHours();
+              if (hour >= 5 && hour < 12) {
+                greeting = "Bom dia";
+              } else if (hour >= 12 && hour < 18) {
+                greeting = "Boa tarde";
+              } else {
+                greeting = "Boa noite";
+              }
+                // Mensagens com saudação
                 const novasMensagens = {
-                    'Mensagens.acordo': inputAcordo.value,
-                    'Mensagens.cobranca': inputCobranca.value,
-                    'Mensagens.contrato': inputContrato.value
+                  //  'Mensagens.acordo': inputAcordo.value,
+                 //   'Mensagens.cobranca': inputCobranca.value,
+                  //  'Mensagens.contrato': inputContrato.value
+
+                    'Mensagens.acordo': `${greeting}, ${inputAcordo.value}`,
+                    'Mensagens.cobranca': `${greeting}, ${inputCobranca.value}`,
+                    'Mensagens.contrato': `${greeting}, ${inputContrato.value}`
                 };
                 try {
                     await docRef.update(novasMensagens);

@@ -81,3 +81,72 @@ thead th { background-color: #e9ecef; }
 .sidebar-footer .back-button:hover {
     background-color: #5a6268; /* Cor um pouco mais escura ao passar o mouse */
 }
+/* Estilos para o botão de toggle da sidebar */
+#sidebar-toggle-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 5px;
+    position: absolute;
+    right: 10px;
+    top: 15px;
+}
+
+#sidebar-toggle-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Transições suaves para a animação */
+.sidebar, .content {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Estilos para quando a sidebar estiver encolhida */
+.main-container.sidebar-collapsed .sidebar {
+    width: 80px; /* Largura da sidebar encolhida */
+}
+
+.main-container.sidebar-collapsed .content {
+    margin-left: 80px; /* Ajusta a margem do conteúdo */
+}
+
+.main-container.sidebar-collapsed .sidebar-header h2 {
+    display: none; /* Esconde o título "Financeiro" */
+}
+
+.main-container.sidebar-collapsed .sidebar-menu button {
+    text-align: center;
+    padding-left: 10px;
+}
+
+/* Esconde o texto dos botões, ideal se você adicionar ícones no futuro */
+.main-container.sidebar-collapsed .sidebar-menu button {
+    font-size: 0; /* Truque para esconder o texto */
+}
+
+/* Adiciona um ícone de placeholder via CSS (opcional, mas melhora a UI) */
+/* Se quiser ícones de verdade, teríamos que adicionar SVGs a cada botão */
+.main-container.sidebar-collapsed .sidebar-menu button::before {
+    content: '●'; /* Você pode trocar por ícones depois */
+    font-size: 16px; /* Restaura o tamanho da fonte para o ícone */
+    padding-right: 0;
+}
+
+.main-container.sidebar-collapsed .sidebar-footer {
+    padding: 10px;
+}
+
+.main-container.sidebar-collapsed .sidebar-footer .back-button,
+.main-container.sidebar-collapsed .sidebar-footer #logout-button {
+    font-size: 0; /* Esconde o texto dos botões do rodapé */
+}
+.main-container.sidebar-collapsed .sidebar-footer .back-button::before {
+    content: '↩';
+    font-size: 18px;
+}
+.main-container.sidebar-collapsed .sidebar-footer #logout-button::before {
+    content: '→';
+    font-size: 18px;
+}

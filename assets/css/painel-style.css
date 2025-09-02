@@ -1,5 +1,6 @@
 /* assets/css/painel-style.css */
 
+/* --- RESET BÁSICO E ESTILOS GERAIS --- */
 * {
     box-sizing: border-box;
 }
@@ -8,34 +9,47 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
     background-color: #f8f9fa;
+    color: #333;
 }
 
+/* --- LAYOUT PRINCIPAL --- */
 .main-container {
     display: flex;
 }
 
+.content {
+    margin-left: 250px; /* Deve ser igual à largura da sidebar */
+    padding: 30px;
+    width: 100%;
+    transition: margin-left 0.3s ease-in-out;
+}
+
+/* --- SIDEBAR (MENU LATERAL) --- */
 .sidebar {
-    width: 250px;
-    background-color: #0d2d4e;
+    width: 250px; /* Largura da sidebar expandida */
+    background-color: #0d2d4e; /* Azul escuro */
     color: white;
     height: 100vh; /* Usa a altura total da tela */
     position: fixed;
     top: 0;
     left: 0;
-    display: flex; /* ATIVA O FLEXBOX */
+    display: flex;
     flex-direction: column; /* Organiza os itens em coluna */
     transition: width 0.3s ease-in-out;
+    padding: 0; /* Remove padding geral para controlar internamente */
 }
 
 .sidebar-header {
-    padding: 20px;
-    border-bottom: 1px solid #3a5f85;
+    padding: 20px 20px 10px 20px;
     position: relative;
 }
 
 .sidebar-header h2 {
     font-size: 1.5em;
     margin: 0;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #3a5f85;
+    transition: opacity 0.3s ease-in-out;
 }
 
 #sidebar-toggle-btn {
@@ -45,9 +59,11 @@ body {
     cursor: pointer;
     padding: 5px;
     position: absolute;
-    right: 10px;
+    right: 20px;
     top: 22px;
+    transition: color 0.2s;
 }
+
 #sidebar-toggle-btn:hover {
     color: white;
 }
@@ -56,8 +72,12 @@ body {
     list-style: none;
     padding: 20px;
     margin: 0;
-    flex-grow: 1; /* Faz esta área crescer e empurrar o rodapé para baixo */
-    overflow-y: auto; /* Adiciona scroll se o menu for muito longo */
+    flex-grow: 1; /* Faz esta área crescer e ocupar todo o espaço, empurrando o rodapé para baixo */
+    overflow-y: auto; /* Adiciona scroll APENAS ao menu se ele for muito longo */
+}
+
+.sidebar-menu li {
+    margin-bottom: 5px;
 }
 
 .sidebar-menu button {
@@ -71,6 +91,7 @@ body {
     cursor: pointer;
     border-radius: 4px;
     transition: all 0.2s ease-in-out;
+    white-space: nowrap; /* Impede que o texto quebre linha durante a animação */
 }
 
 .sidebar-menu button:hover,
@@ -96,6 +117,12 @@ body {
     cursor: pointer;
     border: none;
     transition: all 0.2s ease-in-out;
+    box-sizing: border-box;
+    white-space: nowrap; /* Impede que o texto quebre linha durante a animação */
+}
+
+.sidebar-footer > *:last-child {
+    margin-bottom: 0;
 }
 
 .sidebar-footer .back-button {
@@ -115,47 +142,52 @@ body {
     background-color: #c82333;
 }
 
-.content {
-    margin-left: 250px;
-    padding: 30px;
-    width: 100%;
-    transition: margin-left 0.3s ease-in-out;
-}
+/* ---- ESTILOS PARA QUANDO O MENU ESTIVER RETRÁTIL ---- */
 
-/* --- ESTILOS DO MENU RETRÁTIL --- */
 .main-container.sidebar-collapsed .sidebar {
     width: 80px;
 }
+
 .main-container.sidebar-collapsed .content {
     margin-left: 80px;
 }
+
 .main-container.sidebar-collapsed .sidebar-header h2 {
-    display: none;
+    opacity: 0; /* Esconde o título suavemente */
+    visibility: hidden;
 }
+
 .main-container.sidebar-collapsed #sidebar-toggle-btn {
     left: 50%;
     transform: translateX(-50%);
 }
-.main-container.sidebar-collapsed .sidebar-menu button {
-    font-size: 0;
+
+.main-container.sidebar-collapsed .sidebar-menu {
+    padding: 20px 10px;
 }
-.main-container.sidebar-collapsed .sidebar-menu button::before {
-    content: '●';
-    font-size: 16px;
-    display: block;
-    text-align: center;
-}
-.main-container.sidebar-collapsed .sidebar-footer {
-    padding: 10px;
-}
+
+.main-container.sidebar-collapsed .sidebar-menu button,
 .main-container.sidebar-collapsed .sidebar-footer .back-button,
 .main-container.sidebar-collapsed .sidebar-footer #logout-button {
-    font-size: 0;
+    font-size: 0; /* Esconde o texto */
+    text-align: center;
+    padding: 12px 0;
 }
+
+.main-container.sidebar-collapsed .sidebar-menu button::before {
+    content: '●';
+    font-size: 16px; /* Restaura a fonte para o "ícone" */
+}
+
+.main-container.sidebar-collapsed .sidebar-footer {
+    padding: 15px 10px;
+}
+
 .main-container.sidebar-collapsed .sidebar-footer .back-button::before {
     content: '↩';
     font-size: 20px;
 }
+
 .main-container.sidebar-collapsed .sidebar-footer #logout-button::before {
     content: '→';
     font-size: 22px;

@@ -76,9 +76,13 @@ body {
     border-radius: 4px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     text-align: center;
-    width: 300px;
-    height: 300px;
+    width: 500px;
+    aspect-ratio: 1 / 1;
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
 }
 
 #login-view img {

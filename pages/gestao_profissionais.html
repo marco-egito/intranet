@@ -49,18 +49,45 @@
         <div class="modal-body">
             <form id="profissional-form">
                 <input type="hidden" id="profissional-id">
-                <div class="form-group"><label for="prof-nome">Nome Completo</label><input type="text" id="prof-nome" required></div>
-                <div class="form-group"><label for="prof-email">E-mail (Login)</label><input type="email" id="prof-email" required></div>
-                <div class="form-group"><label for="prof-contato">Telefone</label><input type="text" id="prof-contato"></div>
+
+                <div class="form-group">
+                    <label for="prof-nome">Nome Completo</label>
+                    <input type="text" id="prof-nome" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="prof-username">Username (Apelido)</label>
+                    <input type="text" id="prof-username">
+                </div>
+
+                <div class="form-group">
+                    <label for="prof-email">E-mail (Login)</label>
+                    <input type="email" id="prof-email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="prof-contato">Telefone</label>
+                    <input type="text" id="prof-contato">
+                </div>
+                
+                <div class="form-group">
+                    <label for="prof-profissao">Profissão</label>
+                    <input type="text" id="prof-profissao">
+                </div>
+
                 <div class="form-group checkbox-group">
                     <h4 style="margin: 10px 0;">Funções:</h4>
                     <label><input type="checkbox" name="funcoes" value="admin"> Admin</label>
                     <label><input type="checkbox" name="funcoes" value="financeiro"> Financeiro</label>
                     <label><input type="checkbox" name="funcoes" value="gestor"> Gestor</label>
                 </div>
+
                  <div class="form-group checkbox-group">
-                    <h4 style="margin: 10px 0;">Status:</h4>
+                    <h4 style="margin: 10px 0;">Status e Configurações:</h4>
                     <label><input type="checkbox" id="prof-inativo"> Inativo?</label>
+                    <label><input type="checkbox" id="prof-recebeDireto"> Recebe Direto?</label>
+                    <label><input type="checkbox" id="prof-primeiraFase"> Primeira Fase?</label>
+                    <label><input type="checkbox" id="prof-fazAtendimento"> Faz Atendimento?</label>
                 </div>
             </form>
         </div>

@@ -48,7 +48,9 @@
         </div>`;
         let tableHtml = `<div class="table-wrapper"><table><thead><tr><th>Profissional</th><th>Data Vencimento</th><th>Valor a Pagar (R$)</th><th>Data Pagamento</th><th>Ação</th></tr></thead><tbody>`;
         
-        const profissionaisFiltrados = (DB.profissionais || []).filter(prof => !prof.primeiraFase && !prof.inativo);
+        
+                // Filtra também por profissionais que TENHAM o campo 'nome'
+        const profissionaisFiltrados = (DB.profissionais || []).filter(prof => prof.nome && !prof.primeiraFase && !prof.inativo);
         
         profissionaisFiltrados.sort((a,b) => a.nome.localeCompare(b.nome));
         

@@ -1,5 +1,4 @@
 (function() {
-    // As variáveis `db` e `auth` já existem globalmente, carregadas pelo painel-script.js
     if (!db || !auth) {
         console.error("Instâncias do Firebase (db, auth) não encontradas.");
         return;
@@ -15,6 +14,25 @@
     const saveBtn = document.getElementById('modal-save-btn');
     const form = document.getElementById('profissional-form');
     const tabContainer = document.querySelector('.tab');
+
+    // --- LÓGICA PARA GERAR USERNAME AUTOMATICAMENTE ---
+    const nomeCompletoInput = document.getElementById('prof-nome');
+    const usernameInput = document.getElementById('prof-username');
+
+    if (nomeCompletoInput && usernameInput) {
+        nomeCompletoInput.addEventListener('blur', () => { // 'blur' é acionado quando o usuário sai do campo
+            const nomeCompleto = nomeCompletoInput.value.trim();
+            if (nomeCompleto) {
+                const partes = nomeCompleto.split(/\s+/); // Divide o nome por espaços
+                let username = partes[0]; // Pega o primeiro nome
+                if (partes.length > 1) {
+                    // Se tiver mais de um nome, adiciona o último
+                    username += ' ' + partes[partes.length - 1];
+                }
+                usernameInput.value = username;
+            }
+        });
+    }
 
     // --- Funções Auxiliares (Modal, Toast, Abas) ---
     function openTab(evt, tabName) {
@@ -37,19 +55,15 @@
         document.getElementById('prof-email').disabled = !!user;
 
         if (user) {
-            // Campos existentes
             document.getElementById('prof-nome').value = user.nome || '';
             document.getElementById('prof-email').value = user.email || '';
             document.getElementById('prof-contato').value = user.contato || '';
             document.getElementById('prof-inativo').checked = user.inativo || false;
-            
-            // Campos novos
             document.getElementById('prof-username').value = user.username || '';
             document.getElementById('prof-profissao').value = user.profissao || '';
             document.getElementById('prof-recebeDireto').checked = user.recebeDireto || false;
             document.getElementById('prof-primeiraFase').checked = user.primeiraFase || false;
             document.getElementById('prof-fazAtendimento').checked = user.fazAtendimento || false;
-
             form.querySelectorAll('input[name="funcoes"]').forEach(checkbox => {
                 checkbox.checked = user.funcoes && user.funcoes.includes(checkbox.value);
             });
@@ -143,16 +157,13 @@
             form.querySelectorAll('input[name="funcoes"]:checked').forEach(cb => funcoesSelecionadas.push(cb.value));
             
             const userData = {
-                // Campos existentes
                 nome: document.getElementById('prof-nome').value.trim(),
                 email: document.getElementById('prof-email').value.trim(),
                 contato: document.getElementById('prof-contato').value.trim(),
                 inativo: document.getElementById('prof-inativo').checked,
                 funcoes: funcoesSelecionadas,
-
-                // Campos novos
                 username: document.getElementById('prof-username').value.trim(),
-                profissao: document.getElementById('prof-profissao').value.trim(),
+                profissao: document.getElementById('prof-profissao').value,
                 recebeDireto: document.getElementById('prof-recebeDireto').checked,
                 primeiraFase: document.getElementById('prof-primeiraFase').checked,
                 fazAtendimento: document.getElementById('prof-fazAtendimento').checked,

@@ -14,6 +14,7 @@
     const saveBtn = document.getElementById('modal-save-btn');
     const form = document.getElementById('profissional-form');
     const tabContainer = document.querySelector('.tab');
+    const deleteBtn = document.getElementById('modal-delete-btn'); // Nova variável para o botão
 
     const nomeCompletoInput = document.getElementById('prof-nome');
     const usernameInput = document.getElementById('prof-username');
@@ -48,6 +49,10 @@
         document.getElementById('modal-title').textContent = user ? 'Editar Profissional' : 'Adicionar Profissional';
         document.getElementById('profissional-id').value = user ? user.id : '';
         document.getElementById('prof-email').disabled = !!user;
+        if (deleteBtn) {
+            deleteBtn.style.display = user ? 'inline-block' : 'none';
+        }
+
         if (user) {
             document.getElementById('prof-nome').value = user.nome || '';
             document.getElementById('prof-email').value = user.email || '';
@@ -115,7 +120,6 @@
                 <td>${user.recebeDireto ? 'Sim' : 'Não'}</td>
                 <td>
                     <button class="action-button edit-row-btn" data-id="${user.id}">Editar</button>
-                    <button class="action-button delete-row-btn" data-id="${user.id}">Excluir</button>
                 </td>
             `;
         });
@@ -202,6 +206,30 @@
             }
         });
     }
+
+        // NOVO EVENT LISTENER PARA O BOTÃO EXCLUIR DO MODAL
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', () => {
+            const userId = document.getElementById('profissional-id').value;
+            if (!userId) {
+                showToast('ID do profissional não encontrado.', 'error');
+                return;
+            }
+
+            if (confirm('Tem certeza que deseja excluir este profissional? Esta ação não pode ser desfeita.')) {
+                usuariosCollection.doc(userId).delete()
+                    .then(() => {
+                        showToast('Profissional excluído com sucesso.', 'success');
+                        closeModal();
+                    })
+                    .catch(err => {
+                        showToast(`Erro ao excluir: ${err.message}`, 'error');
+                        console.error("Erro ao excluir:", err);
+                    });
+            }
+        });
+    }
+
 
     if (tableBody) {
         tableBody.addEventListener('click', (e) => {

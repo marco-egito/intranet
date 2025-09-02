@@ -37,10 +37,19 @@
         document.getElementById('prof-email').disabled = !!user;
 
         if (user) {
+            // Campos existentes
             document.getElementById('prof-nome').value = user.nome || '';
             document.getElementById('prof-email').value = user.email || '';
             document.getElementById('prof-contato').value = user.contato || '';
             document.getElementById('prof-inativo').checked = user.inativo || false;
+            
+            // Campos novos
+            document.getElementById('prof-username').value = user.username || '';
+            document.getElementById('prof-profissao').value = user.profissao || '';
+            document.getElementById('prof-recebeDireto').checked = user.recebeDireto || false;
+            document.getElementById('prof-primeiraFase').checked = user.primeiraFase || false;
+            document.getElementById('prof-fazAtendimento').checked = user.fazAtendimento || false;
+
             form.querySelectorAll('input[name="funcoes"]').forEach(checkbox => {
                 checkbox.checked = user.funcoes && user.funcoes.includes(checkbox.value);
             });
@@ -110,7 +119,7 @@
         showToast("Erro ao carregar dados.", "error");
     });
 
-    // --- Event Listeners (COM A CORREÇÃO) ---
+    // --- Event Listeners ---
     if (tabContainer) {
         tabContainer.addEventListener('click', (e) => {
             if (e.target.classList.contains('tablinks')) {
@@ -132,13 +141,23 @@
             const id = document.getElementById('profissional-id').value;
             const funcoesSelecionadas = [];
             form.querySelectorAll('input[name="funcoes"]:checked').forEach(cb => funcoesSelecionadas.push(cb.value));
+            
             const userData = {
+                // Campos existentes
                 nome: document.getElementById('prof-nome').value.trim(),
                 email: document.getElementById('prof-email').value.trim(),
                 contato: document.getElementById('prof-contato').value.trim(),
                 inativo: document.getElementById('prof-inativo').checked,
-                funcoes: funcoesSelecionadas
+                funcoes: funcoesSelecionadas,
+
+                // Campos novos
+                username: document.getElementById('prof-username').value.trim(),
+                profissao: document.getElementById('prof-profissao').value.trim(),
+                recebeDireto: document.getElementById('prof-recebeDireto').checked,
+                primeiraFase: document.getElementById('prof-primeiraFase').checked,
+                fazAtendimento: document.getElementById('prof-fazAtendimento').checked,
             };
+
             if (!userData.nome || !userData.email) {
                 showToast('Nome e E-mail são obrigatórios.', 'error');
                 return;
@@ -166,10 +185,12 @@
             const target = e.target;
             const userId = target.dataset.id;
             if (!userId) return;
+
             if (target.classList.contains('edit-row-btn')) {
                 const userToEdit = localUsuariosList.find(u => u.id === userId);
                 if (userToEdit) openModal(userToEdit);
             }
+
             if (target.classList.contains('delete-row-btn')) {
                 if (confirm('Tem certeza que deseja excluir este profissional?')) {
                     usuariosCollection.doc(userId).delete()

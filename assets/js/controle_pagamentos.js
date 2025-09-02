@@ -50,7 +50,13 @@
         
         
                 // Filtra também por profissionais que TENHAM o campo 'nome'
-        const profissionaisFiltrados = (DB.profissionais || []).filter(prof => prof.nome && !prof.primeiraFase && !prof.inativo);
+        const profissionaisFiltrados = (DB.profissionais || []).filter(
+            prof => 
+                prof.nome && 
+                !prof.primeiraFase && 
+                !prof.inativo && 
+                prof.profissao !== "Assistente Social"
+        );
         
         profissionaisFiltrados.sort((a,b) => a.nome.localeCompare(b.nome));
         

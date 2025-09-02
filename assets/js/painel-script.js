@@ -28,8 +28,6 @@ if (!firebase.apps.length) {
     const contentArea = document.getElementById('content-area');
     const navButtons = document.querySelectorAll('.nav-button');
     const logoutButton = document.getElementById('logout-button');
-
-    // --- LÓGICA DO MENU RETRÁTIL ---
     const toggleButton = document.getElementById('sidebar-toggle-btn');
     const mainContainer = document.getElementById('app-view');
 
@@ -38,7 +36,6 @@ if (!firebase.apps.length) {
             mainContainer.classList.toggle('sidebar-collapsed');
         });
     }
-    // --- FIM DA LÓGICA DO MENU ---
 
     const initializePage = () => {
         auth.onAuthStateChanged(user => {
@@ -83,7 +80,6 @@ if (!firebase.apps.length) {
             
             const response = await fetch(`../pages/${viewName}.html`);
             if (!response.ok) {
-                 // Lança um erro personalizado para ser pego pelo catch
                 throw new Error(`Arquivo não encontrado: ${viewName}.html`);
             }
             contentArea.innerHTML = await response.text();
@@ -98,7 +94,6 @@ if (!firebase.apps.length) {
             newScript.id = 'dynamic-view-script';
             newScript.src = `../assets/js/${viewName}.js`;
             document.body.appendChild(newScript);
-
         } catch (error) {
             console.error(`Erro ao carregar a view ${viewName}:`, error);
             contentArea.innerHTML = `<h2>Erro ao carregar este módulo.</h2><p>${error.message}.</p>`;

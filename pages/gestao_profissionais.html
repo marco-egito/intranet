@@ -49,15 +49,12 @@
         <div class="modal-body">
             <form id="profissional-form">
                 <input type="hidden" id="profissional-id">
+                
+                <input type="hidden" id="prof-username">
 
                 <div class="form-group">
                     <label for="prof-nome">Nome Completo</label>
                     <input type="text" id="prof-nome" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="prof-username">Username (Apelido)</label>
-                    <input type="text" id="prof-username">
                 </div>
 
                 <div class="form-group">
@@ -72,7 +69,14 @@
                 
                 <div class="form-group">
                     <label for="prof-profissao">Profissão</label>
-                    <input type="text" id="prof-profissao">
+                    <select id="prof-profissao">
+                        <option value="" disabled selected>Selecione uma profissão</option>
+                        <option value="Psicólogo">Psicólogo</option>
+                        <option value="Psicopedagoga">Psicopedagoga</option>
+                        <option value="Musicoterapeuta">Musicoterapeuta</option>
+                        <option value="Assistente Social">Assistente Social</option>
+                        <option value="Advogado">Advogado</option>
+                    </select>
                 </div>
 
                 <div class="form-group checkbox-group">
@@ -80,6 +84,8 @@
                     <label><input type="checkbox" name="funcoes" value="admin"> Admin</label>
                     <label><input type="checkbox" name="funcoes" value="financeiro"> Financeiro</label>
                     <label><input type="checkbox" name="funcoes" value="gestor"> Gestor</label>
+                    <label><input type="checkbox" name="funcoes" value="atendimento"> Atendimento</label>
+                    <label><input type="checkbox" name="funcoes" value="assistente"> Assistente</label>
                 </div>
 
                  <div class="form-group checkbox-group">

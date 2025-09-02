@@ -232,4 +232,67 @@
     if (document.querySelector('.tablinks[data-tab="GestaoProfissionais"]')) {
       document.querySelector('.tablinks[data-tab="GestaoProfissionais"]').click();
     }
+    // --- NOVO CÓDIGO: LÓGICA PARA VALORES POR SESSÃO ---
+    
+    // Referência para o documento único de configurações financeiras
+    const docRefValores = db.collection('financeiro').doc('configuracoes');
+
+    // Elementos da página da nova aba
+    const inputOnline = document.getElementById('valor-online');
+    const inputPresencial = document.getElementById('valor-presencial');
+    const inputTaxa = document.getElementById('taxa-acordo');
+    const saveBtnValores = document.getElementById('salvar-valores-btn');
+
+    // Função para carregar os dados do Firestore e preencher o formulário
+    async function carregarValores() {
+        if (!inputOnline) return; // Só executa se estiver na tela certa
+        try {
+            const doc = await docRefValores.get();
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.valores) {
+                    inputOnline.value = data.valores.online || 0;
+                    inputPresencial.value = data.valores.presencial || 0;
+                    inputTaxa.value = data.valores.taxaAcordo || 0;
+                }
+            } else {
+                console.log("Documento de configurações financeiras não encontrado!");
+            }
+        } catch (error) {
+            console.error("Erro ao buscar valores por sessão: ", error);
+            window.showToast('Erro ao buscar valores.', 'error');
+        }
+    }
+
+    // Adiciona o evento de clique no botão de salvar da nova aba
+    if (saveBtnValores) {
+        saveBtnValores.addEventListener('click', async () => {
+            saveBtnValores.disabled = true;
+            
+            const novoValorOnline = parseFloat(inputOnline.value) || 0;
+            const novoValorPresencial = parseFloat(inputPresencial.value) || 0;
+            const novaTaxaAcordo = parseFloat(inputTaxa.value) || 0;
+            
+            try {
+                // Usa a notação de ponto para atualizar campos dentro de um mapa
+                await docRefValores.set({
+                    valores: {
+                        online: novoValorOnline,
+                        presencial: novoValorPresencial,
+                        taxaAcordo: novaTaxaAcordo
+                    }
+                }, { merge: true }); // 'merge: true' garante que não vamos apagar outros dados no documento 'configuracoes'
+                window.showToast('Valores salvos com sucesso!', 'success');
+            } catch (error) {
+                console.error("Erro ao salvar valores: ", error);
+                window.showToast('Erro ao salvar valores.', 'error');
+            } finally {
+                saveBtnValores.disabled = false;
+            }
+        });
+    }
+
+    // Carrega os valores assim que o script é executado
+    carregarValores();
+
 })();

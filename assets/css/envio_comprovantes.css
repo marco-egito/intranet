@@ -1,0 +1,18 @@
+/* assets/css/envio_comprovantes.css */
+#comprovante-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Duas colunas */
+    gap: 20px;
+}
+
+/* Faz com que alguns campos ocupem as duas colunas */
+#comprovante-form .form-group:nth-child(2),
+#comprovante-form .form-group:nth-child(6),
+#comprovante-form .button-bar {
+    grid-column: span 2;
+}
+
+#upload-status.loading::before {
+    content: 'Enviando, por favor aguarde...';
+    color: #007bff;
+}

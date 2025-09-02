@@ -294,5 +294,62 @@
 
     // Carrega os valores assim que o script é executado
     carregarValores();
+    // --- NOVO CÓDIGO: LÓGICA PARA MODELOS DE MENSAGEM ---
+    
+    // Referência para o mesmo documento de configurações
+    const docRefMensagens = db.collection('financeiro').doc('configuracoes');
 
+    // Elementos da página da nova aba
+    const inputAcordo = document.getElementById('msg-acordo');
+    const inputCobranca = document.getElementById('msg-cobranca');
+    const inputContrato = document.getElementById('msg-contrato');
+    const saveBtnMensagens = document.getElementById('salvar-mensagens-btn');
+
+    // Função para carregar os dados do Firestore e preencher os campos de texto
+    async function carregarMensagens() {
+        if (!inputAcordo) return; // Só executa se os elementos existirem
+        try {
+            const doc = await docRefMensagens.get();
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.mensagens) {
+                    inputAcordo.value = data.mensagens.acordo || '';
+                    inputCobranca.value = data.mensagens.cobranca || '';
+                    inputContrato.value = data.mensagens.contrato || '';
+                }
+            } else {
+                console.log("Documento de configurações não encontrado!");
+            }
+        } catch (error) {
+            console.error("Erro ao buscar modelos de mensagem: ", error);
+            window.showToast('Erro ao buscar as mensagens.', 'error');
+        }
+    }
+
+    // Adiciona o evento de clique no botão de salvar da nova aba
+    if (saveBtnMensagens) {
+        saveBtnMensagens.addEventListener('click', async () => {
+            saveBtnMensagens.disabled = true;
+            
+            const novasMensagens = {
+                'mensagens.acordo': inputAcordo.value,
+                'mensagens.cobranca': inputCobranca.value,
+                'mensagens.contrato': inputContrato.value
+            };
+            
+            try {
+                // Usa 'update' para alterar apenas os campos do mapa 'mensagens'
+                await docRefMensagens.update(novasMensagens);
+                window.showToast('Mensagens salvas com sucesso!', 'success');
+            } catch (error) {
+                console.error("Erro ao salvar mensagens: ", error);
+                window.showToast('Erro ao salvar as mensagens.', 'error');
+            } finally {
+                saveBtnMensagens.disabled = false;
+            }
+        });
+    }
+
+    // Carrega os dados das mensagens assim que o script é executado
+    carregarMensagens();
 })();

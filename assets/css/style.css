@@ -1,227 +1,121 @@
-/* ---- RESET BÁSICO E ESTILOS GERAIS ---- */
+/* assets/css/style.css */
+
+/* --- Reset Básico e Estilos Globais --- */
 * {
     box-sizing: border-box;
-    margin: 0;
-    padding: 0;
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f8f9fa;
+    margin: 0;
+    background-color: #f0f2f5;
     color: #333;
 }
 
-/* ---- LAYOUT PRINCIPAL ---- */
-.main-container {
-    display: flex;
-}
-
-.content {
-    margin-left: 280px; /* Espaço para a sidebar */
-    padding: 30px;
-    width: 100%;
-    transition: margin-left 0.3s ease-in-out;
-}
-
-/* ---- SIDEBAR (MENU LATERAL) ---- */
-.sidebar {
-    width: 280px; /* Largura da sidebar expandida */
-    background-color: #0d2d4e; /* Azul escuro */
-    color: white;
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
+/* --- Container Principal --- */
+#app {
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 20px;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-    
-    /* Lógica para fixar o rodapé */
+}
+
+/* --- Cabeçalho --- */
+.main-header {
     display: flex;
-    flex-direction: column;
-    transition: width 0.3s ease-in-out;
-}
-
-.sidebar-header {
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #3a5f85;
-    position: relative;
-}
-
-.sidebar-header h2 {
-    margin: 0;
-    font-size: 1.5em;
-}
-
-#sidebar-toggle-btn {
-    background: none;
-    border: none;
-    color: #aebfd1;
-    cursor: pointer;
-    padding: 5px;
-    position: absolute;
-    right: 0px;
-    top: 5px;
-    transition: color 0.2s;
-}
-
-#sidebar-toggle-btn:hover {
-    color: white;
-}
-
-#sidebar-toggle-btn svg {
-    width: 20px;
-    height: 20px;
-}
-
-.sidebar-menu {
-    flex-grow: 1; /* Faz o menu ocupar todo o espaço, empurrando o rodapé para baixo */
-    overflow-y: auto; /* Adiciona scroll se o menu for muito grande */
-    list-style-type: none;
-}
-
-.sidebar-menu li {
-    margin-bottom: 5px;
-}
-
-.sidebar-menu button {
-    width: 100%;
-    background: none;
-    border: none;
-    color: #aebfd1;
-    padding: 12px 15px;
-    text-align: left;
-    font-size: 1em;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: all 0.2s ease-in-out;
-}
-
-.sidebar-menu button:hover {
-    background-color: #1a73e8;
-    color: white;
-}
-
-.sidebar-menu button.active {
-    background-color: #1a73e8;
-    color: white;
-    font-weight: bold;
-}
-
-.sidebar-footer {
-    padding-top: 20px;
-    border-top: 1px solid #3a5f85;
-}
-
-.sidebar-footer .back-button,
-.sidebar-footer #logout-button {
-    display: block;
-    width: 100%;
-    padding: 12px 15px;
-    margin-bottom: 10px;
-    border-radius: 4px;
-    text-align: center;
-    font-size: 1em;
-    cursor: pointer;
-    border: none;
-    transition: background-color 0.2s ease-in-out, font-size 0.3s ease-in-out;
-    box-sizing: border-box;
-}
-
-.sidebar-footer .back-button {
-    background-color: #6c757d;
-    color: white;
-    text-decoration: none;
-}
-.sidebar-footer .back-button:hover {
-    background-color: #5a6268;
-}
-
-.sidebar-footer #logout-button {
-    background-color: #dc3545;
-    color: white;
-}
-.sidebar-footer #logout-button:hover {
-    background-color: #c82333;
-}
-
-
-/* ---- ESTILOS PARA QUANDO O MENU ESTIVER RETRÁTIL ---- */
-
-.main-container.sidebar-collapsed .sidebar {
-    width: 80px; /* Largura da sidebar encolhida */
-}
-
-.main-container.sidebar-collapsed .content {
-    margin-left: 80px; /* Ajusta a margem do conteúdo */
-}
-
-.main-container.sidebar-collapsed .sidebar-header h2 {
-    display: none; /* Esconde o título "Financeiro" */
-}
-
-.main-container.sidebar-collapsed .sidebar-header #sidebar-toggle-btn {
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.main-container.sidebar-collapsed .sidebar-menu button {
-    text-align: center;
-    padding: 12px 10px;
-    font-size: 0; /* Truque para esconder o texto */
-}
-
-.main-container.sidebar-collapsed .sidebar-menu button::before {
-    content: '●'; /* Placeholder para ícone */
-    font-size: 16px; /* Restaura o tamanho da fonte para o "ícone" */
-}
-
-.main-container.sidebar-collapsed .sidebar-footer {
-    padding: 10px;
-}
-
-.main-container.sidebar-collapsed .sidebar-footer .back-button,
-.main-container.sidebar-collapsed .sidebar-footer #logout-button {
-    font-size: 0; /* Esconde o texto dos botões do rodapé */
-}
-
-.main-container.sidebar-collapsed .sidebar-footer .back-button::before {
-    content: '↩';
-    font-size: 18px; /* Mostra um ícone de "voltar" */
-}
-
-.main-container.sidebar-collapsed .sidebar-footer #logout-button::before {
-    content: '→';
-    font-size: 20px; /* Mostra um ícone de "sair" */
-}
-
-
-/* ---- ESTILOS GENÉRICOS PARA CONTEÚDO (MODAL, TOAST, etc.) ---- */
-
-.view-container {
+    justify-content: space-between;
+    align-items: center;
     background-color: white;
-    padding: 30px;
+    padding: 15px 30px;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 30px;
 }
 
-#toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1050;
-    width: 300px;
+.main-header h1 {
+    font-size: 1.5em;
+    margin: 0;
 }
 
-.toast {
-    background-color: #28a745;
-    color: white;
-    padding: 15px;
-    border-radius: 4px;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
-.toast.toast-error {
-    background-color: #dc3545;
+.user-profile #user-photo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-profile #user-email {
+    font-weight: 500;
+}
+
+.user-profile #logout-button {
+    background-color: transparent;
+    border: 1px solid #ccc;
+    color: #555;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.user-profile #logout-button:hover {
+    background-color: #e9e9e9;
+    border-color: #aaa;
+}
+
+/* --- Grade de Módulos (Cards) --- */
+.modules-title {
+    font-size: 1.8em;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.module-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.module-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+}
+
+.card-icon {
+    flex-shrink: 0;
+    color: #1a73e8;
+}
+
+.card-icon svg {
+    width: 32px;
+    height: 32px;
+}
+
+.card-content h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.2em;
+}
+
+.card-content p {
+    margin: 0;
+    color: #666;
+    font-size: 0.95em;
 }

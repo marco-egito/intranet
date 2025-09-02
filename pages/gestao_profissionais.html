@@ -35,9 +35,33 @@
     </div>
     
     <div id="ModelosMensagem" class="tabcontent">
-        <h2>Modelos de Mensagem</h2>
-        <p>Conteúdo para modelos de mensagem em desenvolvimento.</p>
-    </div>
+            <h2>Modelos de Mensagem</h2>
+            <p>Edite os textos padrão para cobranças, acordos e contratos. Use as variáveis para personalizar as mensagens.</p>
+            
+            <div class="variables-info">
+                <strong>Variáveis Disponíveis:</strong>
+                <code>{greeting}</code>, <code>{nome}</code>, <code>{nomeProfissional}</code>, <code>{item}</code>, <code>{vencimento}</code>, <code>{valor}</code>, <code>{link}</code>, <code>{valorTotalPago}</code>, <code>{valorTotalAPagar}</code>, <code>{saldoRestante}</code>, <code>{valorRestante}</code>, <code>{valor da divida}</code>, <code>{Entrada}</code>, <code>{Taxa Aplicada}</code>, <code>{Valor Final}</code>, <code>{N de Parcelas}</code>, <code>{listaParcelas}</code>
+            </div>
+    
+            <div class="form-group">
+                <label for="msg-acordo">Mensagem de Acordo</label>
+                <textarea id="msg-acordo" rows="6"></textarea>
+            </div>
+    
+            <div class="form-group">
+                <label for="msg-cobranca">Mensagem de Cobrança</label>
+                <textarea id="msg-cobranca" rows="6"></textarea>
+            </div>
+    
+            <div class="form-group">
+                <label for="msg-contrato">Mensagem de Contrato</label>
+                <textarea id="msg-contrato" rows="6"></textarea>
+            </div>
+    
+            <div class="button-bar">
+                <button id="salvar-mensagens-btn" class="action-button">Salvar Mensagens</button>
+            </div>
+        </div>
     
     <div id="ValoresSessao" class="tabcontent">
             <h2>Valores por Sessão</h2>

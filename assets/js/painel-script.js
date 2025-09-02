@@ -28,7 +28,23 @@ if (!firebase.apps.length) {
     const contentArea = document.getElementById('content-area');
     const navButtons = document.querySelectorAll('.nav-button');
     const logoutButton = document.getElementById('logout-button');
+    function() {
+    // ... (inicialização do firebase, etc) ...
 
+    const contentArea = document.getElementById('content-area');
+    const navButtons = document.querySelectorAll('.nav-button');
+    const logoutButton = document.getElementById('logout-button');
+
+    // --- CÓDIGO DO MENU RETRÁTIL ADICIONADO AQUI ---
+    const toggleButton = document.getElementById('sidebar-toggle-btn');
+    const mainContainer = document.getElementById('app-view');
+
+    if (toggleButton && mainContainer) {
+        toggleButton.addEventListener('click', () => {
+            mainContainer.classList.toggle('sidebar-collapsed');
+        });
+    }
+    // --- FIM DO CÓDIGO DO MENU RETRÁTIL ---
     // --- FUNÇÃO DE CARREGAMENTO DINÂMICO (VERSÃO FINAL) ---
     async function loadView(viewName) {
         navButtons.forEach(btn => {

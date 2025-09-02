@@ -44,7 +44,7 @@ if (!firebase.apps.length) {
             mainContainer.classList.toggle('sidebar-collapsed');
         });
     }
-    // --- FIM DO CÓDIGO DO MENU RETRÁTIL ---
+    
     // --- FUNÇÃO DE CARREGAMENTO DINÂMICO (VERSÃO FINAL) ---
     async function loadView(viewName) {
         navButtons.forEach(btn => {

@@ -8,7 +8,7 @@
     const statusDiv = document.getElementById('upload-status');
     
     // ***** COLOQUE A URL DO SEU APP SCRIPT AQUI *****
-    const SCRIPT_URL = "URL_DO_SEU_WEB_APP_AQUI";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyKhLY6TCgRSE_630R8G8tIYhHriJxxo_cJJjcbuoDwypSvtxu7L7Y6X2AJmJE2QxVb8g/exec";
 
     // Preenche a lista de profissionais
     async function popularProfissionais() {

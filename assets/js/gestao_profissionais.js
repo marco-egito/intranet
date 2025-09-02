@@ -1,7 +1,7 @@
-(function(db, auth) {
-    // As variáveis `db` e `auth` são passadas pelo painel-script.js
-    if (!db) {
-        console.error("Conexão com o Firestore não foi estabelecida.");
+(function() {
+    // As variáveis `db` e `auth` já existem globalmente, carregadas pelo painel-script.js
+    if (!db || !auth) {
+        console.error("Instâncias do Firebase (db, auth) não encontradas.");
         return;
     }
 
@@ -30,6 +30,7 @@
     }
 
     function openModal(user = null) {
+        if (!form || !modal) return;
         form.reset();
         document.getElementById('modal-title').textContent = user ? 'Editar Profissional' : 'Adicionar Profissional';
         document.getElementById('profissional-id').value = user ? user.id : '';
@@ -48,7 +49,9 @@
     }
 
     function closeModal() {
-        modal.style.display = 'none';
+        if (modal) {
+            modal.style.display = 'none';
+        }
     }
     
     function showToast(message, type = 'success') {
@@ -99,7 +102,7 @@
         });
     }
 
-    usuariosCollection.orderBy("nome").onSnapshot(snapshot => {
+    const unsubscribe = usuariosCollection.orderBy("nome").onSnapshot(snapshot => {
         localUsuariosList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderTable(localUsuariosList);
     }, error => {
@@ -107,73 +110,78 @@
         showToast("Erro ao carregar dados.", "error");
     });
 
-    // --- Event Listeners ---
-    if(tabContainer){
+    // --- Event Listeners (COM A CORREÇÃO) ---
+    if (tabContainer) {
         tabContainer.addEventListener('click', (e) => {
-            if(e.target.classList.contains('tablinks')) {
+            if (e.target.classList.contains('tablinks')) {
                 openTab(e, e.target.dataset.tab);
             }
         });
     }
     
-    addBtn.addEventListener('click', () => openModal());
-    cancelBtn.addEventListener('click', closeModal);
+    if (addBtn) {
+        addBtn.addEventListener('click', () => openModal());
+    }
 
-    saveBtn.addEventListener('click', async () => {
-        const id = document.getElementById('profissional-id').value;
-        const funcoesSelecionadas = [];
-        form.querySelectorAll('input[name="funcoes"]:checked').forEach(cb => funcoesSelecionadas.push(cb.value));
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', closeModal);
+    }
 
-        const userData = {
-            nome: document.getElementById('prof-nome').value.trim(),
-            email: document.getElementById('prof-email').value.trim(),
-            contato: document.getElementById('prof-contato').value.trim(),
-            inativo: document.getElementById('prof-inativo').checked,
-            funcoes: funcoesSelecionadas
-        };
-
-        if (!userData.nome || !userData.email) {
-            showToast('Nome e E-mail são obrigatórios.', 'error');
-            return;
-        }
-
-        saveBtn.disabled = true;
-        try {
-            if (id) {
-                await usuariosCollection.doc(id).update(userData);
-                showToast('Profissional atualizado com sucesso!', 'success');
-            } else {
-                await usuariosCollection.add(userData);
-                showToast('Profissional adicionado ao banco de dados! Lembre-se de criar o login no Firebase Authentication.', 'success');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', async () => {
+            const id = document.getElementById('profissional-id').value;
+            const funcoesSelecionadas = [];
+            form.querySelectorAll('input[name="funcoes"]:checked').forEach(cb => funcoesSelecionadas.push(cb.value));
+            const userData = {
+                nome: document.getElementById('prof-nome').value.trim(),
+                email: document.getElementById('prof-email').value.trim(),
+                contato: document.getElementById('prof-contato').value.trim(),
+                inativo: document.getElementById('prof-inativo').checked,
+                funcoes: funcoesSelecionadas
+            };
+            if (!userData.nome || !userData.email) {
+                showToast('Nome e E-mail são obrigatórios.', 'error');
+                return;
             }
-            closeModal();
-        } catch (error) {
-            showToast(`Erro ao salvar: ${error.message}`, 'error');
-        } finally {
-            saveBtn.disabled = false;
-        }
-    });
-
-    tableBody.addEventListener('click', (e) => {
-        const target = e.target;
-        const userId = target.dataset.id;
-        if (!userId) return;
-
-        if (target.classList.contains('edit-row-btn')) {
-            const userToEdit = localUsuariosList.find(u => u.id === userId);
-            if (userToEdit) openModal(userToEdit);
-        }
-
-        if (target.classList.contains('delete-row-btn')) {
-            if (confirm('Tem certeza que deseja excluir este profissional?')) {
-                usuariosCollection.doc(userId).delete()
-                    .then(() => showToast('Profissional excluído.', 'success'))
-                    .catch(err => showToast(`Erro: ${err.message}`, 'error'));
+            saveBtn.disabled = true;
+            try {
+                if (id) {
+                    await usuariosCollection.doc(id).update(userData);
+                    showToast('Profissional atualizado com sucesso!', 'success');
+                } else {
+                    await usuariosCollection.add(userData);
+                    showToast('Profissional adicionado ao banco de dados!', 'success');
+                }
+                closeModal();
+            } catch (error) {
+                showToast(`Erro ao salvar: ${error.message}`, 'error');
+            } finally {
+                saveBtn.disabled = false;
             }
-        }
-    });
+        });
+    }
+
+    if (tableBody) {
+        tableBody.addEventListener('click', (e) => {
+            const target = e.target;
+            const userId = target.dataset.id;
+            if (!userId) return;
+            if (target.classList.contains('edit-row-btn')) {
+                const userToEdit = localUsuariosList.find(u => u.id === userId);
+                if (userToEdit) openModal(userToEdit);
+            }
+            if (target.classList.contains('delete-row-btn')) {
+                if (confirm('Tem certeza que deseja excluir este profissional?')) {
+                    usuariosCollection.doc(userId).delete()
+                        .then(() => showToast('Profissional excluído.', 'success'))
+                        .catch(err => showToast(`Erro: ${err.message}`, 'error'));
+                }
+            }
+        });
+    }
     
     // Inicializa a primeira aba
-    document.querySelector('.tablinks[data-tab="GestaoProfissionais"]').click();
-
-})(db, auth); // Passa as variáveis globais para o escopo da função
+    if (document.querySelector('.tablinks[data-tab="GestaoProfissionais"]')) {
+      document.querySelector('.tablinks[data-tab="GestaoProfissionais"]').click();
+    }
+})();

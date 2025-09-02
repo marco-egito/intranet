@@ -15,33 +15,13 @@
     const form = document.getElementById('profissional-form');
     const tabContainer = document.querySelector('.tab');
 
-    // --- LÓGICA PARA GERAR USERNAME AUTOMATICAMENTE ---
-    const nomeCompletoInput = document.getElementById('prof-nome');
-    const usernameInput = document.getElementById('prof-username');
+    // A lógica de 'blur' para gerar o username foi REMOVIDA daqui.
 
-    if (nomeCompletoInput && usernameInput) {
-        nomeCompletoInput.addEventListener('blur', () => { // 'blur' é acionado quando o usuário sai do campo
-            const nomeCompleto = nomeCompletoInput.value.trim();
-            if (nomeCompleto) {
-                const partes = nomeCompleto.split(/\s+/); // Divide o nome por espaços
-                let username = partes[0]; // Pega o primeiro nome
-                if (partes.length > 1) {
-                    // Se tiver mais de um nome, adiciona o último
-                    username += ' ' + partes[partes.length - 1];
-                }
-                usernameInput.value = username;
-            }
-        });
-    }
-
-    // --- Funções Auxiliares (Modal, Toast, Abas) ---
     function openTab(evt, tabName) {
         document.querySelectorAll(".tabcontent").forEach(tc => tc.style.display = "none");
         document.querySelectorAll(".tablinks").forEach(tl => tl.classList.remove("active"));
-        
         const tabElement = document.getElementById(tabName);
         if(tabElement) tabElement.style.display = "block";
-        
         if (evt && evt.currentTarget) {
             evt.currentTarget.classList.add("active");
         }
@@ -53,7 +33,6 @@
         document.getElementById('modal-title').textContent = user ? 'Editar Profissional' : 'Adicionar Profissional';
         document.getElementById('profissional-id').value = user ? user.id : '';
         document.getElementById('prof-email').disabled = !!user;
-
         if (user) {
             document.getElementById('prof-nome').value = user.nome || '';
             document.getElementById('prof-email').value = user.email || '';
@@ -87,12 +66,10 @@
         toast.style.transform = 'translateX(100%)';
         toast.style.transition = 'all 0.4s ease';
         container.appendChild(toast);
-        
         setTimeout(() => {
             toast.style.opacity = '1';
             toast.style.transform = 'translateX(0)';
         }, 10);
-
         setTimeout(() => {
             toast.style.opacity = '0';
             toast.style.transform = 'translateX(100%)';
@@ -100,7 +77,6 @@
         }, 3000);
     }
 
-    // --- Lógica de Dados (Firestore) ---
     function renderTable(users) {
         if (!tableBody) return;
         tableBody.innerHTML = '';
@@ -133,7 +109,6 @@
         showToast("Erro ao carregar dados.", "error");
     });
 
-    // --- Event Listeners ---
     if (tabContainer) {
         tabContainer.addEventListener('click', (e) => {
             if (e.target.classList.contains('tablinks')) {
@@ -145,24 +120,36 @@
     if (addBtn) {
         addBtn.addEventListener('click', () => openModal());
     }
-
     if (cancelBtn) {
         cancelBtn.addEventListener('click', closeModal);
     }
 
     if (saveBtn) {
         saveBtn.addEventListener('click', async () => {
+            // --- LÓGICA DE USERNAME MOVIDA PARA CÁ ---
+            const nomeCompleto = document.getElementById('prof-nome').value.trim();
+            const usernameInput = document.getElementById('prof-username');
+            if (nomeCompleto) {
+                const partes = nomeCompleto.split(/\s+/);
+                let username = partes[0];
+                if (partes.length > 1) {
+                    username += ' ' + partes[partes.length - 1];
+                }
+                usernameInput.value = username; // Garante que o campo hidden tenha o valor
+            }
+            // --- FIM DA LÓGICA DE USERNAME ---
+
             const id = document.getElementById('profissional-id').value;
             const funcoesSelecionadas = [];
             form.querySelectorAll('input[name="funcoes"]:checked').forEach(cb => funcoesSelecionadas.push(cb.value));
             
             const userData = {
-                nome: document.getElementById('prof-nome').value.trim(),
+                nome: nomeCompleto, // Reutiliza a variável que já pegamos
                 email: document.getElementById('prof-email').value.trim(),
                 contato: document.getElementById('prof-contato').value.trim(),
                 inativo: document.getElementById('prof-inativo').checked,
                 funcoes: funcoesSelecionadas,
-                username: document.getElementById('prof-username').value.trim(),
+                username: document.getElementById('prof-username').value.trim(), // Pega o valor que acabamos de gerar
                 profissao: document.getElementById('prof-profissao').value,
                 recebeDireto: document.getElementById('prof-recebeDireto').checked,
                 primeiraFase: document.getElementById('prof-primeiraFase').checked,
@@ -173,6 +160,11 @@
                 showToast('Nome e E-mail são obrigatórios.', 'error');
                 return;
             }
+            if (!userData.profissao) {
+                showToast('O campo Profissão é obrigatório.', 'error');
+                return;
+            }
+
             saveBtn.disabled = true;
             try {
                 if (id) {
@@ -184,6 +176,7 @@
                 }
                 closeModal();
             } catch (error) {
+                console.error("Erro ao salvar no Firestore:", error);
                 showToast(`Erro ao salvar: ${error.message}`, 'error');
             } finally {
                 saveBtn.disabled = false;
@@ -196,12 +189,10 @@
             const target = e.target;
             const userId = target.dataset.id;
             if (!userId) return;
-
             if (target.classList.contains('edit-row-btn')) {
                 const userToEdit = localUsuariosList.find(u => u.id === userId);
                 if (userToEdit) openModal(userToEdit);
             }
-
             if (target.classList.contains('delete-row-btn')) {
                 if (confirm('Tem certeza que deseja excluir este profissional?')) {
                     usuariosCollection.doc(userId).delete()
@@ -212,7 +203,6 @@
         });
     }
     
-    // Inicializa a primeira aba
     if (document.querySelector('.tablinks[data-tab="GestaoProfissionais"]')) {
       document.querySelector('.tablinks[data-tab="GestaoProfissionais"]').click();
     }

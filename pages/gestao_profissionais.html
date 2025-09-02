@@ -1,5 +1,6 @@
-// Envolvemos o código em uma função para manter a organização
-(function() {
+<!-- No final do body do gestao_profissionais.html -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
     // As variáveis `db` e `auth` já existem globalmente, carregadas pelo painel-script.js
     if (!db || !auth) {
         console.error("Instâncias do Firebase (db, auth) não encontradas.");
@@ -17,7 +18,7 @@
     const form = document.getElementById('profissional-form');
     const tabContainer = document.querySelector('.tab');
 
-    // --- Funções Auxiliares (Modal, Toast, Abas) ---
+    // --- Funções Auxiliares ---
     function openTab(evt, tabName) {
         document.querySelectorAll(".tabcontent").forEach(tc => tc.style.display = "none");
         document.querySelectorAll(".tablinks").forEach(tl => tl.classList.remove("active"));
@@ -75,7 +76,7 @@
         }, 3000);
     }
 
-    // --- Lógica de Dados (Firestore) ---
+    // --- Lógica de Dados ---
     function renderTable(users) {
         if (!tableBody) return;
         tableBody.innerHTML = '';
@@ -100,7 +101,7 @@
         });
     }
 
-    const unsubscribe = usuariosCollection.orderBy("nome").onSnapshot(snapshot => {
+    usuariosCollection.orderBy("nome").onSnapshot(snapshot => {
         localUsuariosList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderTable(localUsuariosList);
     }, error => {
@@ -117,65 +118,74 @@
         });
     }
     
-    addBtn.addEventListener('click', () => openModal());
-    cancelBtn.addEventListener('click', closeModal);
+    if (addBtn) {
+        addBtn.addEventListener('click', () => openModal());
+    }
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', closeModal);
+    }
+    if (saveBtn) {
+        saveBtn.addEventListener('click', async () => {
+            const id = document.getElementById('profissional-id').value;
+            const funcoesSelecionadas = [];
+            form.querySelectorAll('input[name="funcoes"]:checked').forEach(cb => funcoesSelecionadas.push(cb.value));
 
-    saveBtn.addEventListener('click', async () => {
-        const id = document.getElementById('profissional-id').value;
-        const funcoesSelecionadas = [];
-        form.querySelectorAll('input[name="funcoes"]:checked').forEach(cb => funcoesSelecionadas.push(cb.value));
+            const userData = {
+                nome: document.getElementById('prof-nome').value.trim(),
+                email: document.getElementById('prof-email').value.trim(),
+                contato: document.getElementById('prof-contato').value.trim(),
+                inativo: document.getElementById('prof-inativo').checked,
+                funcoes: funcoesSelecionadas
+            };
 
-        const userData = {
-            nome: document.getElementById('prof-nome').value.trim(),
-            email: document.getElementById('prof-email').value.trim(),
-            contato: document.getElementById('prof-contato').value.trim(),
-            inativo: document.getElementById('prof-inativo').checked,
-            funcoes: funcoesSelecionadas
-        };
-
-        if (!userData.nome || !userData.email) {
-            showToast('Nome e E-mail são obrigatórios.', 'error');
-            return;
-        }
-
-        saveBtn.disabled = true;
-        try {
-            if (id) {
-                await usuariosCollection.doc(id).update(userData);
-                showToast('Profissional atualizado com sucesso!', 'success');
-            } else {
-                await usuariosCollection.add(userData);
-                showToast('Profissional adicionado ao banco de dados!', 'success');
+            if (!userData.nome || !userData.email) {
+                showToast('Nome e E-mail são obrigatórios.', 'error');
+                return;
             }
-            closeModal();
-        } catch (error) {
-            showToast(`Erro ao salvar: ${error.message}`, 'error');
-        } finally {
-            saveBtn.disabled = false;
-        }
-    });
 
-    tableBody.addEventListener('click', (e) => {
-        const target = e.target;
-        const userId = target.dataset.id;
-        if (!userId) return;
-
-        if (target.classList.contains('edit-row-btn')) {
-            const userToEdit = localUsuariosList.find(u => u.id === userId);
-            if (userToEdit) openModal(userToEdit);
-        }
-
-        if (target.classList.contains('delete-row-btn')) {
-            if (confirm('Tem certeza que deseja excluir este profissional?')) {
-                usuariosCollection.doc(userId).delete()
-                    .then(() => showToast('Profissional excluído.', 'success'))
-                    .catch(err => showToast(`Erro: ${err.message}`, 'error'));
+            saveBtn.disabled = true;
+            try {
+                if (id) {
+                    await usuariosCollection.doc(id).update(userData);
+                    showToast('Profissional atualizado com sucesso!', 'success');
+                } else {
+                    await usuariosCollection.add(userData);
+                    showToast('Profissional adicionado ao banco de dados!', 'success');
+                }
+                closeModal();
+            } catch (error) {
+                showToast(`Erro ao salvar: ${error.message}`, 'error');
+            } finally {
+                saveBtn.disabled = false;
             }
-        }
-    });
+        });
+    }
+
+    if (tableBody) {
+        tableBody.addEventListener('click', (e) => {
+            const target = e.target;
+            const userId = target.dataset.id;
+            if (!userId) return;
+
+            if (target.classList.contains('edit-row-btn')) {
+                const userToEdit = localUsuariosList.find(u => u.id === userId);
+                if (userToEdit) openModal(userToEdit);
+            }
+
+            if (target.classList.contains('delete-row-btn')) {
+                if (confirm('Tem certeza que deseja excluir este profissional?')) {
+                    usuariosCollection.doc(userId).delete()
+                        .then(() => showToast('Profissional excluído.', 'success'))
+                        .catch(err => showToast(`Erro: ${err.message}`, 'error'));
+                }
+            }
+        });
+    }
     
     // Inicializa a primeira aba
-    if (document.querySelector('.tablinks[data-tab="GestaoProfissionais"]')) {
-      document.querySelector('.tablinks[data-tab="GestaoProfissionais"]').click();
+    const primeiraAba = document.querySelector('.tablinks[data-tab="GestaoProfissionais"]');
+    if (primeiraAba) {
+        primeiraAba.click();
     }
-})();
+});
+</script>

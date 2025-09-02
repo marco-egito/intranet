@@ -301,10 +301,23 @@
     const docRefMensagens = db.collection('financeiro').doc('configuracoes');
 
     // Elementos da página da nova aba
+    const docRefMensagens = db.collection('financeiro').doc('configuracoes');
     const inputAcordo = document.getElementById('msg-acordo');
     const inputCobranca = document.getElementById('msg-cobranca');
     const inputContrato = document.getElementById('msg-contrato');
     const saveBtnMensagens = document.getElementById('salvar-mensagens-btn');
+
+    let modoEdicaoMensagens = false; // Flag para controlar o estado do botão
+
+        // Deixa os campos e o botão no estado inicial (bloqueado)
+    function setMensagensState(isEditing) {
+        if (!inputAcordo) return;
+        modoEdicaoMensagens = isEditing;
+        inputAcordo.disabled = !isEditing;
+        inputCobranca.disabled = !isEditing;
+        inputContrato.disabled = !isEditing;
+        saveBtnMensagens.textContent = isEditing ? 'Salvar' : 'Modificar';
+    }
 
     // Função para carregar os dados do Firestore e preencher os campos de texto
     async function carregarMensagens() {
@@ -328,10 +341,16 @@
     }
 
     // Adiciona o evento de clique no botão de salvar da nova aba
-    if (saveBtnMensagens) {
+     if (saveBtnMensagens) {
         saveBtnMensagens.addEventListener('click', async () => {
+            // Se não estiver em modo de edição, apenas ativa
+            if (!modoEdicaoMensagens) {
+                setMensagensState(true);
+                return;
+            }
+
+            // Se estiver em modo de edição, salva os dados
             saveBtnMensagens.disabled = true;
-            
             const novasMensagens = {
                 'Mensagens.acordo': inputAcordo.value,
                 'Mensagens.cobranca': inputCobranca.value,
@@ -339,9 +358,9 @@
             };
             
             try {
-                // Usa 'update' para alterar apenas os campos do mapa 'mensagens'
                 await docRefMensagens.update(novasMensagens);
                 window.showToast('Mensagens salvas com sucesso!', 'success');
+                setMensagensState(false); // Volta para o modo "Modificar"
             } catch (error) {
                 console.error("Erro ao salvar mensagens: ", error);
                 window.showToast('Erro ao salvar as mensagens.', 'error');
@@ -351,8 +370,22 @@
         });
     }
 
-    // Carrega os dados das mensagens assim que o script é executado
-    carregarMensagens();
+        // --- SEÇÃO PRINCIPAL DE EVENTOS E INICIALIZAÇÃO ---
+    const tabContainer = document.querySelector('.tab');
+    if (tabContainer) {
+        tabContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('tablinks')) {
+                const tabName = e.target.dataset.tab;
+                openTab(e, tabName);
+
+                // CORREÇÃO: Carrega os dados apenas quando a aba é clicada
+                if (tabName === 'ModelosMensagem') {
+                    carregarMensagens();
+                    setMensagensState(false); // Garante o estado inicial
+                }
+            }
+        });
+    }
     // --- INICIALIZAÇÃO DA ABA ---
     // (O código que inicializa a primeira aba continua no final)
     if (document.querySelector('.tablinks[data-tab="GestaoProfissionais"]')) {

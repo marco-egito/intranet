@@ -295,21 +295,16 @@
     // Carrega os valores assim que o script é executado
     carregarValores();
     
-     // --- NOVO CÓDIGO: LÓGICA PARA MODELOS DE MENSAGEM ---
-    
-    // Referência para o mesmo documento de configurações
-    const docRefMensagens = db.collection('financeiro').doc('configuracoes');
-
-    // Elementos da página da nova aba
+    // --- SEÇÃO: MODELOS DE MENSAGEM (COM AS CORREÇÕES E NOVIDADES) ---
     const docRefMensagens = db.collection('financeiro').doc('configuracoes');
     const inputAcordo = document.getElementById('msg-acordo');
     const inputCobranca = document.getElementById('msg-cobranca');
     const inputContrato = document.getElementById('msg-contrato');
     const saveBtnMensagens = document.getElementById('salvar-mensagens-btn');
-
+    
     let modoEdicaoMensagens = false; // Flag para controlar o estado do botão
 
-        // Deixa os campos e o botão no estado inicial (bloqueado)
+    // Deixa os campos e o botão no estado inicial (bloqueado)
     function setMensagensState(isEditing) {
         if (!inputAcordo) return;
         modoEdicaoMensagens = isEditing;
@@ -319,14 +314,13 @@
         saveBtnMensagens.textContent = isEditing ? 'Salvar' : 'Modificar';
     }
 
-    // Função para carregar os dados do Firestore e preencher os campos de texto
     async function carregarMensagens() {
-        if (!inputAcordo) return; // Só executa se os elementos existirem
+        if (!inputAcordo) return;
         try {
             const doc = await docRefMensagens.get();
             if (doc.exists) {
                 const data = doc.data();
-                if (data.mensagens) {
+                if (data.Mensagens) {
                     inputAcordo.value = data.Mensagens.acordo || '';
                     inputCobranca.value = data.Mensagens.cobranca || '';
                     inputContrato.value = data.Mensagens.contrato || '';
@@ -340,8 +334,7 @@
         }
     }
 
-    // Adiciona o evento de clique no botão de salvar da nova aba
-     if (saveBtnMensagens) {
+    if (saveBtnMensagens) {
         saveBtnMensagens.addEventListener('click', async () => {
             // Se não estiver em modo de edição, apenas ativa
             if (!modoEdicaoMensagens) {
@@ -370,7 +363,7 @@
         });
     }
 
-        // --- SEÇÃO PRINCIPAL DE EVENTOS E INICIALIZAÇÃO ---
+    // --- SEÇÃO PRINCIPAL DE EVENTOS E INICIALIZAÇÃO ---
     const tabContainer = document.querySelector('.tab');
     if (tabContainer) {
         tabContainer.addEventListener('click', (e) => {
@@ -386,9 +379,14 @@
             }
         });
     }
-    // --- INICIALIZAÇÃO DA ABA ---
-    // (O código que inicializa a primeira aba continua no final)
+
+    // O código de Gestão de Profissionais que estava aqui foi movido para dentro
+    // da função anônima para garantir a ordem correta.
+    // (Cole o código completo da próxima resposta para ter a versão final).
+
+    // Inicializa a primeira aba ao carregar
     if (document.querySelector('.tablinks[data-tab="GestaoProfissionais"]')) {
       document.querySelector('.tablinks[data-tab="GestaoProfissionais"]').click();
     }
+})();
 })();

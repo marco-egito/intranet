@@ -295,7 +295,7 @@
     // Carrega os valores assim que o script é executado
     carregarValores();
     
-    // --- NOVO CÓDIGO: LÓGICA PARA MODELOS DE MENSAGEM ---
+     // --- NOVO CÓDIGO: LÓGICA PARA MODELOS DE MENSAGEM ---
     
     // Referência para o mesmo documento de configurações
     const docRefMensagens = db.collection('financeiro').doc('configuracoes');
@@ -314,9 +314,9 @@
             if (doc.exists) {
                 const data = doc.data();
                 if (data.mensagens) {
-                    inputAcordo.value = data.mensagens.acordo || '';
-                    inputCobranca.value = data.mensagens.cobranca || '';
-                    inputContrato.value = data.mensagens.contrato || '';
+                    inputAcordo.value = data.Mensagens.acordo || '';
+                    inputCobranca.value = data.Mensagens.cobranca || '';
+                    inputContrato.value = data.Mensagens.contrato || '';
                 }
             } else {
                 console.log("Documento de configurações não encontrado!");

@@ -72,8 +72,8 @@ body {
     list-style: none;
     padding: 20px;
     margin: 0;
-    flex-grow: 1; /* Faz esta área crescer e ocupar todo o espaço, empurrando o rodapé para baixo */
-    overflow-y: auto; /* Adiciona scroll APENAS ao menu se ele for muito longo */
+    overflow-y: auto; /* Mantém o scroll apenas para o menu, se necessário */
+    height: calc(100% - 150px); /* Calcula a altura restante */
 }
 
 .sidebar-menu li {
@@ -101,19 +101,22 @@ body {
 }
 
 .sidebar-footer {
+    display: flex; /* Coloca os botões lado a lado */
+    gap: 10px; /* Espaço entre os botões */
     padding: 20px;
-    border-top: 1px solid #3a5f85;
+    border-bottom: 1px solid #3a5f85; /* Linha separadora abaixo dos botões */
 }
 
 .sidebar-footer .back-button,
 .sidebar-footer #logout-button {
+    flex: 1; /* Faz os botões dividirem o espaço igualmente */
+    padding: 8px 10px; /* Diminui o tamanho interno (altura) */
     display: block;
     width: 100%;
-    padding: 12px 15px;
-    margin-bottom: 10px;
+    margin-bottom: 0px;
     border-radius: 4px;
     text-align: center;
-    font-size: 1em;
+    font-size: 0.9em;
     cursor: pointer;
     border: none;
     transition: all 0.2s ease-in-out;

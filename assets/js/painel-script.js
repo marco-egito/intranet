@@ -1,5 +1,5 @@
 
-// --- INÍCIO DA CORREÇÃO ---
+// assets/js/painel-script.js
 
 // 1. Adicionamos a configuração do Firebase, igual à do app.js
 const firebaseConfig = {
@@ -28,14 +28,8 @@ if (!firebase.apps.length) {
     const contentArea = document.getElementById('content-area');
     const navButtons = document.querySelectorAll('.nav-button');
     const logoutButton = document.getElementById('logout-button');
-    function() {
-    // ... (inicialização do firebase, etc) ...
 
-    const contentArea = document.getElementById('content-area');
-    const navButtons = document.querySelectorAll('.nav-button');
-    const logoutButton = document.getElementById('logout-button');
-
-    // --- CÓDIGO DO MENU RETRÁTIL ADICIONADO AQUI ---
+    // --- LÓGICA DO MENU RETRÁTIL ---
     const toggleButton = document.getElementById('sidebar-toggle-btn');
     const mainContainer = document.getElementById('app-view');
 
@@ -44,19 +38,40 @@ if (!firebase.apps.length) {
             mainContainer.classList.toggle('sidebar-collapsed');
         });
     }
-    
-    // --- FUNÇÃO DE CARREGAMENTO DINÂMICO (VERSÃO FINAL) ---
+    // --- FIM DA LÓGICA DO MENU ---
+
+    const initializePage = () => {
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.href = '../index.html';
+                return;
+            }
+            loadView('dashboard');
+        });
+    };
+
+    navButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const viewName = button.dataset.view;
+            loadView(viewName);
+        });
+    });
+
+    logoutButton.addEventListener('click', () => {
+        auth.signOut().then(() => {
+            window.location.href = '../index.html';
+        });
+    });
+
     async function loadView(viewName) {
         navButtons.forEach(btn => {
             btn.classList.toggle('active', btn.dataset.view === viewName);
         });
         
-        // Remove scripts e CSS antigos antes de carregar novos
         const oldScript = document.getElementById('dynamic-view-script');
         if (oldScript) oldScript.remove();
         const oldStyle = document.getElementById('dynamic-view-style');
         if (oldStyle) oldStyle.remove();
-
 
         if (viewName === 'dashboard') {
             renderDashboard();
@@ -66,19 +81,19 @@ if (!firebase.apps.length) {
         try {
             contentArea.innerHTML = '<h2>Carregando...</h2>';
             
-            // 1. Carrega o HTML da view
             const response = await fetch(`../pages/${viewName}.html`);
-            if (!response.ok) throw new Error(`Arquivo não encontrado: ${viewName}.html`);
+            if (!response.ok) {
+                 // Lança um erro personalizado para ser pego pelo catch
+                throw new Error(`Arquivo não encontrado: ${viewName}.html`);
+            }
             contentArea.innerHTML = await response.text();
 
-            // 2. ADICIONADO: Carrega o CSS da view dinamicamente
             const newStyle = document.createElement('link');
             newStyle.id = 'dynamic-view-style';
             newStyle.rel = 'stylesheet';
             newStyle.href = `../assets/css/${viewName}.css`;
             document.head.appendChild(newStyle);
 
-            // 3. Carrega o JavaScript da view dinamicamente
             const newScript = document.createElement('script');
             newScript.id = 'dynamic-view-script';
             newScript.src = `../assets/js/${viewName}.js`;
@@ -99,9 +114,5 @@ if (!firebase.apps.length) {
         `;
     }
     
-    // O resto do script (initializePage, event listeners, etc.) continua igual...
-    const initializePage = () => { auth.onAuthStateChanged(user => { if (!user) { window.location.href = '../index.html'; return; } loadView('dashboard'); }); };
-    navButtons.forEach(button => { button.addEventListener('click', () => { const viewName = button.dataset.view; loadView(viewName); }); });
-    logoutButton.addEventListener('click', () => { auth.signOut().then(() => { window.location.href = '../index.html'; }); });
     initializePage();
 })();

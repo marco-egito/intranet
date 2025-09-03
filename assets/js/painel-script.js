@@ -92,9 +92,9 @@ if (!firebase.apps.length) {
         const oldStyle = document.getElementById('dynamic-view-style');
         if (oldStyle) oldStyle.remove();
 
-        if (viewName === 'dashboard') {
-            renderDashboard();
-            return;
+       // if (viewName === 'dashboard') {
+        //    renderDashboard();
+        //    return;
         }
         
         try {
@@ -122,14 +122,14 @@ if (!firebase.apps.length) {
         }
     }
     
-    function renderDashboard() {
+    /*function renderDashboard() {
         contentArea.innerHTML = `
             <div class="view-container">
                 <h1>Dashboard Financeiro</h1>
                 <p>Bem-vindo ao painel de controle financeiro. Utilize o menu à esquerda para navegar entre as ferramentas.</p>
             </div>
         `;
-    }
+    }*/
     
     initializePage();
 })();

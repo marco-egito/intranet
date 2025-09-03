@@ -28,32 +28,51 @@
     }
 
     async function popularProfissionais() {
+        console.log("--- INICIANDO BUSCA DE PROFISSIONAIS (MODO DEBUG) ---");
         try {
-            // --- LÓGICA DE BUSCA SIMPLIFICADA ---
-            // 1. Busca todos os usuários que não estão inativos.
-            const snapshot = await db.collection('usuarios')
-                .where('inativo', '==', false)
-                .orderBy('nome')
-                .get();
+            // 1. Buscando TODOS os usuários para depuração, apenas ordenados por nome
+            console.log("1. Buscando todos os usuários na coleção 'usuarios'...");
+            const snapshot = await db.collection('usuarios').orderBy('nome').get();
             
-            const todosProfissionaisAtivos = snapshot.docs.map(doc => doc.data());
-            
-            // 2. Filtra a lista no código para pegar apenas quem recebe direto.
-            const profissionaisQualificados = todosProfissionaisAtivos.filter(p => p.recebeDireto === true);
+            if (snapshot.empty) {
+                console.error("ERRO GRAVE: Nenhum documento encontrado na coleção 'usuarios'. Verifique se a coleção existe e se as regras de segurança permitem a leitura.");
+                selectProfissional.innerHTML = '<option value="">Nenhum usuário encontrado no DB</option>';
+                return;
+            }
 
+            const todosProfissionais = snapshot.docs.map(doc => doc.data());
+            console.log(`2. Encontrado um total de ${todosProfissionais.length} profissionais no banco de dados.`);
+            console.log("Dados brutos encontrados:", todosProfissionais);
+
+            // 3. Filtrando no código para encontrar os qualificados
+            console.log("3. Filtrando profissionais que atendem aos critérios: inativo === false E recebeDireto === true");
+            
+            const profissionaisQualificados = todosProfissionais.filter(p => {
+                const isAtivo = p.inativo === false;
+                const isRecebeDireto = p.recebeDireto === true;
+                // Log detalhado para cada profissional
+                console.log(`- Verificando "${p.nome}": inativo=${p.inativo} (é ativo: ${isAtivo}), recebeDireto=${p.recebeDireto} (qualificado: ${isRecebeDireto}). Resultado final: ${isAtivo && isRecebeDireto}`);
+                return isAtivo && isRecebeDireto;
+            });
+
+            console.log(`4. Total de profissionais qualificados após o filtro: ${profissionaisQualificados.length}`);
+            
             if (profissionaisQualificados.length === 0) {
                 selectProfissional.innerHTML = '<option value="">Nenhum profissional qualificado encontrado</option>';
+                console.log("5. Nenhum profissional passou nos filtros. A lista ficará vazia.");
                 return;
             }
             
             const optionsHtml = ['<option value="">Selecione um profissional...</option>', ...profissionaisQualificados.map(p => `<option value="${p.nome}">${p.nome}</option>`)].join('');
             selectProfissional.innerHTML = optionsHtml;
+            console.log("5. Lista de profissionais preenchida com sucesso na tela!");
 
         } catch (error) {
-            console.error("Erro ao buscar profissionais:", error);
-            selectProfissional.innerHTML = '<option value="">Erro ao carregar</option>';
+            console.error("ERRO CRÍTICO AO BUSCAR PROFISSIONAIS:", error);
+            selectProfissional.innerHTML = '<option value="">Erro ao carregar (ver console)</option>';
         }
     }
+    
 
     function popularMeses() {
         const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];

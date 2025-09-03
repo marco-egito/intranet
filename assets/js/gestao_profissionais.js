@@ -5,7 +5,7 @@
     }
 
     // --- INICIALIZAÇÃO E VARIÁVEIS GERAIS ---
-    const functions = firebase.functions(); // Inicializa o serviço de Cloud Functions
+    const functions = firebase.functions();
     const usuariosCollection = db.collection('usuarios');
     let localUsuariosList = []; 
     
@@ -33,13 +33,12 @@
         if (!form || !modal) return;
         form.reset();
         document.getElementById('modal-title').textContent = user ? 'Editar Profissional' : 'Adicionar Profissional';
-        document.getElementById('profissional-id').value = user ? user.id : '';
+        
+        // Usa o UID como ID do documento para consistência
+        document.getElementById('profissional-id').value = user ? user.uid : ''; 
+        
         document.getElementById('prof-email').disabled = !!user;
 
-        const senhaGroup = document.getElementById('prof-senha-group'); // Assumindo que você criará uma div com este ID
-        if (senhaGroup) {
-            senhaGroup.style.display = user ? 'none' : 'block';
-        }
         if (deleteBtn) {
             deleteBtn.style.display = user ? 'inline-block' : 'none';
         }
@@ -135,7 +134,7 @@
                 window.showToast('ID do profissional não encontrado.', 'error');
                 return;
             }
-            if (confirm('Tem certeza que deseja excluir este profissional? Esta ação não pode ser desfeita.')) {
+            if (confirm('Tem certeza que deseja excluir este profissional? Esta ação não pode ser desfeita e irá remover os dados do Firestore, mas não o login da Autenticação.')) {
                 usuariosCollection.doc(userId).delete()
                     .then(() => {
                         window.showToast('Profissional excluído com sucesso.', 'success');
@@ -150,11 +149,10 @@
 
     if (saveBtn) {
         saveBtn.addEventListener('click', async () => {
-            const id = document.getElementById('profissional-id').value;
+            const id = document.getElementById('profissional-id').value; // ID é o UID
             const nomeCompletoInput = document.getElementById('prof-nome');
             const usernameInput = document.getElementById('prof-username');
             
-            // Lógica de username automático
             const nomeCompleto = nomeCompletoInput.value.trim();
             if (nomeCompleto && usernameInput) {
                 const partes = nomeCompleto.split(/\s+/);
@@ -181,11 +179,16 @@
                 fazAtendimento: document.getElementById('prof-fazAtendimento').checked,
             };
 
+            if (!dadosDoFormulario.nome || !dadosDoFormulario.email) {
+                window.showToast("Nome e E-mail são obrigatórios.", "error");
+                return;
+            }
+
             saveBtn.disabled = true;
 
             try {
                 if (id) {
-                    // MODO EDIÇÃO: Atualiza diretamente no Firestore
+                    // MODO EDIÇÃO: Atualiza diretamente no Firestore usando o UID (id)
                     await usuariosCollection.doc(id).update(dadosDoFormulario);
                     window.showToast('Profissional atualizado com sucesso!', 'success');
                     closeModal();
@@ -193,12 +196,6 @@
                     // MODO CRIAÇÃO: Chama a Cloud Function
                     if (!functions) throw new Error("Serviço de Cloud Functions não inicializado.");
                     
-                    dadosDoFormulario.senha = document.getElementById('prof-senha').value;
-                    
-                    if (!dadosDoFormulario.senha || dadosDoFormulario.senha.length < 6) {
-                        throw new Error("A senha inicial é obrigatória (mínimo 6 caracteres).");
-                    }
-
                     const criarNovoProfissional = functions.httpsCallable('criarNovoProfissional');
                     const resultado = await criarNovoProfissional(dadosDoFormulario);
                     

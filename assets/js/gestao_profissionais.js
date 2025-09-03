@@ -96,8 +96,8 @@
             localUsuariosList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             renderTable(localUsuariosList);
         }, error => {
+            window.showToast("Erro ao carregar profissionais.", "error");
             console.error("Erro ao carregar profissionais:", error);
-            window.showToast("Erro ao carregar a lista de profissionais.", "error");
         });
 
         if (addBtn) addBtn.addEventListener('click', () => openModal(null));
@@ -178,6 +178,7 @@
                 }
             });
         }
+        
         inicializado.profissionais = true;
     }
 
@@ -201,7 +202,7 @@
                         inputTaxa.value = data.valores.taxaAcordo || 0;
                     }
                 }
-            } catch (error) { console.error("Erro ao buscar valores por sessão: ", error); window.showToast('Erro ao buscar valores.', 'error'); }
+            } catch (error) { console.error("Erro ao buscar valores: ", error); window.showToast('Erro ao buscar valores.', 'error'); }
         }
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
@@ -249,7 +250,7 @@
                         inputContrato.value = data.Mensagens.contrato || '';
                     }
                 }
-            } catch (error) { console.error("Erro ao buscar modelos de mensagem: ", error); window.showToast('Erro ao buscar as mensagens.', 'error'); }
+            } catch (error) { console.error("Erro ao buscar mensagens: ", error); window.showToast('Erro ao buscar mensagens.', 'error'); }
         }
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
@@ -264,7 +265,7 @@
                     await docRef.update(novasMensagens);
                     window.showToast('Mensagens salvas com sucesso!', 'success');
                     setMensagensState(false);
-                } catch (error) { console.error("Erro ao salvar mensagens: ", error); window.showToast('Erro ao salvar as mensagens.', 'error');
+                } catch (error) { console.error("Erro ao salvar mensagens: ", error); window.showToast('Erro ao salvar mensagens.', 'error');
                 } finally { saveBtn.disabled = false; }
             });
         }

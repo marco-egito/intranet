@@ -3,7 +3,7 @@
     if (!db) { return; }
 
     // ***** COLOQUE A URL DO SEU APP SCRIPT AQUI *****
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyKhLY6TCgRSE_630R8G8tIYhHriJxxo_cJJjcbuoDwypSvtxu7L7Y6X2AJmJE2QxVb8g/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzOGyDANVS--DeH6T-ZaqFiEmhpBYUJu4P8VT0uevQPwC3tLL5EgappHPI2mhKwPtf1fg/exec";
 
     let formData = {};
 

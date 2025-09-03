@@ -20,6 +20,7 @@
             const snapshot = await db.collection('usuarios')
                 .where('inativo', '==', false)
                 .where('recebeDireto', '==', true)
+                .where('fazAtendimento', '==', true)
                 .orderBy('nome')
                 .get();
             

@@ -1,8 +1,5 @@
 (function() {
-    if (!db) {
-        console.error("Instância do Firestore (db) não encontrada.");
-        return;
-    }
+    if (!db) { return; }
 
     const loadingDiv = document.getElementById('repasse-loading');
     const mainContentDiv = document.getElementById('repasse-main-content');
@@ -20,7 +17,7 @@
         const messageEl = document.getElementById('status-message');
         if (!messageEl) return;
         messageEl.textContent = message;
-        messageEl.className = type; // Assume que as classes CSS são 'success', 'error', 'info'
+        messageEl.className = type;
         messageEl.style.display = 'block';
         setTimeout(() => {
             messageEl.style.display = 'none';
@@ -76,7 +73,9 @@
         const mesSelector = document.getElementById('filtro-mes');
         const anoSelector = document.getElementById('filtro-ano');
         
-        const ativos = DB.profissionais.filter(p => p.nome && !p.primeiraFase && !p.inativo).sort((a, b) => a.nome.localeCompare(b.nome));
+        // --- LINHA CORRIGIDA AQUI ---
+        // Adicionamos 'p.recebeDireto === true' ao filtro
+        const ativos = DB.profissionais.filter(p => p.nome && !p.primeiraFase && !p.inativo && p.recebeDireto === true).sort((a, b) => a.nome.localeCompare(b.nome));
         
         profSelector.innerHTML = ['<option value="todos">Todos os Profissionais</option>', ...ativos.map(p => `<option value="${p.nome}">${p.nome}</option>`)].join('');
         mesSelector.innerHTML = ['<option value="todos">Todos os Meses</option>', ...meses.map((m, i) => `<option value="${m.toLowerCase()}">${m}</option>`)].join('');
@@ -175,12 +174,12 @@
         showConfirmation("Tem certeza que deseja excluir este comprovante? Esta ação não pode ser desfeita.", () => {
             db.collection('comprovantes').doc(comprovanteId).delete()
                 .then(() => {
-                    showMessage("Comprovante excluído com sucesso!", "success");
+                    window.showToast("Comprovante excluído com sucesso!", "success");
                     DB.comprovantes = DB.comprovantes.filter(c => c.id !== comprovanteId);
                     updateView();
                 })
                 .catch((error) => {
-                    showMessage("Ocorreu um erro ao tentar excluir.", "error");
+                    window.showToast("Ocorreu um erro ao tentar excluir.", "error");
                     console.error("Erro ao excluir comprovante: ", error);
                 });
         });
@@ -216,6 +215,16 @@
                     startY: 35
                 });
                 doc.save(`resumo_${prof}_${mes}.pdf`);
+            } else if (format === 'csv') {
+                let csvContent = "Item;Valor\n";
+                csvContent += `"Total Recebido (Comprovantes)";"${totalRecebido.toFixed(2).replace('.',',')}"\n`;
+                csvContent += `"Total Devido (Mês/Histórico)";"${totalDevido.toFixed(2).replace('.',',')}"\n`;
+                csvContent += `"Saldo (Crédito/Débito)";"${saldo.toFixed(2).replace('.',',')}"\n`;
+                const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = `resumo_${prof}_${mes}.csv`;
+                link.click();
             }
         } else {
             if (format === 'pdf') {
@@ -227,6 +236,14 @@
                     startY: 35
                 });
                 doc.save(`relatorio_geral_${mes}_${ano}.pdf`);
+            } else if (format === 'csv') {
+                let csvContent = "Profissional;Data Pagamento;Mes Referencia;Valor Pago;Link Comprovante\n";
+                currentlyDisplayedData.forEach(c => { csvContent += `"${c.profissional}";"${formatDate(c.dataPagamento)}";"${c.mesReferencia}/${c.anoReferencia}";"${(c.valor || 0).toFixed(2).replace('.',',')}";"${c.comprovanteUrl}"\n`; });
+                const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = `relatorio_comprovantes_${mes}_${ano}.csv`;
+                link.click();
             }
         }
     }

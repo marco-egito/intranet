@@ -118,7 +118,7 @@
             fetch(WEB_APP_URL, {
                 method: 'POST',
                 body: JSON.stringify(payload),
-                headers: { 'Content-Type': 'application/json' }
+                //headers: { 'Content-Type': 'application/json' }
             })
             .then(res => res.json())
             .then(response => {

@@ -1,7 +1,5 @@
+// assets/js/painel-script.js (Versão Final e Completa)
 
-// assets/js/painel-script.js
-
-// 1. Adicionamos a configuração do Firebase, igual à do app.js
 const firebaseConfig = {
     apiKey: "AIzaSyDJqPJjDDIGo7uRewh3pw1SQZOpMgQJs5M",
     authDomain: "eupsico-agendamentos-d2048.firebaseapp.com",
@@ -11,7 +9,6 @@ const firebaseConfig = {
     messagingSenderId: "1041518416343",
     appId: "1:1041518416343:web:0a11c03c205b802ed7bb92"
 };
-
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
@@ -19,13 +16,9 @@ if (!firebase.apps.length) {
 (function() {
     const auth = firebase.auth();
     const db = firebase.firestore();
-    const rtdb = firebase.database();
-
     window.auth = auth;
     window.db = db;
-    window.rtdb = rtdb;
-
-    // --- FUNÇÃO SHOWTOAST MOVIDA PARA CÁ ---
+    
     window.showToast = function(message, type = 'success') {
         const container = document.getElementById('toast-container');
         if (!container) return;
@@ -65,7 +58,8 @@ if (!firebase.apps.length) {
                 window.location.href = '../index.html';
                 return;
             }
-            loadView('dashboard');
+            // Carrega o dashboard como a primeira tela por padrão
+            loadView('dashboard'); 
         });
     };
 
@@ -82,6 +76,7 @@ if (!firebase.apps.length) {
         });
     });
 
+    // --- FUNÇÃO loadView ATUALIZADA ---
     async function loadView(viewName) {
         navButtons.forEach(btn => {
             btn.classList.toggle('active', btn.dataset.view === viewName);
@@ -91,45 +86,41 @@ if (!firebase.apps.length) {
         if (oldScript) oldScript.remove();
         const oldStyle = document.getElementById('dynamic-view-style');
         if (oldStyle) oldStyle.remove();
-
-       // if (viewName === 'dashboard') {
-        //    renderDashboard();
-        //    return;
-        }
         
         try {
             contentArea.innerHTML = '<h2>Carregando...</h2>';
             
+            // Lógica genérica que agora funciona para TODAS as views, incluindo o dashboard
             const response = await fetch(`../pages/${viewName}.html`);
             if (!response.ok) {
                 throw new Error(`Arquivo não encontrado: ${viewName}.html`);
             }
             contentArea.innerHTML = await response.text();
 
+            // Carrega o CSS específico da view, se existir
             const newStyle = document.createElement('link');
             newStyle.id = 'dynamic-view-style';
             newStyle.rel = 'stylesheet';
             newStyle.href = `../assets/css/${viewName}.css`;
             document.head.appendChild(newStyle);
 
+            // Carrega o JavaScript específico da view, se existir
             const newScript = document.createElement('script');
             newScript.id = 'dynamic-view-script';
             newScript.src = `../assets/js/${viewName}.js`;
             document.body.appendChild(newScript);
+
         } catch (error) {
             console.error(`Erro ao carregar a view ${viewName}:`, error);
-            contentArea.innerHTML = `<h2>Erro ao carregar este módulo.</h2><p>${error.message}.</p>`;
+            // Se um arquivo HTML não for encontrado, mostra uma mensagem amigável.
+            // Isso evita que a tela fique "Carregando..." para sempre.
+            if(error.message.includes('não encontrado')) {
+                 contentArea.innerHTML = `<div class="view-container"><h2>Módulo em Desenvolvimento</h2><p>O conteúdo para esta seção ainda não foi criado.</p></div>`;
+            } else {
+                 contentArea.innerHTML = `<h2>Erro ao carregar este módulo.</h2><p>${error.message}.</p>`;
+            }
         }
     }
-    
-    /*function renderDashboard() {
-        contentArea.innerHTML = `
-            <div class="view-container">
-                <h1>Dashboard Financeiro</h1>
-                <p>Bem-vindo ao painel de controle financeiro. Utilize o menu à esquerda para navegar entre as ferramentas.</p>
-            </div>
-        `;
-    }*/
     
     initializePage();
 })();

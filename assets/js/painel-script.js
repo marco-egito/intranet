@@ -38,7 +38,7 @@ if (!firebase.apps.length) {
             toast.style.transform = 'translateX(100%)';
             setTimeout(() => toast.remove(), 500);
         }, 3000);
-    }
+    };
 
     const contentArea = document.getElementById('content-area');
     const navButtons = document.querySelectorAll('.nav-button');
@@ -51,20 +51,20 @@ if (!firebase.apps.length) {
             mainContainer.classList.toggle('sidebar-collapsed');
         });
     }
+
     function gerenciarPermissoesMenu(funcoesUsuario = []) {
         navButtons.forEach(button => {
             const rolesNecessarias = button.dataset.roles ? button.dataset.roles.split(',') : [];
+            // Se um botão não tiver data-roles, ele é visível para todos os logados.
+            // Senão, verifica se o usuário tem pelo menos uma das funções necessárias.
+            const temPermissao = rolesNecessarias.length === 0 || rolesNecessarias.some(role => funcoesUsuario.includes(role.trim()));
             
-            // Verifica se o usuário tem pelo menos uma das funções necessárias
-            const temPermissao = rolesNecessarias.some(role => funcoesUsuario.includes(role.trim()));
-
-            if (temPermissao) {
-                button.parentElement.style.display = 'block'; // Mostra o item do menu
-            } else {
-                button.parentElement.style.display = 'none'; // Esconde o item do menu
+            if (button.parentElement) { // Garante que o elemento pai (li) existe
+               button.parentElement.style.display = temPermissao ? 'block' : 'none';
             }
         });
     }
+
     const initializePage = () => {
         auth.onAuthStateChanged(async (user) => {
             if (!user) {
@@ -72,28 +72,42 @@ if (!firebase.apps.length) {
                 return;
             }
             try {
-                // Busca o documento do usuário para pegar suas funções
                 const userDoc = await db.collection('usuarios').doc(user.uid).get();
                 if (userDoc.exists) {
                     const funcoes = userDoc.data().funcoes || [];
-                    gerenciarPermissoesMenu(funcoes); // Chama a função para ajustar o menu
-                    loadView('dashboard'); // Carrega a view inicial
+                    gerenciarPermissoesMenu(funcoes);
+
+                    // Lógica de Deep Linking
+                    const hash = window.location.hash.substring(1);
+                    const requestedButton = document.querySelector(`.nav-button[data-view="${hash}"]`);
+                    
+                    if (hash && requestedButton && requestedButton.parentElement.style.display !== 'none') {
+                        loadView(hash);
+                    } else {
+                        loadView('dashboard');
+                    }
                 } else {
-                    // Usuário logado mas sem registro no banco de dados
                     document.body.innerHTML = '<h2>Acesso Negado</h2><p>Seu usuário não foi encontrado no sistema.</p>';
                 }
             } catch (error) {
                 console.error("Erro ao buscar permissões do usuário:", error);
-                document.body.innerHTML = '<h2>Ocorreu um erro</h2>';
+                document.body.innerHTML = '<h2>Ocorreu um erro ao carregar o painel.</h2>';
             }
         });
     };
 
     navButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const viewName = button.dataset.view;
-            loadView(viewName);
+        button.addEventListener('click', (e) => {
+            const viewName = e.currentTarget.dataset.view;
+            // Apenas atualiza o hash. O listener 'hashchange' fará o resto.
+            window.location.hash = viewName;
         });
+    });
+    
+    // Ouve por mudanças no hash da URL para carregar a view correta
+    window.addEventListener('hashchange', () => {
+        const viewName = window.location.hash.substring(1) || 'dashboard';
+        loadView(viewName);
     });
 
     logoutButton.addEventListener('click', () => {
@@ -102,35 +116,33 @@ if (!firebase.apps.length) {
         });
     });
 
-    // --- FUNÇÃO loadView ATUALIZADA ---
     async function loadView(viewName) {
+        // Marca o botão de navegação ativo
         navButtons.forEach(btn => {
             btn.classList.toggle('active', btn.dataset.view === viewName);
         });
         
+        // Remove scripts e CSS antigos
         const oldScript = document.getElementById('dynamic-view-script');
         if (oldScript) oldScript.remove();
         const oldStyle = document.getElementById('dynamic-view-style');
         if (oldStyle) oldStyle.remove();
         
         try {
-            contentArea.innerHTML = '<h2>Carregando...</h2>';
+            contentArea.innerHTML = '<div class="loading-spinner"></div>';
             
-            // Lógica genérica que agora funciona para TODAS as views, incluindo o dashboard
             const response = await fetch(`../pages/${viewName}.html`);
             if (!response.ok) {
                 throw new Error(`Arquivo não encontrado: ${viewName}.html`);
             }
             contentArea.innerHTML = await response.text();
 
-            // Carrega o CSS específico da view, se existir
             const newStyle = document.createElement('link');
             newStyle.id = 'dynamic-view-style';
             newStyle.rel = 'stylesheet';
             newStyle.href = `../assets/css/${viewName}.css`;
             document.head.appendChild(newStyle);
 
-            // Carrega o JavaScript específico da view, se existir
             const newScript = document.createElement('script');
             newScript.id = 'dynamic-view-script';
             newScript.src = `../assets/js/${viewName}.js`;
@@ -138,10 +150,8 @@ if (!firebase.apps.length) {
 
         } catch (error) {
             console.error(`Erro ao carregar a view ${viewName}:`, error);
-            // Se um arquivo HTML não for encontrado, mostra uma mensagem amigável.
-            // Isso evita que a tela fique "Carregando..." para sempre.
             if(error.message.includes('não encontrado')) {
-                 contentArea.innerHTML = `<div class="view-container"><h2>Módulo em Desenvolvimento</h2><p>O conteúdo para esta seção ainda não foi criado.</p></div>`;
+                 contentArea.innerHTML = `<div class="view-container"><h2>Módulo em Desenvolvimento</h2><p>O conteúdo para a seção '${viewName}' ainda não foi criado.</p></div>`;
             } else {
                  contentArea.innerHTML = `<h2>Erro ao carregar este módulo.</h2><p>${error.message}.</p>`;
             }

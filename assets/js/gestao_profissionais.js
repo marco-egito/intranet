@@ -1,10 +1,9 @@
 (function() {
     if (!db || !auth || !firebase.functions) {
-        console.error("Instâncias do Firebase (db, auth, functions) não encontradas. Verifique se todos os scripts do Firebase foram carregados no painel.html.");
+        console.error("Instâncias do Firebase (db, auth, functions) não encontradas.");
         return;
     }
 
-    // --- INICIALIZAÇÃO E VARIÁVEIS GERAIS ---
     const functions = firebase.functions();
     const usuariosCollection = db.collection('usuarios');
     let localUsuariosList = []; 
@@ -18,7 +17,6 @@
     const form = document.getElementById('profissional-form');
     const tabContainer = document.querySelector('.tab');
 
-    // --- FUNÇÕES AUXILIARES E DE RENDERIZAÇÃO ---
     function openTab(evt, tabName) {
         document.querySelectorAll(".tabcontent").forEach(tc => tc.style.display = "none");
         document.querySelectorAll(".tablinks").forEach(tl => tl.classList.remove("active"));
@@ -33,16 +31,11 @@
         if (!form || !modal) return;
         form.reset();
         document.getElementById('modal-title').textContent = user ? 'Editar Profissional' : 'Adicionar Profissional';
-        
-        // Usa o UID como ID do documento para consistência
         document.getElementById('profissional-id').value = user ? user.uid : ''; 
-        
         document.getElementById('prof-email').disabled = !!user;
-
         if (deleteBtn) {
             deleteBtn.style.display = user ? 'inline-block' : 'none';
         }
-
         if (user) {
             document.getElementById('prof-nome').value = user.nome || '';
             document.getElementById('prof-email').value = user.email || '';
@@ -89,7 +82,6 @@
         });
     }
 
-    // --- LISTENER DE DADOS EM TEMPO REAL ---
     usuariosCollection.orderBy("nome").onSnapshot(snapshot => {
         localUsuariosList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderTable(localUsuariosList);
@@ -98,7 +90,6 @@
         window.showToast("Erro ao carregar a lista de profissionais.", "error");
     });
 
-    // --- EVENT LISTENERS PARA OS BOTÕES E ABAS ---
     if (tabContainer) {
         tabContainer.addEventListener('click', (e) => {
             if (e.target.classList.contains('tablinks')) {
@@ -134,7 +125,7 @@
                 window.showToast('ID do profissional não encontrado.', 'error');
                 return;
             }
-            if (confirm('Tem certeza que deseja excluir este profissional? Esta ação não pode ser desfeita e irá remover os dados do Firestore, mas não o login da Autenticação.')) {
+            if (confirm('Tem certeza que deseja excluir os dados deste profissional do banco de dados? Isso NÃO remove o login dele.')) {
                 usuariosCollection.doc(userId).delete()
                     .then(() => {
                         window.showToast('Profissional excluído com sucesso.', 'success');
@@ -149,11 +140,10 @@
 
     if (saveBtn) {
         saveBtn.addEventListener('click', async () => {
-            const id = document.getElementById('profissional-id').value; // ID é o UID
-            const nomeCompletoInput = document.getElementById('prof-nome');
+            const id = document.getElementById('profissional-id').value;
+            const nomeCompleto = document.getElementById('prof-nome').value.trim();
             const usernameInput = document.getElementById('prof-username');
             
-            const nomeCompleto = nomeCompletoInput.value.trim();
             if (nomeCompleto && usernameInput) {
                 const partes = nomeCompleto.split(/\s+/);
                 let username = partes[0];
@@ -188,13 +178,13 @@
 
             try {
                 if (id) {
-                    // MODO EDIÇÃO: Atualiza diretamente no Firestore usando o UID (id)
                     await usuariosCollection.doc(id).update(dadosDoFormulario);
                     window.showToast('Profissional atualizado com sucesso!', 'success');
                     closeModal();
                 } else {
-                    // MODO CRIAÇÃO: Chama a Cloud Function
                     if (!functions) throw new Error("Serviço de Cloud Functions não inicializado.");
+                    
+                    // LÓGICA DE SENHA REMOVIDA DAQUI
                     
                     const criarNovoProfissional = functions.httpsCallable('criarNovoProfissional');
                     const resultado = await criarNovoProfissional(dadosDoFormulario);
@@ -211,7 +201,6 @@
         });
     }
 
-    // Inicializa a primeira aba
     if (document.querySelector('.tablinks[data-tab="GestaoProfissionais"]')) {
       document.querySelector('.tablinks[data-tab="GestaoProfissionais"]').click();
     }

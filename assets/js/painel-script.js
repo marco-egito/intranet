@@ -51,15 +51,41 @@ if (!firebase.apps.length) {
             mainContainer.classList.toggle('sidebar-collapsed');
         });
     }
+    function gerenciarPermissoesMenu(funcoesUsuario = []) {
+        navButtons.forEach(button => {
+            const rolesNecessarias = button.dataset.roles ? button.dataset.roles.split(',') : [];
+            
+            // Verifica se o usuário tem pelo menos uma das funções necessárias
+            const temPermissao = rolesNecessarias.some(role => funcoesUsuario.includes(role.trim()));
 
+            if (temPermissao) {
+                button.parentElement.style.display = 'block'; // Mostra o item do menu
+            } else {
+                button.parentElement.style.display = 'none'; // Esconde o item do menu
+            }
+        });
+    }
     const initializePage = () => {
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(async (user) => {
             if (!user) {
                 window.location.href = '../index.html';
                 return;
             }
-            // Carrega o dashboard como a primeira tela por padrão
-            loadView('dashboard'); 
+            try {
+                // Busca o documento do usuário para pegar suas funções
+                const userDoc = await db.collection('usuarios').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const funcoes = userDoc.data().funcoes || [];
+                    gerenciarPermissoesMenu(funcoes); // Chama a função para ajustar o menu
+                    loadView('dashboard'); // Carrega a view inicial
+                } else {
+                    // Usuário logado mas sem registro no banco de dados
+                    document.body.innerHTML = '<h2>Acesso Negado</h2><p>Seu usuário não foi encontrado no sistema.</p>';
+                }
+            } catch (error) {
+                console.error("Erro ao buscar permissões do usuário:", error);
+                document.body.innerHTML = '<h2>Ocorreu um erro</h2>';
+            }
         });
     };
 

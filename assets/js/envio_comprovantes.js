@@ -4,7 +4,7 @@
         return;
     }
 
-    // ***** COLOQUE A URL DO SEU APP SCRIPT AQUI *****
+    // ***** MANTENHA A URL DO SEU APP SCRIPT AQUI *****
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzOGyDANVS--DeH6T-ZaqFiEmhpBYUJu4P8VT0uevQPwC3tLL5EgappHPI2mhKwPtf1fg/exec";
 
     let formData = {};
@@ -29,20 +29,24 @@
 
     async function popularProfissionais() {
         try {
+            // --- LÓGICA DE BUSCA SIMPLIFICADA ---
+            // 1. Busca todos os usuários que não estão inativos.
             const snapshot = await db.collection('usuarios')
                 .where('inativo', '==', false)
-                .where('recebeDireto', '==', true)
                 .orderBy('nome')
                 .get();
             
-            const profissionais = snapshot.docs.map(doc => doc.data());
+            const todosProfissionaisAtivos = snapshot.docs.map(doc => doc.data());
             
-            if (profissionais.length === 0) {
+            // 2. Filtra a lista no código para pegar apenas quem recebe direto.
+            const profissionaisQualificados = todosProfissionaisAtivos.filter(p => p.recebeDireto === true);
+
+            if (profissionaisQualificados.length === 0) {
                 selectProfissional.innerHTML = '<option value="">Nenhum profissional qualificado encontrado</option>';
                 return;
             }
             
-            const optionsHtml = ['<option value="">Selecione um profissional...</option>', ...profissionais.map(p => `<option value="${p.nome}">${p.nome}</option>`)].join('');
+            const optionsHtml = ['<option value="">Selecione um profissional...</option>', ...profissionaisQualificados.map(p => `<option value="${p.nome}">${p.nome}</option>`)].join('');
             selectProfissional.innerHTML = optionsHtml;
 
         } catch (error) {

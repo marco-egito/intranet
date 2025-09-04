@@ -1,3 +1,38 @@
+<div class="view-container">
+    <h1>Configurações Gerais do Financeiro</h1>
+    
+    <div class="tab">
+        <button class="tablinks" data-tab="GestaoProfissionais">Gestão de Profissionais</button>
+        <button class="tablinks" data-tab="ModelosMensagem">Modelos de Mensagem</button>
+        <button class="tablinks" data-tab="ValoresSessao">Valores por Sessão</button>
+    </div>
+
+    <div id="GestaoProfissionais" class="tabcontent">
+        <h2>Gestão de Profissionais</h2>
+        <p>Adicione ou edite os dados de um profissional.</p>
+        <div class="button-bar">
+            <button class="action-button add-row-btn" id="add-profissional-btn">Adicionar Profissional</button>
+        </div>
+        <div style="overflow-x: auto;">
+            <table id="profissionais-table">
+                <thead>
+                    <tr>
+                        <th>Nome</th><th>Telefone</th><th>Funções</th><th>Inativo?</th>
+                        <th>Primeira Fase</th><th>Faz Atendimento</th><th>Recebe Direto</th><th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody><tr><td colspan="8">Carregando profissionais...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div id="ModelosMensagem" class="tabcontent">
+        </div>
+    
+    <div id="ValoresSessao" class="tabcontent">
+        </div>
+</div>
+
 <div id="profissional-modal" class="modal">
     <div class="modal-content">
         <div class="modal-header"><h2 id="modal-title">Adicionar Novo Profissional</h2></div>
@@ -20,7 +55,7 @@
 
                 <div class="form-group">
                     <label for="prof-contato">Telefone</label>
-                    <input type="text" id="prof-contato">
+                    <input type="text" id="prof-contato" required>
                     <div class="error-message" id="error-contato"></div>
                 </div>
 
@@ -40,7 +75,8 @@
                     <div class="error-message" id="error-profissao"></div>
                 </div>
 
-                <div class="form-group checkbox-group"><h4 style="margin: 10px 0;">Funções:</h4>
+                <div class="form-group checkbox-group">
+                    <h4 style="margin: 10px 0;">Funções:</h4>
                     <label><input type="checkbox" name="funcoes" value="admin"> Admin</label>
                     <label><input type="checkbox" name="funcoes" value="financeiro"> Financeiro</label>
                     <label><input type="checkbox" name="funcoes" value="gestor"> Gestor</label>
@@ -48,7 +84,8 @@
                     <label><input type="checkbox" name="funcoes" value="assistente"> Assistente</label>
                     <label><input type="checkbox" name="funcoes" value="supervisor"> Supervisor</label>
                 </div>
-                <div class="form-group checkbox-group"><h4 style="margin: 10px 0;">Status e Configurações:</h4>
+                <div class="form-group checkbox-group">
+                    <h4 style="margin: 10px 0;">Status e Configurações:</h4>
                     <label><input type="checkbox" id="prof-inativo"> Inativo?</label>
                     <label><input type="checkbox" id="prof-recebeDireto"> Recebe Direto?</label>
                     <label><input type="checkbox" id="prof-primeiraFase"> Primeira Fase?</label>

@@ -84,11 +84,14 @@
                     <label for="prof-email">E-mail (Login)</label>
                     <input type="email" id="prof-email" required>
                     <span class="error-message">Este campo é obrigatório.</span>
+                     <span class="error-message" data-error-type="format">Formato inválido. Ex: nome@email.com</span>
                 </div>
                 <div class="form-group">
                     <label for="prof-contato">Telefone</label>
+                    <input type="text" id="prof-contato" placeholder="(99) 99999-9999">
                     <input type="text" id="prof-contato"required>
-                    <span class="error-message">Este campo é obrigatório.</span>                   
+                    <span class="error-message">Este campo é obrigatório.</span>
+                    <span class="error-message" data-error-type="format">Formato inválido. Use o modelo: (99) 99999-9999</span>
                 </div>
                 <div class="form-group">
                     <label for="prof-profissao">Profissão</label>

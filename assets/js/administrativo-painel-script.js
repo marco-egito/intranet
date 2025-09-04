@@ -16,22 +16,36 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 document.addEventListener('DOMContentLoaded', function() {
+    // CORREÇÃO: O ID correto da área de conteúdo neste painel é 'content-area'.
     const contentArea = document.getElementById('content-area');
     const sidebarMenu = document.querySelector('.sidebar-menu');
     const logoutButton = document.getElementById('logout-button');
     let currentUserRoles = [];
+
+    // Função para limpar estilos e scripts de views antigas
+    function cleanupPreviousView(viewName) {
+        const oldLink = document.querySelector(`link[data-view-style]:not([data-view-style="${viewName}"])`);
+        if (oldLink) oldLink.remove();
+        
+        const oldScript = document.querySelector(`script[data-view-script]:not([data-view-script="${viewName}"])`);
+        if (oldScript) oldScript.remove();
+    }
 
     // Função genérica para carregar HTML, CSS e JS de uma view
     async function loadView(viewName) {
         if (!contentArea) return;
         contentArea.innerHTML = '<h2>Carregando...</h2>';
 
+        // Limpa a view anterior antes de carregar a nova
+        cleanupPreviousView(viewName);
+
         const filesToLoad = {};
 
+        // Mapeamento da view para os arquivos corretos
         if (viewName === 'grade_atendimento') {
-            filesToLoad.html = './administrativo.html'; // O arquivo que já criamos
-            filesToLoad.css = '../assets/css/administrativo.css'; // O arquivo que já criamos
-            filesToLoad.js = '../assets/js/administrativo.js'; // O arquivo que já criamos
+            filesToLoad.html = './administrativo.html';
+            filesToLoad.css = '../assets/css/administrativo.css';
+            filesToLoad.js = '../assets/js/administrativo.js';
         }
         // Futuras views administrativas entrarão aqui com outros 'else if'
 
@@ -40,23 +54,22 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!htmlResponse.ok) throw new Error(`Erro ao carregar HTML: ${htmlResponse.statusText}`);
             contentArea.innerHTML = await htmlResponse.text();
 
-            // Carrega o CSS da view dinamicamente
-            const head = document.head;
-            const existingLink = document.querySelector(`link[data-view-style="${viewName}"]`);
-            if (existingLink) existingLink.remove(); // Remove o estilo da view anterior
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = filesToLoad.css;
-            link.dataset.viewStyle = viewName;
-            head.appendChild(link);
+            // Carrega o CSS da view dinamicamente, se ainda não estiver carregado
+            if (!document.querySelector(`link[data-view-style="${viewName}"]`)) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = filesToLoad.css;
+                link.dataset.viewStyle = viewName;
+                document.head.appendChild(link);
+            }
 
-            // Carrega o JS da view dinamicamente
-            const existingScript = document.querySelector(`script[data-view-script="${viewName}"]`);
-            if (existingScript) existingScript.remove(); // Remove o script da view anterior
-            const script = document.createElement('script');
-            script.src = filesToLoad.js;
-            script.dataset.viewScript = viewName;
-            document.body.appendChild(script);
+            // Carrega o JS da view dinamicamente, se ainda não estiver carregado
+            if (!document.querySelector(`script[data-view-script="${viewName}"]`)) {
+                const script = document.createElement('script');
+                script.src = filesToLoad.js;
+                script.dataset.viewScript = viewName;
+                document.body.appendChild(script);
+            }
 
         } catch (error) {
             console.error('Erro ao carregar a view:', error);
@@ -72,16 +85,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (userDoc.exists) {
                     currentUserRoles = userDoc.data().funcoes || [];
                     updateMenuVisibility();
-                    // Carrega a primeira view disponível por padrão
+                    
                     const firstVisibleButton = sidebarMenu.querySelector('button:not([style*="display: none"])');
                     if (firstVisibleButton) {
                         firstVisibleButton.click();
                     } else {
                         contentArea.innerHTML = '<h2>Você não tem permissão para acessar nenhum módulo.</h2>';
                     }
+                } else {
+                     contentArea.innerHTML = '<h2>Usuário não encontrado no banco de dados.</h2>';
+                     setTimeout(() => auth.signOut(), 3000);
                 }
             } catch (error) {
                 console.error("Erro ao buscar permissões do usuário:", error);
+                contentArea.innerHTML = '<h2>Ocorreu um erro ao verificar suas permissões.</h2>';
             }
         } else {
             window.location.href = '../index.html'; // Redireciona para o login se não estiver logado
@@ -99,11 +116,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (sidebarMenu) {
         sidebarMenu.addEventListener('click', (e) => {
-            if (e.target.tagName === 'BUTTON') {
+            if (e.target.tagName === 'BUTTON' && !e.target.classList.contains('active')) {
                 const view = e.target.dataset.view;
-                loadView(view);
                 sidebarMenu.querySelectorAll('button').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
+                loadView(view);
             }
         });
     }

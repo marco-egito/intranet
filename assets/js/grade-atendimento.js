@@ -5,12 +5,68 @@
     }
     const appContent = document.querySelector('#grade-horarios-view #app-content');
     if (!appContent) return;
+
     let listaProfissionais = [];
+    const coresProfissionais = new Map(); // Mapa para armazenar as cores de cada profissional
+
     let dadosDasGrades = {};
     const horarios = ["07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"];
     const diasDaSemana = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
     const diasDaSemanaNomes = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
     const colunasPresencial = ['Leila Tardivo', 'Leonardo Abrahão', 'Karina Okajima Fukumitsu', 'Maria Júlia Kovacs', 'Christian Dunker', 'Maria Célia Malaquias (Grupo)'];
+    
+    // --- FUNÇÕES PARA GERENCIAR CORES ---
+
+    /**
+     * Gera uma cor hexadecimal a partir de uma string (ex: nome do profissional).
+     * Garante que a cor seja sempre a mesma para a mesma string.
+     * @param {string} str A string de entrada.
+     * @returns {string} Uma cor no formato #RRGGBB.
+     */
+    function generateColorFromString(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        let color = '#';
+        for (let i = 0; i < 3; i++) {
+            // Gera cores mais claras e agradáveis (tons pastel)
+            let value = (hash >> (i * 8)) & 0xFF;
+            value = 100 + (value % 156); // Garante que o valor do RGB esteja entre 100 e 255
+            color += ('00' + value.toString(16)).substr(-2);
+        }
+        return color;
+    }
+
+    /**
+     * Verifica se uma cor é escura, para decidir a cor do texto (preto ou branco).
+     * @param {string} hexColor A cor em hexadecimal.
+     * @returns {boolean} True se a cor for escura.
+     */
+    function isColorDark(hexColor) {
+        if (!hexColor) return false;
+        const r = parseInt(hexColor.substr(1, 2), 16);
+        const g = parseInt(hexColor.substr(3, 2), 16);
+        const b = parseInt(hexColor.substr(5, 2), 16);
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return luminance < 0.5;
+    }
+
+    /**
+     * Aplica a cor de fundo e do texto a um elemento <select>.
+     * @param {HTMLElement} selectElement O elemento <select> a ser estilizado.
+     */
+    function aplicarCor(selectElement) {
+        const nomeProfissional = selectElement.value;
+        const cor = coresProfissionais.get(nomeProfissional);
+        if (cor) {
+            selectElement.style.backgroundColor = cor;
+            selectElement.style.color = isColorDark(cor) ? 'white' : 'black';
+        } else {
+            selectElement.style.backgroundColor = ''; // Reseta para a cor padrão
+            selectElement.style.color = '';       // Reseta para a cor padrão
+        }
+    }
     
     function createDropdownOptions() {
         return '<option value=""></option>' + listaProfissionais.map(prof => `<option value="${prof.username}">${prof.username}</option>`).join('');
@@ -52,6 +108,7 @@
                 const fullPath = `${tipo}.${dia}.${horaFormatadaParaBusca}.col${i}`;
                 const savedValue = dadosDasGrades[fullPath] || '';
                 dropdown.value = savedValue;
+                aplicarCor(dropdown);
                 cell.appendChild(dropdown);
             }
         });
@@ -64,7 +121,14 @@
         try {
             const q = db.collection("usuarios").where("fazAtendimento", "==", true).orderBy("nome");
             const querySnapshot = await q.get();
+            
             listaProfissionais = querySnapshot.docs.map(doc => doc.data());
+
+            listaProfissionais.forEach(prof => {
+                const color = prof.cor || generateColorFromString(prof.username);
+                coresProfissionais.set(prof.username, color);
+            });
+
             const gradesDocRef = db.collection('administrativo').doc('grades');
             gradesDocRef.onSnapshot((doc) => {
                 dadosDasGrades = doc.exists ? doc.data() : {};
@@ -138,20 +202,16 @@
     
     appContent.addEventListener('change', (e) => {
         if (e.target.tagName === 'SELECT') {
+            aplicarCor(e.target);
             autoSaveChange(e.target);
         }
     });
 
-    // --- NOVA FUNCIONALIDADE ADICIONADA AQUI ---
     appContent.addEventListener('keydown', (e) => {
-        // Verifica se a tecla pressionada é Delete ou Backspace e se o alvo é um <select>
         if ((e.key === 'Delete' || e.key === 'Backspace') && e.target.tagName === 'SELECT') {
-            e.preventDefault(); // Previne o navegador de voltar a página (ação padrão do Backspace)
-            
-            // Verifica se o valor já não está vazio para evitar salvamentos desnecessários
+            e.preventDefault();
             if (e.target.value !== '') {
-                e.target.value = ''; // Limpa a seleção
-                // Dispara o evento 'change' manualmente para acionar nossa função de salvar
+                e.target.value = '';
                 e.target.dispatchEvent(new Event('change', { bubbles: true }));
             }
         }

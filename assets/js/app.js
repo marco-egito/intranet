@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const areas = {
             intranet: { titulo: 'Intranet Geral', descricao: 'Avisos, notícias e informações para todos.', url: 'URL_DA_INTRANET_GERAL_AQUI', roles: ['todos'], icon: icons.intranet },
-            administrativo: { titulo: 'Intranet Administrativo', descricao: 'Processos, documentos e organização.', url: '#', roles: ['admin', 'administrativo'], icon: icons.administrativo },
+            administrativo: { titulo: 'Intranet Administrativo', descricao: 'Processos, documentos e organização.', url: './pages/administrativo.html', roles: ['admin', 'administrativo'], icon: icons.administrativo },
             captacao: { titulo: 'Intranet Captação', descricao: 'Ferramentas e informações para captação.', url: '#', roles: ['admin', 'captacao'], icon: icons.captacao },
             financeiro: { titulo: 'Intranet Financeiro', descricao: 'Painel de controle financeiro e relatórios.', url: './pages/painel.html', roles: ['admin', 'financeiro'], icon: icons.financeiro },
             grupos: { titulo: 'Intranet Grupos', descricao: 'Informações e materiais para grupos.', url: '#', roles: ['admin', 'grupos'], icon: icons.grupos },

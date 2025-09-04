@@ -23,11 +23,15 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentUserRoles = [];
 
     function cleanupPreviousView(viewName) {
-        // ... (código inalterado)
+        const oldLink = document.querySelector(`link[data-view-style]:not([data-view-style="${viewName}"])`);
+        if (oldLink) oldLink.remove();
+        
+        const oldScript = document.querySelector(`script[data-view-script]:not([data-view-script="${viewName}"])`);
+        if (oldScript) oldScript.remove();
     }
 
     async function loadView(viewName) {
-        if (!contentArea) return;
+        if (!contentArea || !viewName) return; // Adicionada verificação para viewName
         contentArea.innerHTML = '<h2>Carregando...</h2>';
         cleanupPreviousView(viewName);
         const filesToLoad = {};
@@ -68,12 +72,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (userDoc.exists) {
                     currentUserRoles = userDoc.data().funcoes || [];
                     updateMenuVisibility();
+                    
+                    // -------- BLOCO DE CÓDIGO CORRIGIDO ABAIXO --------
                     const firstVisibleButton = sidebarMenu.querySelector('button:not([style*="display: none"])');
                     if (firstVisibleButton) {
-                        firstVisibleButton.click();
+                        // CORREÇÃO: Em vez de simular um clique, chamamos a função diretamente.
+                        const initialView = firstVisibleButton.dataset.view;
+                        firstVisibleButton.classList.add('active'); // Ativa o botão manualmente
+                        loadView(initialView); // Carrega a view diretamente
                     } else {
                         contentArea.innerHTML = '<h2>Você não tem permissão para acessar nenhum módulo.</h2>';
                     }
+
                 } else {
                      contentArea.innerHTML = '<h2>Usuário não encontrado no banco de dados.</h2>';
                      setTimeout(() => auth.signOut(), 3000);
@@ -86,12 +96,10 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = '../index.html';
         }
     });
-
-    // -------- FUNÇÃO CORRIGIDA ABAIXO --------
+    
     function updateMenuVisibility() {
         const buttons = sidebarMenu.querySelectorAll('.nav-button');
         buttons.forEach(button => {
-            // CORREÇÃO: .map(role => role.trim()) remove espaços em branco antes ou depois das roles
             const requiredRoles = button.dataset.roles.split(',').map(role => role.trim());
             const hasPermission = requiredRoles.some(role => currentUserRoles.includes(role));
             button.style.display = hasPermission ? 'block' : 'none';

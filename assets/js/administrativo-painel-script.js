@@ -42,9 +42,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const filesToLoad = {};
         if (viewName === 'grade_atendimento') {
-            filesToLoad.html = './administrativo.html';
-            filesToLoad.css = '../assets/css/administrativo.css';
-            filesToLoad.js = '../assets/js/administrativo.js';
+            filesToLoad.html = './grade-atendimento.html';       // Nome do arquivo atualizado
+            filesToLoad.css = '../assets/css/grade-atendimento.css'; // Nome do arquivo atualizado
+            filesToLoad.js = '../assets/js/grade-atendimento.js';     // Nome do arquivo atualizado
         }
 
         try {

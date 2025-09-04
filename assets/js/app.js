@@ -9,14 +9,60 @@ const firebaseConfig = {
   appId: "1:1041518416343:web:0a11c03c205b802ed7bb92"
 };
 
+
+// Inicializa o Firebase
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+
+// Disponibiliza as instâncias do Firebase para outros scripts
+window.auth = firebase.auth();
+window.db = firebase.firestore();
+window.functions = firebase.functions();
 
 document.addEventListener('DOMContentLoaded', function() {
     const appContainer = document.getElementById('app');
     let inactivityTimer;
 
+    // --- FUNÇÃO PARA CARREGAR MÓDULOS ---
+    async function loadModulePage(pageName) {
+        const moduleContentContainer = document.getElementById('module-content');
+        if (!moduleContentContainer) {
+            console.error("Container de módulo #module-content não encontrado!");
+            return;
+        }
+
+        // Esconde a lista de módulos para dar foco ao módulo aberto
+        const navLinks = document.getElementById('nav-links');
+        if (navLinks) {
+            navLinks.style.display = 'none';
+        }
+        
+        moduleContentContainer.innerHTML = `<p>Carregando módulo...</p>`;
+        moduleContentContainer.style.display = 'block';
+
+        try {
+            // 1. Carrega o arquivo HTML da página do módulo
+            const response = await fetch(`./pages/${pageName}.html`);
+            if (!response.ok) throw new Error(`Arquivo ${pageName}.html não encontrado.`);
+            
+            moduleContentContainer.innerHTML = await response.text();
+
+            // 2. Carrega e executa o JavaScript correspondente ao módulo
+            const oldScript = document.getElementById('page-script');
+            if (oldScript) oldScript.remove();
+
+            const pageScript = document.createElement('script');
+            pageScript.id = 'page-script';
+            pageScript.src = `./assets/js/${pageName}.js`;
+            pageScript.defer = true;
+            document.body.appendChild(pageScript);
+
+        } catch (error) {
+            console.error("Erro ao carregar módulo:", error);
+            moduleContentContainer.innerHTML = `<h2>Erro ao carregar o módulo.</h2><p>${error.message}</p>`;
+        }
+    }
+    
+    // --- FUNÇÃO DE TIMER DE INATIVIDADE ---
     function resetInactivityTimer() {
         clearTimeout(inactivityTimer);
         inactivityTimer = setTimeout(() => {
@@ -33,7 +79,8 @@ document.addEventListener('DOMContentLoaded', function() {
         window.addEventListener('touchstart', resetInactivityTimer);
         resetInactivityTimer();
     }
-
+    
+    // --- FUNÇÕES DE RENDERIZAÇÃO ---
     function handleAuth() {
         appContainer.innerHTML = `<p style="text-align:center; margin-top: 50px;">Verificando autenticação...</p>`;
         auth.onAuthStateChanged(async (user) => {
@@ -98,6 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </header>
             <h2 class="modules-title">Módulos da Intranet</h2>
             <div id="nav-links" class="modules-grid"></div>
+            <main id="module-content" style="display: none;"></main>
         `;
         document.getElementById('logout-button').addEventListener('click', () => auth.signOut());
         renderModuleCards(funcoes);
@@ -110,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const icons = {
             intranet: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 12c0-5.25-4.25-9.5-9.5-9.5S2.5 6.75 2.5 12s4.25 9.5 9.5 9.5s9.5-4.25 9.5-9.5Z"/><path d="M12 2.5v19"/><path d="M2.5 12h19"/></svg>`,
-            administrativo: `<svg xmlns="http://www.w.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>`,
+            administrativo: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>`,
             captacao: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>`,
             financeiro: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
             gestao: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
@@ -123,16 +171,16 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         const areas = {
-            intranet: { titulo: 'Intranet Geral', descricao: 'Avisos, notícias e informações para todos.', url: 'URL_DA_INTRANET_GERAL_AQUI', roles: ['todos'], icon: icons.intranet },
-            administrativo: { titulo: 'Intranet Administrativo', descricao: 'Processos, documentos e organização.', url: '#', roles: ['admin', 'administrativo'], icon: icons.administrativo },
-            captacao: { titulo: 'Intranet Captação', descricao: 'Ferramentas e informações para captação.', url: '#', roles: ['admin', 'captacao'], icon: icons.captacao },
-            financeiro: { titulo: 'Intranet Financeiro', descricao: 'Painel de controle financeiro e relatórios.', url: './pages/painel.html', roles: ['admin', 'financeiro'], icon: icons.financeiro },
-            grupos: { titulo: 'Intranet Grupos', descricao: 'Informações e materiais para grupos.', url: '#', roles: ['admin', 'grupos'], icon: icons.grupos },
-            marketing: { titulo: 'Intranet Marketing', descricao: 'Materiais de marketing e campanhas.', url: '#', roles: ['admin', 'marketing'], icon: icons.marketing },
-            plantao: { titulo: 'Intranet Plantão', descricao: 'Escalas, contatos e procedimentos.', url: '#', roles: ['admin', 'plantao'], icon: icons.plantao },
-            rh: { titulo: 'Recursos Humanos', descricao: 'Informações sobre vagas e comunicados.', url: '#', roles: ['admin', 'rh'], icon: icons.rh },
-            servico_social: { titulo: 'Intranet Serviço Social', descricao: 'Documentos e orientações do S.S.', url: '#', roles: ['admin', 'servico_social'], icon: icons.servico_social },
-            supervisao: { titulo: 'Intranet Supervisão', descricao: 'Acompanhamento de equipes e feedback.', url: '#', roles: ['admin', 'supervisao'], icon: icons.supervisao },
+            intranet: { titulo: 'Intranet Geral', descricao: 'Avisos, notícias e informações para todos.', roles: ['todos'], icon: icons.intranet },
+            administrativo: { titulo: 'Intranet Administrativo', descricao: 'Processos, documentos e organização.', roles: ['admin', 'administrativo'], icon: icons.administrativo },
+            captacao: { titulo: 'Intranet Captação', descricao: 'Ferramentas e informações para captação.', roles: ['admin', 'captacao'], icon: icons.captacao },
+            financeiro: { titulo: 'Gestão de Profissionais', descricao: 'Painel para adicionar e gerenciar profissionais.', module: 'gestao_profissionais', roles: ['admin', 'financeiro'], icon: icons.financeiro },
+            grupos: { titulo: 'Intranet Grupos', descricao: 'Informações e materiais para grupos.', roles: ['admin', 'grupos'], icon: icons.grupos },
+            marketing: { titulo: 'Intranet Marketing', descricao: 'Materiais de marketing e campanhas.', roles: ['admin', 'marketing'], icon: icons.marketing },
+            plantao: { titulo: 'Intranet Plantão', descricao: 'Escalas, contatos e procedimentos.', roles: ['admin', 'plantao'], icon: icons.plantao },
+            rh: { titulo: 'Recursos Humanos', descricao: 'Informações sobre vagas e comunicados.', roles: ['admin', 'rh'], icon: icons.rh },
+            servico_social: { titulo: 'Intranet Serviço Social', descricao: 'Documentos e orientações do S.S.', roles: ['admin', 'servico_social'], icon: icons.servico_social },
+            supervisao: { titulo: 'Intranet Supervisão', descricao: 'Acompanhamento de equipes e feedback.', roles: ['admin', 'supervisao'], icon: icons.supervisao },
         };
 
         let cardsParaMostrar = [];
@@ -152,9 +200,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         cardsParaMostrar.forEach(config => {
-            const card = document.createElement('a');
-            card.href = config.url;
+            const card = document.createElement('div');
             card.className = 'module-card';
+            card.setAttribute('role', 'button');
+            card.tabIndex = 0;
 
             card.innerHTML = `
                 <div class="card-icon">${config.icon}</div>
@@ -163,8 +212,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p>${config.descricao}</p>
                 </div>
             `;
+            
+            if (config.module) {
+                card.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    loadModulePage(config.module);
+                });
+            } else {
+                card.style.cursor = "not-allowed";
+                card.style.opacity = "0.5";
+            }
+            
             navLinks.appendChild(card);
         });
+    }
+
+    // Adiciona uma função global de Toast (usada no gestao_profissionais.js)
+    window.showToast = function(message, type = 'info') {
+        // Você pode substituir por uma biblioteca de toast mais elegante no futuro
+        console.log(`[${type.toUpperCase()}] ${message}`);
+        alert(`${type.toUpperCase()}: ${message}`);
     }
 
     // Inicia a aplicação

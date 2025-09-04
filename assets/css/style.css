@@ -72,12 +72,13 @@ body {
 /* --- Estilos da Tela de Login --- */
 #login-view {
     background-color: white;
-    padding: 50px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 50px 40px; /* Ajustado para melhor proporção */
+    border-radius: 16px; /* Aumentado para um visual mais suave */
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08); /* Sombra mais suave */
     text-align: center;
-    max-width: 650px;
-    margin: 0 auto;
+    max-width: 400px; /* Aumentado para um visual mais quadrado */
+    width: 90%;       /* Garante que não fique colado nas bordas em telas pequenas */
+    margin: 60px auto; /* Aumenta a margem superior para melhor centralização vertical */
 }
 
 #login-view img {

@@ -18,6 +18,12 @@ exports.criarNovoProfissional = functions.https.onCall(async (data, context) => 
     throw new functions.https.HttpsError("permission-denied", "Você não tem permissão para criar usuários.");
   }
 
+  // --- INÍCIO: VALIDAÇÃO DOS DADOS DE ENTRADA ---
+  if (!data.nome || !data.email || !data.contato || !data.profissao) {
+    throw new functions.https.HttpsError("invalid-argument", "Os campos Nome, E-mail, Telefone e Profissão são obrigatórios.");
+  }
+  // --- FIM: VALIDAÇÃO DOS DADOS DE ENTRADA ---
+
   // Define uma senha padrão segura
   const senhaPadrao = "eupsico@2025"; 
 
@@ -32,7 +38,10 @@ exports.criarNovoProfissional = functions.https.onCall(async (data, context) => 
     });
   } catch (error) {
     console.error("Erro ao criar usuário na Autenticação:", error);
-    throw new functions.https.HttpsError("internal", "Não foi possível criar o usuário. O e-mail pode já estar em uso.");
+    if (error.code === 'auth/email-already-exists') {
+        throw new functions.https.HttpsError("already-exists", "O e-mail fornecido já está em uso por outro usuário.");
+    }
+    throw new functions.https.HttpsError("internal", "Não foi possível criar o usuário na autenticação.");
   }
 
   // 2. Salva o documento no Firestore
@@ -43,11 +52,11 @@ exports.criarNovoProfissional = functions.https.onCall(async (data, context) => 
     email: data.email,
     contato: data.contato,
     profissao: data.profissao,
-    funcoes: data.funcoes,
-    inativo: data.inativo,
-    recebeDireto: data.recebeDireto,
-    primeiraFase: data.primeiraFase,
-    fazAtendimento: data.fazAtendimento,
+    funcoes: data.funcoes || [], // Garante que funcoes seja um array
+    inativo: data.inativo || false,
+    recebeDireto: data.recebeDireto || false,
+    primeiraFase: data.primeiraFase || false,
+    fazAtendimento: data.fazAtendimento || false,
     uid: uid,
   };
 
@@ -55,7 +64,8 @@ exports.criarNovoProfissional = functions.https.onCall(async (data, context) => 
     await db.collection("usuarios").doc(uid).set(dadosParaSalvar);
   } catch (error) {
     console.error("Erro ao salvar dados no Firestore:", error);
-    await admin.auth().deleteUser(uid); // Desfaz a criação do usuário se o DB falhar
+    // Desfaz a criação do usuário se o DB falhar
+    await admin.auth().deleteUser(uid); 
     throw new functions.https.HttpsError("internal", "Falha ao salvar dados no Firestore. O usuário da autenticação foi removido.");
   }
 

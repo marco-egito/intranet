@@ -4,7 +4,6 @@
         return;
     }
 
-    // --- VARIÁVEIS GERAIS E CONTROLE DE INICIALIZAÇÃO ---
     const tabContainer = document.querySelector('.tab');
     const inicializado = {
         profissionais: false,
@@ -12,25 +11,19 @@
         valores: false
     };
 
-    // --- FUNÇÃO COMPARTILHADA PARA NAVEGAÇÃO DAS ABAS ---
     function openTab(evt, tabName) {
         document.querySelectorAll(".tabcontent").forEach(tc => tc.style.display = "none");
         document.querySelectorAll(".tablinks").forEach(tl => tl.classList.remove("active"));
         const tabElement = document.getElementById(tabName);
         if (tabElement) tabElement.style.display = "block";
-        if (evt && evt.currentTarget) {
-            evt.currentTarget.classList.add("active");
-        }
-    }
+        if (evt && evt.currentTarget) evt.currentTarget.classList.add("active");
+   }
 
-    // --- LÓGICA DA ABA: GESTÃO DE PROFISSIONAIS ---
     function initGestaoProfissionais() {
         if (inicializado.profissionais) return;
-        
         const functions = firebase.functions ? firebase.functions() : null;
         const usuariosCollection = db.collection('usuarios');
-        let localUsuariosList = []; 
-        
+        let localUsuariosList = [];
         const tableBody = document.querySelector('#profissionais-table tbody');
         const modal = document.getElementById('profissional-modal');
         const addBtn = document.getElementById('add-profissional-btn');
@@ -43,13 +36,9 @@
             if (!form || !modal) return;
             form.reset();
             document.getElementById('modal-title').textContent = user ? 'Editar Profissional' : 'Adicionar Profissional';
-            document.getElementById('profissional-id').value = user ? user.uid : ''; 
+            document.getElementById('profissional-id').value = user ? user.uid : '';
             document.getElementById('prof-email').disabled = !!user;
-            
-            const senhaGroup = document.getElementById('prof-senha-group');
-            if (senhaGroup) senhaGroup.style.display = user ? 'none' : 'block';
             if (deleteBtn) deleteBtn.style.display = user ? 'inline-block' : 'none';
-
             if (user) {
                 document.getElementById('prof-nome').value = user.nome || '';
                 document.getElementById('prof-email').value = user.email || '';
@@ -79,30 +68,28 @@
             users.forEach(user => {
                 const row = tableBody.insertRow();
                 const funcoesStr = (user.funcoes || []).join(', ') || 'Nenhuma';
-                row.innerHTML = `
-                    <td>${user.nome || ''}</td>
-                    <td>${user.contato || ''}</td>
-                    <td>${funcoesStr}</td>
-                    <td>${user.inativo ? 'Sim' : 'Não'}</td>
-                    <td>${user.primeiraFase ? 'Sim' : 'Não'}</td>
-                    <td>${user.fazAtendimento ? 'Sim' : 'Não'}</td>
-                    <td>${user.recebeDireto ? 'Sim' : 'Não'}</td>
-                    <td><button class="action-button edit-row-btn" data-id="${user.uid}">Editar</button></td>
-                `;
+                row.innerHTML = `<td>${user.nome || ''}</td>
+                <td>${user.contato || ''}</td>
+                <td>${funcoesStr}</td>
+                <td>${user.inativo ? 'Sim' : 'Não'}</td>
+                <td>${user.primeiraFase ? 'Sim' : 'Não'}</td>
+                <td>${user.fazAtendimento ? 'Sim' : 'Não'}</td>
+                <td>${user.recebeDireto ? 'Sim' : 'Não'}</td>
+                <td><button class="action-button edit-row-btn" data-id="${user.uid}">Editar</button></td>`;
             });
         }
 
         usuariosCollection.orderBy("nome").onSnapshot(snapshot => {
             localUsuariosList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             renderTable(localUsuariosList);
-        }, error => {
-            window.showToast("Erro ao carregar profissionais.", "error");
-            console.error("Erro ao carregar profissionais:", error);
-        });
+        }, error => 
+            { window.showToast("Erro ao carregar profissionais.", "error"); 
+                console.error(error); 
+            });
 
         if (addBtn) addBtn.addEventListener('click', () => openModal(null));
         if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
-        
+
         if (tableBody) {
             tableBody.addEventListener('click', (e) => {
                 if (e.target.classList.contains('edit-row-btn')) {
@@ -119,7 +106,7 @@
                 if (!userId) { window.showToast('ID do profissional não encontrado.', 'error'); return; }
                 if (confirm('Tem certeza que deseja excluir os dados deste profissional? Isso NÃO remove o login dele.')) {
                     usuariosCollection.doc(userId).delete()
-                        .then(() => { window.showToast('Profissional excluído com sucesso.', 'success'); closeModal(); })
+                        .then(() => { window.showToast('Profissional excluído.', 'success'); closeModal(); })
                         .catch(err => { window.showToast(`Erro ao excluir: ${err.message}`, 'error'); });
                 }
             });
@@ -149,27 +136,19 @@
                     primeiraFase: document.getElementById('prof-primeiraFase').checked,
                     fazAtendimento: document.getElementById('prof-fazAtendimento').checked,
                 };
-
-                if (!dadosDoFormulario.nome || !dadosDoFormulario.email) {
-                    window.showToast("Nome e E-mail são obrigatórios.", "error"); return;
-                }
+                if (!dadosDoFormulario.nome || !dadosDoFormulario.email) { window.showToast("Nome e E-mail são obrigatórios.", "error"); return; }
                 saveBtn.disabled = true;
                 try {
                     if (id) {
                         await usuariosCollection.doc(id).update(dadosDoFormulario);
                         window.showToast('Profissional atualizado com sucesso!', 'success');
-                        closeModal();
                     } else {
-                        if (!functions) throw new Error("Serviço de Cloud Functions não inicializado.");
-                        dadosDoFormulario.senha = document.getElementById('prof-senha').value;
-                        if (!dadosDoFormulario.senha || dadosDoFormulario.senha.length < 6) {
-                            throw new Error("A senha inicial é obrigatória (mínimo 6 caracteres).");
-                        }
+                        if (!functions) throw new Error("Serviço de Cloud Functions não está pronto.");
                         const criarNovoProfissional = functions.httpsCallable('criarNovoProfissional');
                         const resultado = await criarNovoProfissional(dadosDoFormulario);
                         window.showToast(resultado.data.message, 'success');
-                        closeModal();
                     }
+                    closeModal();
                 } catch (error) {
                     console.error("Erro ao salvar:", error);
                     window.showToast(`Erro: ${error.message}`, 'error');
@@ -178,11 +157,9 @@
                 }
             });
         }
-        
         inicializado.profissionais = true;
     }
 
-    // --- LÓGICA DA ABA: VALORES POR SESSÃO ---
     function initValoresSessao() {
         if (inicializado.valores) return;
         const docRef = db.collection('financeiro').doc('configuracoes');
@@ -207,11 +184,9 @@
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
                 saveBtn.disabled = true;
-                const novoValorOnline = parseFloat(inputOnline.value) || 0;
-                const novoValorPresencial = parseFloat(inputPresencial.value) || 0;
-                const novaTaxaAcordo = parseFloat(inputTaxa.value) || 0;
+                const dados = { 'valores.online': parseFloat(inputOnline.value) || 0, 'valores.presencial': parseFloat(inputPresencial.value) || 0, 'valores.taxaAcordo': parseFloat(inputTaxa.value) || 0 };
                 try {
-                    await docRef.set({ valores: { online: novoValorOnline, presencial: novoValorPresencial, taxaAcordo: novaTaxaAcordo }}, { merge: true });
+                    await docRef.update(dados);
                     window.showToast('Valores salvos com sucesso!', 'success');
                 } catch (error) { console.error("Erro ao salvar valores: ", error); window.showToast('Erro ao salvar valores.', 'error');
                 } finally { saveBtn.disabled = false; }
@@ -221,7 +196,6 @@
         inicializado.valores = true;
     }
 
-    // --- LÓGICA DA ABA: MODELOS DE MENSAGEM ---
     function initModelosMensagem() {
         if (inicializado.mensagens) return;
         const docRef = db.collection('financeiro').doc('configuracoes');
@@ -256,11 +230,7 @@
             saveBtn.addEventListener('click', async () => {
                 if (!modoEdicao) { setMensagensState(true); return; }
                 saveBtn.disabled = true;
-                const novasMensagens = {
-                    'Mensagens.acordo': inputAcordo.value,
-                    'Mensagens.cobranca': inputCobranca.value,
-                    'Mensagens.contrato': inputContrato.value
-                };
+                const novasMensagens = { 'Mensagens.acordo': inputAcordo.value, 'Mensagens.cobranca': inputCobranca.value, 'Mensagens.contrato': inputContrato.value };
                 try {
                     await docRef.update(novasMensagens);
                     window.showToast('Mensagens salvas com sucesso!', 'success');

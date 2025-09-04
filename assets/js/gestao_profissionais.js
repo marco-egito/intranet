@@ -17,7 +17,7 @@
         const tabElement = document.getElementById(tabName);
         if (tabElement) tabElement.style.display = "block";
         if (evt && evt.currentTarget) evt.currentTarget.classList.add("active");
-   }
+    }
 
     function initGestaoProfissionais() {
         if (inicializado.profissionais) return;
@@ -31,7 +31,7 @@
         const saveBtn = document.getElementById('modal-save-btn');
         const deleteBtn = document.getElementById('modal-delete-btn');
         const form = document.getElementById('profissional-form');
-        
+
         function clearErrorMessages() {
             document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
         }
@@ -90,7 +90,9 @@
             modal.style.display = 'block';
         }
 
-        function closeModal() { if (modal) modal.style.display = 'none'; }
+        function closeModal() {
+            if (modal) modal.style.display = 'none';
+        }
 
         function renderTable(users) {
             if (!tableBody) return;
@@ -114,11 +116,14 @@
         }
 
         usuariosCollection.orderBy("nome").onSnapshot(snapshot => {
-            localUsuariosList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            localUsuariosList = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
             renderTable(localUsuariosList);
         }, error => {
-            window.showToast("Erro ao carregar profissionais.", "error"); 
-            console.error(error); 
+            window.showToast("Erro ao carregar profissionais.", "error");
+            console.error(error);
         });
 
         if (addBtn) addBtn.addEventListener('click', () => openModal(null));
@@ -137,11 +142,19 @@
         if (deleteBtn) {
             deleteBtn.addEventListener('click', () => {
                 const userId = document.getElementById('profissional-id').value;
-                if (!userId) { window.showToast('ID do profissional não encontrado.', 'error'); return; }
+                if (!userId) {
+                    window.showToast('ID do profissional não encontrado.', 'error');
+                    return;
+                }
                 if (confirm('Tem certeza que deseja excluir os dados deste profissional? Isso NÃO remove o login dele.')) {
                     usuariosCollection.doc(userId).delete()
-                        .then(() => { window.showToast('Profissional excluído.', 'success'); closeModal(); })
-                        .catch(err => { window.showToast(`Erro ao excluir: ${err.message}`, 'error'); });
+                        .then(() => {
+                            window.showToast('Profissional excluído.', 'success');
+                            closeModal();
+                        })
+                        .catch(err => {
+                            window.showToast(`Erro ao excluir: ${err.message}`, 'error');
+                        });
                 }
             });
         }
@@ -174,7 +187,7 @@
                     primeiraFase: document.getElementById('prof-primeiraFase').checked,
                     fazAtendimento: document.getElementById('prof-fazAtendimento').checked,
                 };
-                
+
                 saveBtn.disabled = true;
                 try {
                     if (id) {
@@ -197,9 +210,117 @@
         }
         inicializado.profissionais = true;
     }
-    
-    // O restante do seu código (initValoresSessao, initModelosMensagem, etc.) permanece o mesmo.
-    // ...
+
+    function initValoresSessao() {
+        if (inicializado.valores) return;
+        const docRef = db.collection('financeiro').doc('configuracoes');
+        const inputOnline = document.getElementById('valor-online');
+        const inputPresencial = document.getElementById('valor-presencial');
+        const inputTaxa = document.getElementById('taxa-acordo');
+        const saveBtn = document.getElementById('salvar-valores-btn');
+        async function carregarValores() {
+            if (!inputOnline) return;
+            try {
+                const doc = await docRef.get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data.valores) {
+                        inputOnline.value = data.valores.online || 0;
+                        inputPresencial.value = data.valores.presencial || 0;
+                        inputTaxa.value = data.valores.taxaAcordo || 0;
+                    }
+                }
+            } catch (error) {
+                console.error("Erro ao buscar valores: ", error);
+                window.showToast('Erro ao buscar valores.', 'error');
+            }
+        }
+        if (saveBtn) {
+            saveBtn.addEventListener('click', async () => {
+                saveBtn.disabled = true;
+                const dados = {
+                    'valores.online': parseFloat(inputOnline.value) || 0,
+                    'valores.presencial': parseFloat(inputPresencial.value) || 0,
+                    'valores.taxaAcordo': parseFloat(inputTaxa.value) || 0
+                };
+                try {
+                    await docRef.update(dados);
+                    window.showToast('Valores salvos com sucesso!', 'success');
+                } catch (error) {
+                    console.error("Erro ao salvar valores: ", error);
+                    window.showToast('Erro ao salvar valores.', 'error');
+                } finally {
+                    saveBtn.disabled = false;
+                }
+            });
+        }
+        carregarValores();
+        inicializado.valores = true;
+    }
+
+    function initModelosMensagem() {
+        if (inicializado.mensagens) return;
+        const docRef = db.collection('financeiro').doc('configuracoes');
+        const inputAcordo = document.getElementById('msg-acordo');
+        const inputCobranca = document.getElementById('msg-cobranca');
+        const inputContrato = document.getElementById('msg-contrato');
+        const saveBtn = document.getElementById('salvar-mensagens-btn');
+        let modoEdicao = false;
+
+        function setMensagensState(isEditing) {
+            if (!inputAcordo) return;
+            modoEdicao = isEditing;
+            inputAcordo.disabled = !isEditing;
+            inputCobranca.disabled = !isEditing;
+            inputContrato.disabled = !isEditing;
+            saveBtn.textContent = isEditing ? 'Salvar' : 'Modificar';
+        }
+        async function carregarMensagens() {
+            if (!inputAcordo) return;
+            try {
+                const doc = await docRef.get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data.Mensagens) {
+                        inputAcordo.value = data.Mensagens.acordo || '';
+                        inputCobranca.value = data.Mensagens.cobranca || '';
+                        inputContrato.value = data.Mensagens.contrato || '';
+                    }
+                }
+            } catch (error) {
+                console.error("Erro ao buscar mensagens: ", error);
+                window.showToast('Erro ao buscar mensagens.', 'error');
+            }
+        }
+        if (saveBtn) {
+            saveBtn.addEventListener('click', async () => {
+                if (!modoEdicao) {
+                    setMensagensState(true);
+                    return;
+                }
+                saveBtn.disabled = true;
+                const novasMensagens = {
+                    'Mensagens.acordo': inputAcordo.value,
+                    'Mensagens.cobranca': inputCobranca.value,
+                    'Mensagens.contrato': inputContrato.value
+                };
+                try {
+                    await docRef.update(novasMensagens);
+                    window.showToast('Mensagens salvas com sucesso!', 'success');
+                    setMensagensState(false);
+                } catch (error) {
+                    console.error("Erro ao salvar mensagens: ", error);
+                    window.showToast('Erro ao salvar mensagens.', 'error');
+                } finally {
+                    saveBtn.disabled = false;
+                }
+            });
+        }
+        carregarMensagens();
+        setMensagensState(false);
+        inicializado.mensagens = true;
+    }
+
     // --- GERENCIADOR PRINCIPAL DAS ABAS ---
     if (tabContainer) {
         tabContainer.addEventListener('click', (e) => {
@@ -207,12 +328,13 @@
                 const tabName = e.target.dataset.tab;
                 openTab(e, tabName);
                 if (tabName === 'GestaoProfissionais') initGestaoProfissionais();
-                // else if (tabName === 'ValoresSessao') initValoresSessao();
-                // else if (tabName === 'ModelosMensagem') initModelosMensagem();
+                else if (tabName === 'ValoresSessao') initValoresSessao();
+                else if (tabName === 'ModelosMensagem') initModelosMensagem();
             }
         });
     }
 
+    // Inicializa a primeira aba por padrão
     const primeiraAba = document.querySelector('.tablinks[data-tab="GestaoProfissionais"]');
     if (primeiraAba) {
         primeiraAba.click();

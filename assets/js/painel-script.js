@@ -9,18 +9,16 @@ const firebaseConfig = {
     messagingSenderId: "1041518416343",
     appId: "1:1041518416343:web:0a11c03c205b802ed7bb92"
 };
-
-// Garante que o Firebase seja inicializado apenas uma vez
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 
 (function() {
-    // Disponibiliza as instâncias do Firebase globalmente para os scripts das views
-    window.auth = firebase.auth();
-    window.db = firebase.firestore();
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    window.auth = auth;
+    window.db = db;
     
-    // Função global para exibir notificações
     window.showToast = function(message, type = 'success') {
         const container = document.getElementById('toast-container');
         if (!container) return;
@@ -57,13 +55,66 @@ if (!firebase.apps.length) {
     function gerenciarPermissoesMenu(funcoesUsuario = []) {
         navButtons.forEach(button => {
             const rolesNecessarias = button.dataset.roles ? button.dataset.roles.split(',') : [];
+            // Se um botão não tiver data-roles, ele é visível para todos os logados.
+            // Senão, verifica se o usuário tem pelo menos uma das funções necessárias.
             const temPermissao = rolesNecessarias.length === 0 || rolesNecessarias.some(role => funcoesUsuario.includes(role.trim()));
             
-            if (button.parentElement) {
-                button.parentElement.style.display = temPermissao ? 'block' : 'none';
+            if (button.parentElement) { // Garante que o elemento pai (li) existe
+               button.parentElement.style.display = temPermissao ? 'block' : 'none';
             }
         });
     }
+
+    const initializePage = () => {
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = '../index.html';
+                return;
+            }
+            try {
+                const userDoc = await db.collection('usuarios').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const funcoes = userDoc.data().funcoes || [];
+                    gerenciarPermissoesMenu(funcoes);
+
+                    // Lógica de Deep Linking
+                    const hash = window.location.hash.substring(1);
+                    const requestedButton = document.querySelector(`.nav-button[data-view="${hash}"]`);
+                    
+                    if (hash && requestedButton && requestedButton.parentElement.style.display !== 'none') {
+                        loadView(hash);
+                    } else {
+                        loadView('dashboard');
+                    }
+                } else {
+                    document.body.innerHTML = '<h2>Acesso Negado</h2><p>Seu usuário não foi encontrado no sistema.</p>';
+                }
+            } catch (error) {
+                console.error("Erro ao buscar permissões do usuário:", error);
+                document.body.innerHTML = '<h2>Ocorreu um erro ao carregar o painel.</h2>';
+            }
+        });
+    };
+
+    navButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const viewName = e.currentTarget.dataset.view;
+            // Apenas atualiza o hash. O listener 'hashchange' fará o resto.
+            window.location.hash = viewName;
+        });
+    });
+    
+    // Ouve por mudanças no hash da URL para carregar a view correta
+    window.addEventListener('hashchange', () => {
+        const viewName = window.location.hash.substring(1) || 'dashboard';
+        loadView(viewName);
+    });
+
+    logoutButton.addEventListener('click', () => {
+        auth.signOut().then(() => {
+            window.location.href = '../index.html';
+        });
+    });
 
     async function loadView(viewName) {
         // Marca o botão de navegação ativo
@@ -71,7 +122,7 @@ if (!firebase.apps.length) {
             btn.classList.toggle('active', btn.dataset.view === viewName);
         });
         
-        // Remove scripts e CSS antigos para evitar conflitos
+        // Remove scripts e CSS antigos
         const oldScript = document.getElementById('dynamic-view-script');
         if (oldScript) oldScript.remove();
         const oldStyle = document.getElementById('dynamic-view-style');
@@ -86,14 +137,12 @@ if (!firebase.apps.length) {
             }
             contentArea.innerHTML = await response.text();
 
-            // Tenta carregar o CSS específico da view
             const newStyle = document.createElement('link');
             newStyle.id = 'dynamic-view-style';
             newStyle.rel = 'stylesheet';
             newStyle.href = `../assets/css/${viewName}.css`;
             document.head.appendChild(newStyle);
 
-            // Tenta carregar o JS específico da view
             const newScript = document.createElement('script');
             newScript.id = 'dynamic-view-script';
             newScript.src = `../assets/js/${viewName}.js`;
@@ -107,63 +156,6 @@ if (!firebase.apps.length) {
                  contentArea.innerHTML = `<h2>Erro ao carregar este módulo.</h2><p>${error.message}.</p>`;
             }
         }
-    }
-    
-    // Gerencia a navegação via hash na URL
-    function handleNavigation() {
-        const viewName = window.location.hash.substring(1) || 'dashboard';
-        const requestedButton = document.querySelector(`.nav-button[data-view="${viewName}"]`);
-
-        // Verifica se o botão existe e se está visível antes de carregar
-        if (requestedButton && requestedButton.parentElement.style.display !== 'none') {
-            loadView(viewName);
-        } else {
-            // Se a view pedida não existe ou o usuário não tem permissão, carrega o dashboard
-            window.location.hash = 'dashboard';
-            loadView('dashboard');
-        }
-    }
-    
-    const initializePage = () => {
-        auth.onAuthStateChanged(async (user) => {
-            if (!user) {
-                window.location.href = '../index.html';
-                return;
-            }
-            try {
-                const userDoc = await db.collection('usuarios').doc(user.uid).get();
-                if (userDoc.exists) {
-                    const funcoes = userDoc.data().funcoes || [];
-                    gerenciarPermissoesMenu(funcoes);
-                    
-                    // A navegação agora é tratada após as permissões serem checadas
-                    handleNavigation(); 
-                    window.addEventListener('hashchange', handleNavigation);
-
-                } else {
-                    document.body.innerHTML = '<h2>Acesso Negado</h2><p>Seu usuário não foi encontrado no sistema.</p>';
-                }
-            } catch (error) {
-                console.error("Erro ao buscar permissões do usuário:", error);
-                document.body.innerHTML = '<h2>Ocorreu um erro ao carregar o painel.</h2>';
-            }
-        });
-    };
-
-    navButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            const viewName = e.currentTarget.dataset.view;
-            // Apenas muda o hash, o 'hashchange' listener cuida do carregamento
-            window.location.hash = viewName;
-        });
-    });
-
-    if (logoutButton) {
-        logoutButton.addEventListener('click', () => {
-            auth.signOut().then(() => {
-                window.location.href = '../index.html';
-            });
-        });
     }
     
     initializePage();

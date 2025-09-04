@@ -46,8 +46,7 @@
             document.getElementById('profissional-id').value = user ? user.uid : ''; 
             document.getElementById('prof-email').disabled = !!user;
             
-            const senhaGroup = document.getElementById('prof-senha-group');
-            if (senhaGroup) senhaGroup.style.display = user ? 'none' : 'block';
+            // LÓGICA DE SENHA REMOVIDA DAQUI
             if (deleteBtn) deleteBtn.style.display = user ? 'inline-block' : 'none';
 
             if (user) {
@@ -125,7 +124,7 @@
             });
         }
 
-        if (saveBtn) {
+        if (saveBtn) {  
             saveBtn.addEventListener('click', async () => {
                 const id = document.getElementById('profissional-id').value;
                 const nomeCompleto = document.getElementById('prof-nome').value.trim();
@@ -161,10 +160,10 @@
                         closeModal();
                     } else {
                         if (!functions) throw new Error("Serviço de Cloud Functions não inicializado.");
-                        dadosDoFormulario.senha = document.getElementById('prof-senha').value;
-                        if (!dadosDoFormulario.senha || dadosDoFormulario.senha.length < 6) {
-                            throw new Error("A senha inicial é obrigatória (mínimo 6 caracteres).");
-                        }
+                        
+                        // LÓGICA DE VALIDAÇÃO E ENVIO DE SENHA REMOVIDA DAQUI
+                        // A senha agora é criada apenas no backend
+
                         const criarNovoProfissional = functions.httpsCallable('criarNovoProfissional');
                         const resultado = await criarNovoProfissional(dadosDoFormulario);
                         window.showToast(resultado.data.message, 'success');

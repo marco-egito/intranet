@@ -11,9 +11,11 @@
     const diasDaSemana = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
     const diasDaSemanaNomes = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
     const colunasPresencial = ['Leila Tardivo', 'Leonardo Abrahão', 'Karina Okajima Fukumitsu', 'Maria Júlia Kovacs', 'Christian Dunker', 'Maria Célia Malaquias (Grupo)'];
+    
     function createDropdownOptions() {
         return '<option value=""></option>' + listaProfissionais.map(prof => `<option value="${prof.username}">${prof.username}</option>`).join('');
     }
+
     function renderGrade(tipo, dia) {
         if (!appContent) return;
         appContent.innerHTML = '';
@@ -32,7 +34,7 @@
         let headers = ['Período', 'Horário'];
         headers = headers.concat(tipo === 'online' ? Array(6).fill('Online') : colunasPresencial);
         thead.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
-        const gradeData = dadosDasGrades[tipo]?.[dia] || {};
+
         horarios.forEach((hora, index) => {
             const row = tbody.insertRow();
             if (index < 5) row.className = 'periodo-manha';
@@ -46,9 +48,14 @@
                 const cell = row.insertCell();
                 const dropdown = document.createElement('select');
                 dropdown.innerHTML = createDropdownOptions();
-                const horaFormatadaParaBusca = hora.replace(":", "-");
-                const savedValue = gradeData[horaFormatadaParaBusca]?.[`col${i}`] || '';
+                
+                // ---- CORREÇÃO DO BUG AQUI ----
+                // Busca o valor usando o mesmo formato com hífen que foi salvo
+                const horaFormatada = hora.replace(":", "-");
+                const fullPath = `${tipo}.${dia}.${horaFormatada}.col${i}`;
+                const savedValue = dadosDasGrades[fullPath] || '';
                 dropdown.value = savedValue;
+                
                 cell.appendChild(dropdown);
             }
         });
@@ -56,6 +63,7 @@
         tableWrapper.appendChild(table);
         appContent.appendChild(tableWrapper);
     }
+
     async function init() {
         try {
             const q = db.collection("usuarios").where("fazAtendimento", "==", true).orderBy("nome");
@@ -80,6 +88,7 @@
             appContent.innerHTML = `<p style="color:red; text-align:center;">Erro ao carregar dados.</p>`;
         }
     }
+
     async function autoSaveChange(selectElement) {
         const row = selectElement.closest('tr');
         const horaCell = row.querySelector('.hour-cell');
@@ -107,6 +116,7 @@
             setTimeout(() => selectElement.classList.remove('is-error'), 2000);
         }
     }
+
     const mainTabsContainer = document.querySelector('#grade-horarios-view #main-tabs');
     if (mainTabsContainer) {
         mainTabsContainer.addEventListener('click', (e) => {
@@ -117,12 +127,11 @@
             }
         });
     }
+
     appContent.addEventListener('click', (e) => {
         if (e.target.tagName === 'BUTTON' && e.target.closest('.tab-nav')) {
             if (!mainTabsContainer) return;
             const activeMainTab = mainTabsContainer.querySelector('button.active').dataset.tab;
-            // O event listener para os dias da semana já está dentro do appContent
-            // Precisamos garantir que não confundimos com outros botões
             if(e.target.dataset.day){
                  appContent.querySelectorAll('.tab-nav button').forEach(b => b.classList.remove('active'));
                  e.target.classList.add('active');
@@ -130,10 +139,12 @@
             }
         }
     });
+
     appContent.addEventListener('change', (e) => {
         if (e.target.tagName === 'SELECT') {
             autoSaveChange(e.target);
         }
     });
+    
     init();
 })();

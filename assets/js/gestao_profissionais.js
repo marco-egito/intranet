@@ -1,8 +1,12 @@
 (function() {
-    if (!db || !auth) {
-        console.error("Instâncias do Firebase (db, auth) não encontradas.");
+    // Garante que o firebase foi inicializado pelo script principal (painel-script.js)
+    if (typeof firebase === 'undefined') {
+        console.error("Firebase não foi inicializado. Verifique a ordem dos scripts.");
         return;
     }
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    const functions = firebase.functions();
 
     const tabContainer = document.querySelector('.tab');
     const inicializado = {
@@ -21,7 +25,7 @@
 
     function initGestaoProfissionais() {
         if (inicializado.profissionais) return;
-        const functions = firebase.functions ? firebase.functions() : null;
+        
         const usuariosCollection = db.collection('usuarios');
         let localUsuariosList = [];
         const tableBody = document.querySelector('#profissionais-table tbody');
@@ -31,7 +35,8 @@
         const saveBtn = document.getElementById('modal-save-btn');
         const deleteBtn = document.getElementById('modal-delete-btn');
         const form = document.getElementById('profissional-form');
-
+        
+        // --- INÍCIO: NOVAS FUNÇÕES DE VALIDAÇÃO ---
         function clearErrorMessages() {
             document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
         }
@@ -64,11 +69,13 @@
 
             return isValid;
         }
+        // --- FIM: NOVAS FUNÇÕES DE VALIDAÇÃO ---
+
 
         function openModal(user = null) {
             if (!form || !modal) return;
             form.reset();
-            clearErrorMessages();
+            clearErrorMessages(); // Limpa erros ao abrir o modal
             document.getElementById('modal-title').textContent = user ? 'Editar Profissional' : 'Adicionar Profissional';
             document.getElementById('profissional-id').value = user ? user.uid : '';
             document.getElementById('prof-email').disabled = !!user;
@@ -90,9 +97,7 @@
             modal.style.display = 'block';
         }
 
-        function closeModal() {
-            if (modal) modal.style.display = 'none';
-        }
+        function closeModal() { if (modal) modal.style.display = 'none'; }
 
         function renderTable(users) {
             if (!tableBody) return;
@@ -116,14 +121,12 @@
         }
 
         usuariosCollection.orderBy("nome").onSnapshot(snapshot => {
-            localUsuariosList = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
+            localUsuariosList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             renderTable(localUsuariosList);
-        }, error => {
-            window.showToast("Erro ao carregar profissionais.", "error");
+        }, error => { 
             console.error(error);
+            // a função showToast está no seu painel-script.js, então deve funcionar
+            if (window.showToast) window.showToast("Erro ao carregar profissionais.", "error"); 
         });
 
         if (addBtn) addBtn.addEventListener('click', () => openModal(null));
@@ -142,29 +145,22 @@
         if (deleteBtn) {
             deleteBtn.addEventListener('click', () => {
                 const userId = document.getElementById('profissional-id').value;
-                if (!userId) {
-                    window.showToast('ID do profissional não encontrado.', 'error');
-                    return;
-                }
+                if (!userId) { if (window.showToast) window.showToast('ID do profissional não encontrado.', 'error'); return; }
                 if (confirm('Tem certeza que deseja excluir os dados deste profissional? Isso NÃO remove o login dele.')) {
                     usuariosCollection.doc(userId).delete()
-                        .then(() => {
-                            window.showToast('Profissional excluído.', 'success');
-                            closeModal();
-                        })
-                        .catch(err => {
-                            window.showToast(`Erro ao excluir: ${err.message}`, 'error');
-                        });
+                        .then(() => { if (window.showToast) window.showToast('Profissional excluído.', 'success'); closeModal(); })
+                        .catch(err => { if (window.showToast) window.showToast(`Erro ao excluir: ${err.message}`, 'error'); });
                 }
             });
         }
 
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
+                // --- MUDANÇA PRINCIPAL AQUI ---
                 if (!validateForm()) {
-                    return;
+                    return; // Para a execução se o formulário for inválido
                 }
-
+                
                 const id = document.getElementById('profissional-id').value;
                 const nomeCompleto = document.getElementById('prof-nome').value.trim();
                 const usernameInput = document.getElementById('prof-username');
@@ -187,22 +183,21 @@
                     primeiraFase: document.getElementById('prof-primeiraFase').checked,
                     fazAtendimento: document.getElementById('prof-fazAtendimento').checked,
                 };
-
+                
                 saveBtn.disabled = true;
                 try {
                     if (id) {
                         await usuariosCollection.doc(id).update(dadosDoFormulario);
-                        window.showToast('Profissional atualizado com sucesso!', 'success');
+                        if (window.showToast) window.showToast('Profissional atualizado com sucesso!', 'success');
                     } else {
-                        if (!functions) throw new Error("Serviço de Cloud Functions não está pronto.");
                         const criarNovoProfissional = functions.httpsCallable('criarNovoProfissional');
                         const resultado = await criarNovoProfissional(dadosDoFormulario);
-                        window.showToast(resultado.data.message, 'success');
+                        if (window.showToast) window.showToast(resultado.data.message, 'success');
                     }
                     closeModal();
                 } catch (error) {
                     console.error("Erro ao salvar:", error);
-                    window.showToast(`Erro: ${error.message}`, 'error');
+                    if (window.showToast) window.showToast(`Erro: ${error.message}`, 'error');
                 } finally {
                     saveBtn.disabled = false;
                 }
@@ -230,27 +225,20 @@
                         inputTaxa.value = data.valores.taxaAcordo || 0;
                     }
                 }
-            } catch (error) {
-                console.error("Erro ao buscar valores: ", error);
-                window.showToast('Erro ao buscar valores.', 'error');
-            }
+            } catch (error) { console.error("Erro ao buscar valores: ", error); if (window.showToast) window.showToast('Erro ao buscar valores.', 'error'); }
         }
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
                 saveBtn.disabled = true;
-                const dados = {
-                    'valores.online': parseFloat(inputOnline.value) || 0,
-                    'valores.presencial': parseFloat(inputPresencial.value) || 0,
-                    'valores.taxaAcordo': parseFloat(inputTaxa.value) || 0
-                };
+                const dados = { 'valores.online': parseFloat(inputOnline.value) || 0, 'valores.presencial': parseFloat(inputPresencial.value) || 0, 'valores.taxaAcordo': parseFloat(inputTaxa.value) || 0 };
                 try {
                     await docRef.update(dados);
-                    window.showToast('Valores salvos com sucesso!', 'success');
-                } catch (error) {
-                    console.error("Erro ao salvar valores: ", error);
-                    window.showToast('Erro ao salvar valores.', 'error');
-                } finally {
-                    saveBtn.disabled = false;
+                    if (window.showToast) window.showToast('Valores salvos com sucesso!', 'success');
+                } catch (error) { 
+                    console.error("Erro ao salvar valores: ", error); 
+                    if (window.showToast) window.showToast('Erro ao salvar valores.', 'error');
+                } finally { 
+                    saveBtn.disabled = false; 
                 }
             });
         }
@@ -266,7 +254,6 @@
         const inputContrato = document.getElementById('msg-contrato');
         const saveBtn = document.getElementById('salvar-mensagens-btn');
         let modoEdicao = false;
-
         function setMensagensState(isEditing) {
             if (!inputAcordo) return;
             modoEdicao = isEditing;
@@ -287,32 +274,22 @@
                         inputContrato.value = data.Mensagens.contrato || '';
                     }
                 }
-            } catch (error) {
-                console.error("Erro ao buscar mensagens: ", error);
-                window.showToast('Erro ao buscar mensagens.', 'error');
-            }
+            } catch (error) { console.error("Erro ao buscar mensagens: ", error); if (window.showToast) window.showToast('Erro ao buscar mensagens.', 'error'); }
         }
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
-                if (!modoEdicao) {
-                    setMensagensState(true);
-                    return;
-                }
+                if (!modoEdicao) { setMensagensState(true); return; }
                 saveBtn.disabled = true;
-                const novasMensagens = {
-                    'Mensagens.acordo': inputAcordo.value,
-                    'Mensagens.cobranca': inputCobranca.value,
-                    'Mensagens.contrato': inputContrato.value
-                };
+                const novasMensagens = { 'Mensagens.acordo': inputAcordo.value, 'Mensagens.cobranca': inputCobranca.value, 'Mensagens.contrato': inputContrato.value };
                 try {
                     await docRef.update(novasMensagens);
-                    window.showToast('Mensagens salvas com sucesso!', 'success');
+                    if (window.showToast) window.showToast('Mensagens salvas com sucesso!', 'success');
                     setMensagensState(false);
-                } catch (error) {
-                    console.error("Erro ao salvar mensagens: ", error);
-                    window.showToast('Erro ao salvar mensagens.', 'error');
-                } finally {
-                    saveBtn.disabled = false;
+                } catch (error) { 
+                    console.error("Erro ao salvar mensagens: ", error); 
+                    if (window.showToast) window.showToast('Erro ao salvar mensagens.', 'error');
+                } finally { 
+                    saveBtn.disabled = false; 
                 }
             });
         }

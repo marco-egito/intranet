@@ -9,7 +9,7 @@
 
     <div id="GestaoProfissionais" class="tabcontent">
         <h2>Gestão de Profissionais</h2>
-        <p>Adicione ou edite os dados de um profissional. A conta de login deve ser criada separadamente no Firebase Authentication.</p>
+        <p>Adicione ou edite os dados de um profissional.</p>
         <div class="button-bar">
             <button class="action-button add-row-btn" id="add-profissional-btn">Adicionar Profissional</button>
         </div>
@@ -17,19 +17,11 @@
             <table id="profissionais-table">
                 <thead>
                     <tr>
-                        <th>Nome</th>
-                        <th>Telefone</th>
-                        <th>Funções</th>
-                        <th>Inativo?</th>
-                        <th>Primeira Fase</th>
-                        <th>Faz Atendimento</th>
-                        <th>Recebe Direto</th>
-                        <th>Ações</th>
+                        <th>Nome</th><th>Telefone</th><th>Funções</th><th>Inativo?</th>
+                        <th>Primeira Fase</th><th>Faz Atendimento</th><th>Recebe Direto</th><th>Ações</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr><td colspan="8">Carregando profissionais...</td></tr>
-                </tbody>
+                <tbody><tr><td colspan="8">Carregando profissionais...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -39,7 +31,7 @@
         <p>Edite os textos padrão para cobranças, acordos e contratos. Use as variáveis para personalizar as mensagens.</p>
         <div class="variables-info">
             <strong>Variáveis Disponíveis:</strong>
-            <code>{greeting}</code>, <code>{nome}</code>, <code>{nomeProfissional}</code>, <code>{item}</code>, <code>{vencimento}</code>, <code>{valor}</code>, etc.
+            <code>{greeting}</code>, <code>{nome}</code>, <code>{nomeProfissional}</code>, <code>{item}</code>, <code>{vencimento}</code>, <code>{valor}</code>, <code>{link}</code>, <code>{valorTotalPago}</code>, <code>{valorTotalAPagar}</code>, <code>{saldoRestante}</code>, <code>{valorRestante}</code>, <code>{valor da divida}</code>, <code>{Entrada}</code>, <code>{Taxa Aplicada}</code>, <code>{Valor Final}</code>, <code>{N de Parcelas}</code>, <code>{listaParcelas}</code>
         </div>
         <div class="form-group">
             <label for="msg-acordo">Mensagem de Acordo</label>
@@ -86,38 +78,21 @@
             <form id="profissional-form">
                 <input type="hidden" id="profissional-id">
                 <input type="hidden" id="prof-username">
-                <div class="form-group">
-                    <label for="prof-nome">Nome Completo</label>
-                    <input type="text" id="prof-nome" required>
-                </div>
-                <div class="form-group">
-                    <label for="prof-email">E-mail (Login)</label>
-                    <input type="email" id="prof-email" required>
-                </div>
-                <div class="form-group" id="prof-senha-group">
-                    <label for="prof-senha">Senha Inicial</label>
-                    <input type="password" id="prof-senha" placeholder="Mínimo 6 caracteres">
-                </div>
-                <div class="form-group">
-                    <label for="prof-contato">Telefone</label>
-                    <input type="text" id="prof-contato">
-                </div>
-                <div class="form-group">
-                    <label for="prof-profissao">Profissão</label>
-                    <select id="prof-profissao">
-                        <option value="" disabled selected>Selecione uma profissão</option>
-                        <option value="Psicólogo">Psicólogo</option>
-                        <option value="Psicopedagoga">Psicopedagoga</option>
-                        <option value="Musicoterapeuta">Musicoterapeuta</option>
-                        <option value="Assistente Social">Assistente Social</option>
-                        <option value="Advogado">Advogado</option>
-                        <option value="Nutricionista">Nutricionista</option>
-                        <option value="Assistente">Assistente</option>
-                        <option value="Marketing">Marketing</option>
-                    </select>
-                </div>
-                <div class="form-group checkbox-group">
-                    <h4 style="margin: 10px 0;">Funções:</h4>
+                <div class="form-group"><label for="prof-nome">Nome Completo</label><input type="text" id="prof-nome" required></div>
+                <div class="form-group"><label for="prof-email">E-mail (Login)</label><input type="email" id="prof-email" required></div>
+                <div class="form-group"><label for="prof-contato">Telefone</label><input type="text" id="prof-contato"></div>
+                <div class="form-group"><label for="prof-profissao">Profissão</label><select id="prof-profissao">
+                    <option value="" disabled selected>Selecione uma profissão</option>
+                    <option value="Psicólogo">Psicólogo</option>
+                    <option value="Psicopedagoga">Psicopedagoga</option>
+                    <option value="Musicoterapeuta">Musicoterapeuta</option>
+                    <option value="Assistente Social">Assistente Social</option>
+                    <option value="Advogado">Advogado</option>
+                    <option value="Nutricionista">Nutricionista</option>
+                    <option value="Assistente">Assistente</option>
+                    <option value="Marketing">Marketing</option>
+                </select></div>
+                <div class="form-group checkbox-group"><h4 style="margin: 10px 0;">Funções:</h4>
                     <label><input type="checkbox" name="funcoes" value="admin"> Admin</label>
                     <label><input type="checkbox" name="funcoes" value="financeiro"> Financeiro</label>
                     <label><input type="checkbox" name="funcoes" value="gestor"> Gestor</label>
@@ -125,8 +100,7 @@
                     <label><input type="checkbox" name="funcoes" value="assistente"> Assistente</label>
                     <label><input type="checkbox" name="funcoes" value="supervisor"> Supervisor</label>
                 </div>
-                <div class="form-group checkbox-group">
-                    <h4 style="margin: 10px 0;">Status e Configurações:</h4>
+                <div class="form-group checkbox-group"><h4 style="margin: 10px 0;">Status e Configurações:</h4>
                     <label><input type="checkbox" id="prof-inativo"> Inativo?</label>
                     <label><input type="checkbox" id="prof-recebeDireto"> Recebe Direto?</label>
                     <label><input type="checkbox" id="prof-primeiraFase"> Primeira Fase?</label>

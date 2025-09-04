@@ -48,14 +48,10 @@
                 const cell = row.insertCell();
                 const dropdown = document.createElement('select');
                 dropdown.innerHTML = createDropdownOptions();
-                
-                // ---- CORREÇÃO DO BUG AQUI ----
-                // Busca o valor usando o mesmo formato com hífen que foi salvo
-                const horaFormatada = hora.replace(":", "-");
-                const fullPath = `${tipo}.${dia}.${horaFormatada}.col${i}`;
+                const horaFormatadaParaBusca = hora.replace(":", "-");
+                const fullPath = `${tipo}.${dia}.${horaFormatadaParaBusca}.col${i}`;
                 const savedValue = dadosDasGrades[fullPath] || '';
                 dropdown.value = savedValue;
-                
                 cell.appendChild(dropdown);
             }
         });
@@ -116,7 +112,7 @@
             setTimeout(() => selectElement.classList.remove('is-error'), 2000);
         }
     }
-
+    
     const mainTabsContainer = document.querySelector('#grade-horarios-view #main-tabs');
     if (mainTabsContainer) {
         mainTabsContainer.addEventListener('click', (e) => {
@@ -139,10 +135,25 @@
             }
         }
     });
-
+    
     appContent.addEventListener('change', (e) => {
         if (e.target.tagName === 'SELECT') {
             autoSaveChange(e.target);
+        }
+    });
+
+    // --- NOVA FUNCIONALIDADE ADICIONADA AQUI ---
+    appContent.addEventListener('keydown', (e) => {
+        // Verifica se a tecla pressionada é Delete ou Backspace e se o alvo é um <select>
+        if ((e.key === 'Delete' || e.key === 'Backspace') && e.target.tagName === 'SELECT') {
+            e.preventDefault(); // Previne o navegador de voltar a página (ação padrão do Backspace)
+            
+            // Verifica se o valor já não está vazio para evitar salvamentos desnecessários
+            if (e.target.value !== '') {
+                e.target.value = ''; // Limpa a seleção
+                // Dispara o evento 'change' manualmente para acionar nossa função de salvar
+                e.target.dispatchEvent(new Event('change', { bubbles: true }));
+            }
         }
     });
     

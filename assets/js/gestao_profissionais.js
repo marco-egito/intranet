@@ -31,10 +31,46 @@
         const saveBtn = document.getElementById('modal-save-btn');
         const deleteBtn = document.getElementById('modal-delete-btn');
         const form = document.getElementById('profissional-form');
+        
+        // --- INÍCIO: NOVAS FUNÇÕES DE VALIDAÇÃO ---
+        function clearErrorMessages() {
+            document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+        }
+
+        function validateForm() {
+            clearErrorMessages();
+            let isValid = true;
+
+            const nome = document.getElementById('prof-nome').value.trim();
+            const email = document.getElementById('prof-email').value.trim();
+            const telefone = document.getElementById('prof-contato').value.trim();
+            const profissao = document.getElementById('prof-profissao').value;
+
+            if (!nome) {
+                document.getElementById('error-nome').textContent = 'Campo obrigatório';
+                isValid = false;
+            }
+            if (!email) {
+                document.getElementById('error-email').textContent = 'Campo obrigatório';
+                isValid = false;
+            }
+            if (!telefone) {
+                document.getElementById('error-contato').textContent = 'Campo obrigatório';
+                isValid = false;
+            }
+            if (!profissao) {
+                document.getElementById('error-profissao').textContent = 'Campo obrigatório';
+                isValid = false;
+            }
+
+            return isValid;
+        }
+        // --- FIM: NOVAS FUNÇÕES DE VALIDAÇÃO ---
 
         function openModal(user = null) {
             if (!form || !modal) return;
             form.reset();
+            clearErrorMessages(); // Limpa erros ao abrir o modal
             document.getElementById('modal-title').textContent = user ? 'Editar Profissional' : 'Adicionar Profissional';
             document.getElementById('profissional-id').value = user ? user.uid : '';
             document.getElementById('prof-email').disabled = !!user;
@@ -114,6 +150,12 @@
 
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
+                // --- INÍCIO: LÓGICA DE VALIDAÇÃO APLICADA ---
+                if (!validateForm()) {
+                    return; // Para a execução se o formulário for inválido
+                }
+                // --- FIM: LÓGICA DE VALIDAÇÃO APLICADA ---
+
                 const id = document.getElementById('profissional-id').value;
                 const nomeCompleto = document.getElementById('prof-nome').value.trim();
                 const usernameInput = document.getElementById('prof-username');
@@ -136,7 +178,10 @@
                     primeiraFase: document.getElementById('prof-primeiraFase').checked,
                     fazAtendimento: document.getElementById('prof-fazAtendimento').checked,
                 };
-                if (!dadosDoFormulario.nome || !dadosDoFormulario.email) { window.showToast("Nome e E-mail são obrigatórios.", "error"); return; }
+                
+                // A validação antiga pode ser removida, pois a nova é mais completa
+                // if (!dadosDoFormulario.nome || !dadosDoFormulario.email) { window.showToast("Nome e E-mail são obrigatórios.", "error"); return; }
+                
                 saveBtn.disabled = true;
                 try {
                     if (id) {
@@ -159,6 +204,8 @@
         }
         inicializado.profissionais = true;
     }
+
+    // O restante do seu código (initValoresSessao, initModelosMensagem, etc.) permanece o mesmo...
 
     function initValoresSessao() {
         if (inicializado.valores) return;

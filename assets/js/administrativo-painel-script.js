@@ -11,6 +11,7 @@ const firebaseConfig = {
         appId: "1:1041518416343:web:0a11c03c205b802ed7bb92"
 
 };
+
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -32,6 +33,10 @@ document.addEventListener('DOMContentLoaded', function() {
         cardGridArea.style.display = 'none';
         viewContentArea.style.display = 'block';
         viewContentArea.innerHTML = '<h2>Carregando...</h2>';
+        const existingScript = document.querySelector('script[data-view-script]');
+        if (existingScript) {
+            existingScript.remove();
+        }
         const filesToLoad = {};
         if (viewName === 'grade_atendimento') {
             filesToLoad.html = './grade-atendimento.html';
@@ -49,12 +54,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 link.dataset.viewStyle = viewName;
                 document.head.appendChild(link);
             }
-            if (!document.querySelector(`script[data-view-script="${viewName}"]`)) {
-                const script = document.createElement('script');
-                script.src = filesToLoad.js;
-                script.dataset.viewScript = viewName;
-                document.body.appendChild(script);
-            }
+            const script = document.createElement('script');
+            script.src = filesToLoad.js;
+            script.dataset.viewScript = viewName;
+            document.body.appendChild(script);
         } catch (error) {
             console.error('Erro ao carregar a view:', error);
             viewContentArea.innerHTML = '<h2>Erro ao carregar a página. Tente novamente. <button onclick="showAdminDashboard()">Voltar</button></h2>';

@@ -8,15 +8,12 @@ const firebaseConfig = {
   messagingSenderId: "1041518416343",
   appId: "1:1041518416343:web:0a11c03c205b802ed7bb92"
 };
-
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-
 document.addEventListener('DOMContentLoaded', function() {
     const appContainer = document.getElementById('app');
     let inactivityTimer;
-
     function resetInactivityTimer() {
         clearTimeout(inactivityTimer);
         inactivityTimer = setTimeout(() => {
@@ -24,7 +21,6 @@ document.addEventListener('DOMContentLoaded', function() {
             auth.signOut();
         }, 20 * 60 * 1000); 
     }
-
     function setupInactivityListeners() {
         window.addEventListener('mousemove', resetInactivityTimer);
         window.addEventListener('mousedown', resetInactivityTimer);
@@ -33,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
         window.addEventListener('touchstart', resetInactivityTimer);
         resetInactivityTimer();
     }
-
     function handleAuth() {
         appContainer.innerHTML = `<p style="text-align:center; margin-top: 50px;">Verificando autenticação...</p>`;
         auth.onAuthStateChanged(async (user) => {
@@ -58,7 +53,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
     function renderLogin(message = "Por favor, faça login para continuar.") {
         appContainer.innerHTML = `
             <div id="login-view" class="content-box" style="text-align: center; max-width: 250px; margin: 30px auto;">
@@ -74,7 +68,6 @@ document.addEventListener('DOMContentLoaded', function() {
             auth.signInWithPopup(provider).catch(error => console.error(error));
         });
     }
-
     function renderAccessDenied() {
         appContainer.innerHTML = `
             <div class="content-box" style="max-width: 800px; margin: 50px auto; text-align: center;">
@@ -85,7 +78,6 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         document.getElementById('denied-logout').addEventListener('click', () => auth.signOut());
     }
-
     function renderDashboard(user, funcoes) {
         appContainer.innerHTML = `
             <header class="main-header">
@@ -102,15 +94,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('logout-button').addEventListener('click', () => auth.signOut());
         renderModuleCards(funcoes);
     }
-
     function renderModuleCards(funcoes) {
         const navLinks = document.getElementById('nav-links');
         if (!navLinks) return;
         navLinks.innerHTML = '';
-        
-        const icons = {
+        const icons = {
             intranet: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 12c0-5.25-4.25-9.5-9.5-9.5S2.5 6.75 2.5 12s4.25 9.5 9.5 9.5s9.5-4.25 9.5-9.5Z"/><path d="M12 2.5v19"/><path d="M2.5 12h19"/></svg>`,
-            administrativo: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>`,
+            administrativo: `<svg xmlns="http://www.w.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>`,
             captacao: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>`,
             financeiro: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
             gestao: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
@@ -121,7 +111,6 @@ document.addEventListener('DOMContentLoaded', function() {
             servico_social: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
             supervisao: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`,
         };
-
         const areas = {
             intranet: { titulo: 'Intranet Geral', descricao: 'Avisos, notícias e informações para todos.', url: 'URL_DA_INTRANET_GERAL_AQUI', roles: ['todos'], icon: icons.intranet },
             administrativo: { titulo: 'Intranet Administrativo', descricao: 'Processos, documentos e organização.', url: '#', roles: ['admin', 'administrativo'], icon: icons.administrativo },
@@ -134,9 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
             servico_social: { titulo: 'Intranet Serviço Social', descricao: 'Documentos e orientações do S.S.', url: '#', roles: ['admin', 'servico_social'], icon: icons.servico_social },
             supervisao: { titulo: 'Intranet Supervisão', descricao: 'Acompanhamento de equipes e feedback.', url: '#', roles: ['admin', 'supervisao'], icon: icons.supervisao },
         };
-
         let cardsParaMostrar = [];
-
         for (const key in areas) {
             const area = areas[key];
             const temPermissao = funcoes.includes('admin') || area.roles.includes('todos') || area.roles.some(role => funcoes.includes(role));
@@ -144,18 +131,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 cardsParaMostrar.push(area);
             }
         }
-
         cardsParaMostrar.sort((a, b) => {
             if (a.titulo.includes('Intranet Geral')) return -1;
             if (b.titulo.includes('Intranet Geral')) return 1;
             return a.titulo.localeCompare(b.titulo);
         });
-        
-        cardsParaMostrar.forEach(config => {
+        cardsParaMostrar.forEach(config => {
             const card = document.createElement('a');
             card.href = config.url;
             card.className = 'module-card';
-
             card.innerHTML = `
                 <div class="card-icon">${config.icon}</div>
                 <div class="card-content">
@@ -166,7 +150,6 @@ document.addEventListener('DOMContentLoaded', function() {
             navLinks.appendChild(card);
         });
     }
-
     // Inicia a aplicação
-    handleAuth();
+   handleAuth();
 });

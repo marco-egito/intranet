@@ -43,9 +43,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Mapeamento da view para os arquivos corretos
         if (viewName === 'grade_atendimento') {
-            filesToLoad.html = './administrativo.html';
-            filesToLoad.css = '../assets/css/administrativo.css';
-            filesToLoad.js = '../assets/js/administrativo.js';
+            filesToLoad.html = './administrativo-painel.html';
+            filesToLoad.css = '../assets/css/administrativo-painel.css';
+            filesToLoad.js = '../assets/js/administrativo-painel.js';
         }
         // Futuras views administrativas entrarão aqui com outros 'else if'
 

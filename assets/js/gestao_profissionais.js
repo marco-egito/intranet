@@ -39,9 +39,53 @@
         const deleteBtn = document.getElementById('modal-delete-btn');
         const form = document.getElementById('profissional-form');
 
+                // NOVA FUNÇÃO DE VALIDAÇÃO
+        function validateForm() {
+            let isValid = true;
+            const campos = [
+                { id: 'prof-nome', required: true },
+                { id: 'prof-email', required: true },
+                { id: 'prof-contato', required: true },
+                { id: 'prof-profissao', required: true }
+            ];
+
+            // Primeiro, limpa todos os erros antigos
+            campos.forEach(campo => {
+                const input = document.getElementById(campo.id);
+                const errorMessage = input.nextElementSibling;
+                input.classList.remove('is-invalid');
+                if (errorMessage && errorMessage.classList.contains('error-message')) {
+                    errorMessage.style.display = 'none';
+                }
+            });
+
+            // Agora, verifica cada campo
+            campos.forEach(campo => {
+                if (campo.required) {
+                    const input = document.getElementById(campo.id);
+                    const value = input.value.trim();
+                    if (!value) {
+                        isValid = false;
+                        input.classList.add('is-invalid');
+                        const errorMessage = input.nextElementSibling;
+                        if (errorMessage && errorMessage.classList.contains('error-message')) {
+                            errorMessage.style.display = 'block';
+                        }
+                    }
+                }
+            });
+
+            return isValid;
+        }
+
         function openModal(user = null) {
             if (!form || !modal) return;
             form.reset();
+
+            // Limpa qualquer validação anterior ao abrir o modal
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            form.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+            
             document.getElementById('modal-title').textContent = user ? 'Editar Profissional' : 'Adicionar Profissional';
             document.getElementById('profissional-id').value = user ? user.uid : ''; 
             document.getElementById('prof-email').disabled = !!user;
@@ -126,6 +170,10 @@
 
         if (saveBtn) {  
             saveBtn.addEventListener('click', async () => {
+                // CHAMA A VALIDAÇÃO AQUI
+                if (!validateForm()) {
+                    return; // Para a execução se o formulário for inválido
+                }
                 const id = document.getElementById('profissional-id').value;
                 const nomeCompleto = document.getElementById('prof-nome').value.trim();
                 const usernameInput = document.getElementById('prof-username');

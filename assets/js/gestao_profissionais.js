@@ -4,7 +4,6 @@
         return;
     }
 
-    // --- VARIÁVEIS GERAIS E CONTROLE DE INICIALIZAÇÃO ---
     const tabContainer = document.querySelector('.tab');
     const inicializado = {
         profissionais: false,
@@ -12,7 +11,6 @@
         valores: false
     };
 
-    // --- FUNÇÃO COMPARTILHADA PARA NAVEGAÇÃO DAS ABAS ---
     function openTab(evt, tabName) {
         document.querySelectorAll(".tabcontent").forEach(tc => tc.style.display = "none");
         document.querySelectorAll(".tablinks").forEach(tl => tl.classList.remove("active"));
@@ -23,7 +21,6 @@
         }
     }
 
-    // --- LÓGICA DA ABA: GESTÃO DE PROFISSIONAIS ---
     function initGestaoProfissionais() {
         if (inicializado.profissionais) return;
         
@@ -39,50 +36,75 @@
         const deleteBtn = document.getElementById('modal-delete-btn');
         const form = document.getElementById('profissional-form');
 
-                // NOVA FUNÇÃO DE VALIDAÇÃO
+        const campoContato = document.getElementById('prof-contato');
+        if(campoContato) {
+            campoContato.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, "");
+                value = value.substring(0, 11);
+                if (value.length > 2) {
+                    value = `(${value.substring(0, 2)}) ${value.substring(2)}`;
+                }
+                if (value.length > 9) {
+                    value = `${value.substring(0, 9)}-${value.substring(9)}`;
+                }
+                e.target.value = value;
+            });
+        }
+
         function validateForm() {
             let isValid = true;
-            const campos = [
-                { id: 'prof-nome', required: true },
-                { id: 'prof-email', required: true },
-                { id: 'prof-contato', required: true },
-                { id: 'prof-profissao', required: true }
-            ];
+            const campos = ['prof-nome', 'prof-email', 'prof-contato', 'prof-profissao'];
 
-            // Primeiro, limpa todos os erros antigos
-            campos.forEach(campo => {
-                const input = document.getElementById(campo.id);
-                const errorMessage = input.nextElementSibling;
+            campos.forEach(id => {
+                const input = document.getElementById(id);
                 input.classList.remove('is-invalid');
-                if (errorMessage && errorMessage.classList.contains('error-message')) {
-                    errorMessage.style.display = 'none';
-                }
+                input.parentElement.querySelectorAll('.error-message').forEach(msg => msg.style.display = 'none');
             });
 
-            // Agora, verifica cada campo
-            campos.forEach(campo => {
-                if (campo.required) {
-                    const input = document.getElementById(campo.id);
-                    const value = input.value.trim();
-                    if (!value) {
-                        isValid = false;
-                        input.classList.add('is-invalid');
-                        const errorMessage = input.nextElementSibling;
-                        if (errorMessage && errorMessage.classList.contains('error-message')) {
-                            errorMessage.style.display = 'block';
-                        }
-                    }
-                }
-            });
+            const nomeInput = document.getElementById('prof-nome');
+            if (!nomeInput.value.trim()) {
+                isValid = false;
+                nomeInput.classList.add('is-invalid');
+                nomeInput.parentElement.querySelector('[data-error-type="empty"]').style.display = 'block';
+            }
 
+            const emailInput = document.getElementById('prof-email');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailInput.value.trim()) {
+                isValid = false;
+                emailInput.classList.add('is-invalid');
+                emailInput.parentElement.querySelector('[data-error-type="empty"]').style.display = 'block';
+            } else if (!emailRegex.test(emailInput.value.trim())) {
+                isValid = false;
+                emailInput.classList.add('is-invalid');
+                emailInput.parentElement.querySelector('[data-error-type="format"]').style.display = 'block';
+            }
+
+            const contatoInput = document.getElementById('prof-contato');
+            const numTelefone = contatoInput.value.replace(/\D/g, "");
+            if (!contatoInput.value.trim()) {
+                isValid = false;
+                contatoInput.classList.add('is-invalid');
+                contatoInput.parentElement.querySelector('[data-error-type="empty"]').style.display = 'block';
+            } else if (numTelefone.length < 11) {
+                 isValid = false;
+                contatoInput.classList.add('is-invalid');
+                contatoInput.parentElement.querySelector('[data-error-type="format"]').style.display = 'block';
+            }
+
+            const profissaoInput = document.getElementById('prof-profissao');
+            if (!profissaoInput.value) {
+                isValid = false;
+                profissaoInput.classList.add('is-invalid');
+                profissaoInput.parentElement.querySelector('.error-message').style.display = 'block';
+            }
+            
             return isValid;
         }
 
         function openModal(user = null) {
             if (!form || !modal) return;
             form.reset();
-
-            // Limpa qualquer validação anterior ao abrir o modal
             form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
             form.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
             
@@ -90,16 +112,15 @@
             document.getElementById('profissional-id').value = user ? user.uid : ''; 
             document.getElementById('prof-email').disabled = !!user;
             
-            // LÓGICA DE SENHA REMOVIDA DAQUI
             if (deleteBtn) deleteBtn.style.display = user ? 'inline-block' : 'none';
 
             if (user) {
                 document.getElementById('prof-nome').value = user.nome || '';
                 document.getElementById('prof-email').value = user.email || '';
                 document.getElementById('prof-contato').value = user.contato || '';
+                document.getElementById('prof-profissao').value = user.profissao || '';
                 document.getElementById('prof-inativo').checked = user.inativo || false;
                 document.getElementById('prof-username').value = user.username || '';
-                document.getElementById('prof-profissao').value = user.profissao || '';
                 document.getElementById('prof-recebeDireto').checked = user.recebeDireto || false;
                 document.getElementById('prof-primeiraFase').checked = user.primeiraFase || false;
                 document.getElementById('prof-fazAtendimento').checked = user.fazAtendimento || false;
@@ -122,16 +143,7 @@
             users.forEach(user => {
                 const row = tableBody.insertRow();
                 const funcoesStr = (user.funcoes || []).join(', ') || 'Nenhuma';
-                row.innerHTML = `
-                    <td>${user.nome || ''}</td>
-                    <td>${user.contato || ''}</td>
-                    <td>${funcoesStr}</td>
-                    <td>${user.inativo ? 'Sim' : 'Não'}</td>
-                    <td>${user.primeiraFase ? 'Sim' : 'Não'}</td>
-                    <td>${user.fazAtendimento ? 'Sim' : 'Não'}</td>
-                    <td>${user.recebeDireto ? 'Sim' : 'Não'}</td>
-                    <td><button class="action-button edit-row-btn" data-id="${user.uid}">Editar</button></td>
-                `;
+                row.innerHTML = `<td>${user.nome || ''}</td><td>${user.contato || ''}</td><td>${funcoesStr}</td><td>${user.inativo ? 'Sim' : 'Não'}</td><td>${user.primeiraFase ? 'Sim' : 'Não'}</td><td>${user.fazAtendimento ? 'Sim' : 'Não'}</td><td>${user.recebeDireto ? 'Sim' : 'Não'}</td><td><button class="action-button edit-row-btn" data-id="${user.uid}">Editar</button></td>`;
             });
         }
 
@@ -140,7 +152,7 @@
             renderTable(localUsuariosList);
         }, error => {
             window.showToast("Erro ao carregar profissionais.", "error");
-            console.error("Erro ao carregar profissionais:", error);
+            console.error(error);
         });
 
         if (addBtn) addBtn.addEventListener('click', () => openModal(null));
@@ -162,7 +174,7 @@
                 if (!userId) { window.showToast('ID do profissional não encontrado.', 'error'); return; }
                 if (confirm('Tem certeza que deseja excluir os dados deste profissional? Isso NÃO remove o login dele.')) {
                     usuariosCollection.doc(userId).delete()
-                        .then(() => { window.showToast('Profissional excluído com sucesso.', 'success'); closeModal(); })
+                        .then(() => { window.showToast('Profissional excluído.', 'success'); closeModal(); })
                         .catch(err => { window.showToast(`Erro ao excluir: ${err.message}`, 'error'); });
                 }
             });
@@ -170,9 +182,8 @@
 
         if (saveBtn) {  
             saveBtn.addEventListener('click', async () => {
-                // CHAMA A VALIDAÇÃO AQUI
                 if (!validateForm()) {
-                    return; // Para a execução se o formulário for inválido
+                    return;
                 }
                 const id = document.getElementById('profissional-id').value;
                 const nomeCompleto = document.getElementById('prof-nome').value.trim();
@@ -188,35 +199,27 @@
                     nome: nomeCompleto,
                     email: document.getElementById('prof-email').value.trim(),
                     contato: document.getElementById('prof-contato').value.trim(),
+                    profissao: document.getElementById('prof-profissao').value,
                     inativo: document.getElementById('prof-inativo').checked,
                     funcoes: funcoesSelecionadas,
                     username: usernameInput.value.trim(),
-                    profissao: document.getElementById('prof-profissao').value,
                     recebeDireto: document.getElementById('prof-recebeDireto').checked,
                     primeiraFase: document.getElementById('prof-primeiraFase').checked,
                     fazAtendimento: document.getElementById('prof-fazAtendimento').checked,
                 };
-
-                if (!dadosDoFormulario.nome || !dadosDoFormulario.email) {
-                    window.showToast("Nome e E-mail são obrigatórios.", "error"); return;
-                }
+                
                 saveBtn.disabled = true;
                 try {
                     if (id) {
                         await usuariosCollection.doc(id).update(dadosDoFormulario);
                         window.showToast('Profissional atualizado com sucesso!', 'success');
-                        closeModal();
                     } else {
                         if (!functions) throw new Error("Serviço de Cloud Functions não inicializado.");
-                        
-                        // LÓGICA DE VALIDAÇÃO E ENVIO DE SENHA REMOVIDA DAQUI
-                        // A senha agora é criada apenas no backend
-
                         const criarNovoProfissional = functions.httpsCallable('criarNovoProfissional');
                         const resultado = await criarNovoProfissional(dadosDoFormulario);
                         window.showToast(resultado.data.message, 'success');
-                        closeModal();
                     }
+                    closeModal();
                 } catch (error) {
                     console.error("Erro ao salvar:", error);
                     window.showToast(`Erro: ${error.message}`, 'error');
@@ -229,7 +232,6 @@
         inicializado.profissionais = true;
     }
 
-    // --- LÓGICA DA ABA: VALORES POR SESSÃO ---
     function initValoresSessao() {
         if (inicializado.valores) return;
         const docRef = db.collection('financeiro').doc('configuracoes');
@@ -254,11 +256,9 @@
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
                 saveBtn.disabled = true;
-                const novoValorOnline = parseFloat(inputOnline.value) || 0;
-                const novoValorPresencial = parseFloat(inputPresencial.value) || 0;
-                const novaTaxaAcordo = parseFloat(inputTaxa.value) || 0;
+                const dados = { 'valores.online': parseFloat(inputOnline.value) || 0, 'valores.presencial': parseFloat(inputPresencial.value) || 0, 'valores.taxaAcordo': parseFloat(inputTaxa.value) || 0 };
                 try {
-                    await docRef.set({ valores: { online: novoValorOnline, presencial: novoValorPresencial, taxaAcordo: novaTaxaAcordo }}, { merge: true });
+                    await docRef.update(dados);
                     window.showToast('Valores salvos com sucesso!', 'success');
                 } catch (error) { console.error("Erro ao salvar valores: ", error); window.showToast('Erro ao salvar valores.', 'error');
                 } finally { saveBtn.disabled = false; }
@@ -268,7 +268,6 @@
         inicializado.valores = true;
     }
 
-    // --- LÓGICA DA ABA: MODELOS DE MENSAGEM ---
     function initModelosMensagem() {
         if (inicializado.mensagens) return;
         const docRef = db.collection('financeiro').doc('configuracoes');
@@ -292,9 +291,9 @@
                 if (doc.exists) {
                     const data = doc.data();
                     if (data.Mensagens) {
-                        inputAcordo.value = data.Mensagens.acordo || '';
+                       inputAcordo.value = data.Mensagens.acordo || '';
                         inputCobranca.value = data.Mensagens.cobranca || '';
-                        inputContrato.value = data.Mensagens.contrato || '';
+                       inputContrato.value = data.Mensagens.contrato || '';
                     }
                 }
             } catch (error) { console.error("Erro ao buscar mensagens: ", error); window.showToast('Erro ao buscar mensagens.', 'error'); }
@@ -303,11 +302,7 @@
             saveBtn.addEventListener('click', async () => {
                 if (!modoEdicao) { setMensagensState(true); return; }
                 saveBtn.disabled = true;
-                const novasMensagens = {
-                    'Mensagens.acordo': inputAcordo.value,
-                    'Mensagens.cobranca': inputCobranca.value,
-                    'Mensagens.contrato': inputContrato.value
-                };
+                const novasMensagens = { 'Mensagens.acordo': inputAcordo.value, 'Mensagens.cobranca': inputCobranca.value, 'Mensagens.contrato': inputContrato.value };
                 try {
                     await docRef.update(novasMensagens);
                     window.showToast('Mensagens salvas com sucesso!', 'success');
@@ -321,7 +316,6 @@
         inicializado.mensagens = true;
     }
 
-    // --- GERENCIADOR PRINCIPAL DAS ABAS ---
     if (tabContainer) {
         tabContainer.addEventListener('click', (e) => {
             if (e.target.classList.contains('tablinks')) {
@@ -334,7 +328,6 @@
         });
     }
 
-    // Inicializa a primeira aba por padrão
     const primeiraAba = document.querySelector('.tablinks[data-tab="GestaoProfissionais"]');
     if (primeiraAba) {
         primeiraAba.click();

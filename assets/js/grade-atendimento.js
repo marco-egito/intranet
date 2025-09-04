@@ -63,7 +63,11 @@
                 dropdown.innerHTML = createDropdownOptions();
                 
                 const savedValue = gradeData[hora]?.[`col${i}`] || '';
+                const horaFormatadaParaBusca = hora.replace(":", "-");
+                const savedValue = gradeData[horaFormatadaParaBusca]?.[`col${i}`] || '';
+                
                 dropdown.value = savedValue;
+              
                 
                 cell.appendChild(dropdown);
             }

@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderLogin(message = "Por favor, faça login para continuar.") {
         appContainer.innerHTML = `
-            <div id="login-view" class="content-box" style="text-align: center; max-width: 250px; margin: 30px auto;">
+            <div id="login-view" class="content-box">
                 <img src="./assets/img/logo-eupsico.png" alt="Logo EuPsico" style="max-width: 100px;">
                 <h2>Intranet EuPsico</h2>
                 <p>${message}</p>

@@ -192,29 +192,24 @@ body {
 }
 
 tr:nth-child(even) { background-color: #f9f9f9; }
-/* Faixa do cabeçalho */
 .view-header-band {
     background-color: #04396d;
     color: white;
-    padding: 15px 25px;
+    padding: 12px 25px; /* Deixando a faixa mais fina */
     border-radius: 8px;
     margin-bottom: 20px;
 }
-
+/* Título dentro da faixa ajustado */
 .view-header-band h1 {
     color: white !important;
-    margin: 0 0 10px 0;
+    margin: 0; /* Removendo margens para centralizar melhor */
     padding-bottom: 0;
     border-bottom: none;
-    text-align: left;
-    font-size: 1.8em;
+    text-align: center; /* Centralizando o título */
+    font-size: 1.6em; /* Leve ajuste de tamanho */
 }
 
-.view-header-band p {
-    color: #e0e0e0 !important;
-    margin: 0;
-    line-height: 1.5;
-}
+
 
 /* Botão de ação secundário (Voltar) */
 .secondary-action-button {
@@ -233,7 +228,14 @@ tr:nth-child(even) { background-color: #f9f9f9; }
 .secondary-action-button:hover {
     background-color: #185abc;
 }
-
+.page-subtitle {
+    text-align: center;
+    font-weight: bold;
+    color: #333;
+    font-size: 1.1em;
+    margin-top: 10px;
+    margin-bottom: 25px;
+}
 .main-container.sidebar-collapsed .sidebar-footer #logout-button::before {
     content: '→';
     font-size: 22px;

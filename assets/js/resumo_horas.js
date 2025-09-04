@@ -1,4 +1,4 @@
-// assets/js/resumo_horas.js
+// assets/js/resumo_horas.js (Versão 1 - Refatorado)
 (function() {
     if (!db) {
         console.error("Instância do Firestore (db) não encontrada.");
@@ -8,54 +8,52 @@
     const appContent = document.getElementById('resumo-horas-content');
 
     async function init() {
+        if (!appContent) return;
+        appContent.innerHTML = '<div class="loading-spinner"></div>';
+
         try {
-            // Busca os dados do Firestore em paralelo
-            const [usuariosSnapshot, configSnapshot] = await Promise.all([
-                db.collection('usuarios').get(),
+            // Busca os dados do Firestore em paralelo.
+            // ALTERAÇÃO: Agora busca a grade da coleção 'administrativo'.
+            const [usuariosSnapshot, gradesSnapshot, configSnapshot] = await Promise.all([
+                db.collection('usuarios').orderBy('nome').get(),
+                db.collection('administrativo').doc('grades').get(),
                 db.collection('financeiro').doc('configuracoes').get()
             ]);
 
             const usuarios = usuariosSnapshot.docs.map(doc => doc.data());
+            const gradesData = gradesSnapshot.exists ? gradesSnapshot.data() : {};
             const configData = configSnapshot.exists ? configSnapshot.data() : {};
-            
-            const DB = {
-                profissionais: usuarios,
-                grades: configData.grades || {},
-                valores: configData.valores || { online: 0, presencial: 0 }
-            };
+            const valores = configData.valores || { online: 0, presencial: 0 };
 
             let resumoCalculado = [];
-            (DB.profissionais || []).forEach(prof => {
-                // Pula profissionais inativos ou sem nome
-                if (!prof.nome || prof.inativo) return;
-                
-                let horasOnline = 0, horasPresencial = 0;
 
-                // Lógica de contagem de horas (mantida do seu script original)
-                if (DB.grades.online) {
-                    Object.values(DB.grades.online).forEach(dia => {
-                        Object.values(dia).forEach(hora => {
-                            Object.values(hora).forEach(nome => {
-                                if (nome === prof.nome) horasOnline++;
-                            });
-                        });
-                    });
-                }
-                if (DB.grades.presencial) {
-                    Object.values(DB.grades.presencial).forEach(dia => {
-                        Object.values(dia).forEach(hora => {
-                            Object.values(hora).forEach(nome => {
-                                if (nome === prof.nome) horasPresencial++;
-                            });
-                        });
-                    });
+            // NOVA LÓGICA DE CONTAGEM DE HORAS
+            usuarios.forEach(prof => {
+                // Pula profissionais sem username ou inativos
+                if (!prof.username || prof.inativo) return;
+                
+                let horasOnline = 0;
+                let horasPresencial = 0;
+
+                // Itera sobre todas as entradas na grade de horários
+                for (const key in gradesData) {
+                    const profissionalNaGrade = gradesData[key];
+
+                    // Compara o username na grade com o username do profissional atual
+                    if (profissionalNaGrade === prof.username) {
+                        if (key.startsWith('online.')) {
+                            horasOnline++;
+                        } else if (key.startsWith('presencial.')) {
+                            horasPresencial++;
+                        }
+                    }
                 }
                 
-                const dividaOnline = horasOnline * (DB.valores.online || 0);
-                const dividaPresencial = horasPresencial * (DB.valores.presencial || 0);
+                const dividaOnline = horasOnline * (valores.online || 0);
+                const dividaPresencial = horasPresencial * (valores.presencial || 0);
 
                 resumoCalculado.push({
-                    nome: prof.nome,
+                    nome: prof.nome, // Mostra o nome completo na tabela
                     totalDivida: dividaOnline + dividaPresencial,
                     horasOnline,
                     horasPresencial,
@@ -65,10 +63,7 @@
                 });
             });
 
-            // Ordena o resultado pelo nome do profissional
-            resumoCalculado.sort((a, b) => a.nome.localeCompare(b.nome));
-
-            // Renderiza a tabela
+            // O código para renderizar a tabela permanece o mesmo.
             let tableHtml = `
                 <div class="table-wrapper">
                     <table>
@@ -92,9 +87,9 @@
                         <td>${resumo.horasPresencial}</td>
                         <td>${resumo.horasOnline}</td>
                         <td><strong>${resumo.totalHoras}</strong></td>
-                        <td>R$ ${resumo.dividaPresencial.toFixed(2)}</td>
-                        <td>R$ ${resumo.dividaOnline.toFixed(2)}</td>
-                        <td><strong>R$ ${resumo.totalDivida.toFixed(2)}</strong></td>
+                        <td>R$ ${resumo.dividaPresencial.toFixed(2).replace('.', ',')}</td>
+                        <td>R$ ${resumo.dividaOnline.toFixed(2).replace('.', ',')}</td>
+                        <td><strong>R$ ${resumo.totalDivida.toFixed(2).replace('.', ',')}</strong></td>
                     </tr>`;
             });
 

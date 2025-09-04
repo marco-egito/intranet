@@ -8,7 +8,7 @@
     const inicializado = {
         profissionais: false,
         mensagens: false,
-        valores: false
+       valores: false
     };
 
     function openTab(evt, tabName) {
@@ -57,7 +57,6 @@
         }
 
         function closeModal() { if (modal) modal.style.display = 'none'; }
-
         function renderTable(users) {
             if (!tableBody) return;
             tableBody.innerHTML = '';
@@ -65,6 +64,7 @@
                 tableBody.innerHTML = '<tr><td colspan="8">Nenhum profissional encontrado.</td></tr>';
                 return;
             }
+
             users.forEach(user => {
                 const row = tableBody.insertRow();
                 const funcoesStr = (user.funcoes || []).join(', ') || 'Nenhuma';
@@ -89,7 +89,6 @@
 
         if (addBtn) addBtn.addEventListener('click', () => openModal(null));
         if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
-
         if (tableBody) {
             tableBody.addEventListener('click', (e) => {
                 if (e.target.classList.contains('edit-row-btn')) {
@@ -123,6 +122,7 @@
                     if (partes.length > 1) username += ' ' + partes[partes.length - 1];
                     usernameInput.value = username;
                 }
+
                 const funcoesSelecionadas = Array.from(form.querySelectorAll('input[name="funcoes"]:checked')).map(cb => cb.value);
                 const dadosDoFormulario = {
                     nome: nomeCompleto,
@@ -185,6 +185,7 @@
             saveBtn.addEventListener('click', async () => {
                 saveBtn.disabled = true;
                 const dados = { 'valores.online': parseFloat(inputOnline.value) || 0, 'valores.presencial': parseFloat(inputPresencial.value) || 0, 'valores.taxaAcordo': parseFloat(inputTaxa.value) || 0 };
+
                 try {
                     await docRef.update(dados);
                     window.showToast('Valores salvos com sucesso!', 'success');
@@ -219,9 +220,9 @@
                 if (doc.exists) {
                     const data = doc.data();
                     if (data.Mensagens) {
-                        inputAcordo.value = data.Mensagens.acordo || '';
+                       inputAcordo.value = data.Mensagens.acordo || '';
                         inputCobranca.value = data.Mensagens.cobranca || '';
-                        inputContrato.value = data.Mensagens.contrato || '';
+                       inputContrato.value = data.Mensagens.contrato || '';
                     }
                 }
             } catch (error) { console.error("Erro ao buscar mensagens: ", error); window.showToast('Erro ao buscar mensagens.', 'error'); }

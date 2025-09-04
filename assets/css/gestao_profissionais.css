@@ -46,7 +46,18 @@ tr:nth-child(even) { background-color: #f9f9f9; }
 .modal-footer .delete-btn { background-color: #dc3545; margin-right: auto; display: none; }
 .modal-footer .delete-btn:hover { background-color: #c82333; }
 #profissionais-table .action-button.edit-row-btn { background-color: #03204c; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+.error-message {
+    color: #dc3545; /* Vermelho */
+    font-size: 0.85em; /* Tamanho de fonte um pouco menor */
+    margin-top: 4px; /* Pequeno espaço acima da mensagem */
+    display: none; /* Começa escondido por padrão */
+}
 
+/* NOVO: Estilo para a borda do campo inválido */
+.form-group input.is-invalid,
+.form-group select.is-invalid {
+    border-color: #dc3545; /* Borda vermelha */
+}
 /* Estilos para a aba Modelos de Mensagem */
 .variables-info { background-color: #e9ecef; padding: 15px; border-radius: 5px; margin: 20px 0; font-size: 0.9em; line-height: 1.6; }
 .variables-info code { background-color: #d1d5db; padding: 2px 5px; border-radius: 3px; }/* --- Estilos Gerais da View --- */

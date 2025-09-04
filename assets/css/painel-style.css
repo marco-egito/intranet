@@ -190,6 +190,47 @@ body {
     content: '↩';
     font-size: 20px;
 }
+/* Faixa do cabeçalho */
+.view-header-band {
+    background-color: #04396d;
+    color: white;
+    padding: 20px 25px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.view-header-band h1 {
+    color: white !important;
+    margin: 0 0 10px 0;
+    padding-bottom: 0;
+    border-bottom: none;
+    text-align: left;
+    font-size: 1.8em;
+}
+
+.view-header-band p {
+    color: #e0e0e0 !important;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Botão de ação secundário (Voltar) */
+.secondary-action-button {
+    background-color: #1d70b7;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 0.9em;
+    margin-bottom: 20px;
+    transition: background-color 0.2s;
+}
+.secondary-action-button:hover {
+    background-color: #185abc;
+}
 
 .main-container.sidebar-collapsed .sidebar-footer #logout-button::before {
     content: '→';

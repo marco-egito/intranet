@@ -1,9 +1,7 @@
-// assets/js/formulario-supervisao.js (Versão 8 - Completo com Abertura Direta)
+// assets/js/formulario-supervisao.js (Versão 9 - Completo e Corrigido)
 (function() {
     if (!db || !auth.currentUser) {
         console.error("Firestore ou usuário não autenticado não encontrado.");
-        const view = document.getElementById('supervisao-view');
-        if(view) view.innerHTML = '<h2>Erro de autenticação. Por favor, recarregue a página.</h2>';
         return;
     }
 
@@ -17,7 +15,6 @@
     const supervisorSelect = document.getElementById('supervisor-nome');
     const psicologoSelect = document.getElementById('psicologo-nome');
     const listaRegistros = document.getElementById('lista-registros');
-    const deleteBtn = document.getElementById('delete-btn');
     const pdfBtn = document.getElementById('pdf-btn');
     const documentIdField = document.getElementById('document-id');
     const filtrosContainer = document.getElementById('filtros-container');
@@ -27,20 +24,16 @@
     
     let todosOsRegistros = [];
     let isSupervisor = false;
-    let debounceTimer;
 
     function debounce(func, delay) {
         let timeout;
-        return (...args) => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), delay);
-        };
+        return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), delay); };
     }
 
     async function popularSelects() {
         try {
-            const supervisoresQuery = db.collection('usuarios').where('funcoes', 'array-contains', 'supervisor').where('inativo', '!=', true);
-            const psicologosQuery = db.collection('usuarios').where('profissao', 'in', ['Psicólogo', 'Psicopedagoga', 'Musicoterapeuta']).where('inativo', '!=', true);
+            const supervisoresQuery = db.collection('usuarios').where('funcoes', 'array-contains', 'supervisor').where('inativo', '==', false);
+            const psicologosQuery = db.collection('usuarios').where('profissao', 'in', ['Psicólogo', 'Psicopedagoga', 'Musicoterapeuta']).where('inativo', '==', false);
             const [supervisoresSnapshot, psicologosSnapshot] = await Promise.all([supervisoresQuery.get(), psicologosQuery.get()]);
             supervisorSelect.innerHTML = '<option value="">Selecione um supervisor</option>';
             psicologoSelect.innerHTML = '<option value="">Selecione um psicólogo</option>';
@@ -49,20 +42,14 @@
                 const user = doc.data();
                 if (user && user.nome && user.uid) {
                     psicologoSelect.innerHTML += `<option value="${user.uid}">${user.nome}</option>`;
-                    if (user.uid === currentUser.uid) {
-                        isCurrentUserAPsicologo = true;
-                    }
+                    if (user.uid === currentUser.uid) { isCurrentUserAPsicologo = true; }
                 }
             });
             supervisoresSnapshot.forEach(doc => {
                 const user = doc.data();
-                if (user && user.nome && user.uid) {
-                    supervisorSelect.innerHTML += `<option value="${user.uid}">${user.nome}</option>`;
-                }
+                if (user && user.nome && user.uid) { supervisorSelect.innerHTML += `<option value="${user.uid}">${user.nome}</option>`; }
             });
-            if (isCurrentUserAPsicologo) {
-                psicologoSelect.value = currentUser.uid;
-            }
+            if (isCurrentUserAPsicologo) { psicologoSelect.value = currentUser.uid; }
         } catch (error) {
             console.error("Erro ao popular selects:", error);
             supervisorSelect.innerHTML = '<option value="">Erro ao carregar</option>';
@@ -71,6 +58,7 @@
     }
 
     function renderizarLista(registrosParaRenderizar) {
+        if (!listaRegistros) return;
         listaRegistros.innerHTML = '';
         if (registrosParaRenderizar.length === 0) {
             listaRegistros.innerHTML = '<p>Nenhum acompanhamento encontrado com os filtros atuais.</p>';
@@ -87,6 +75,7 @@
     }
 
     function aplicarFiltros() {
+        if (!filtroPacienteInput || !filtroPsicologoSelect) return;
         const pacienteTermo = filtroPacienteInput.value.toLowerCase();
         const psicologoUidSelecionado = isSupervisor ? filtroPsicologoSelect.value : '';
         let registrosFiltrados = todosOsRegistros.filter(reg => {
@@ -98,6 +87,7 @@
     }
     
     async function carregarRegistros() {
+        if (!listaRegistros) return;
         listaRegistros.innerHTML = '<p>Carregando...</p>';
         try {
             const comoPsicologoQuery = supervisaoCollection.where('psicologoUid', '==', currentUser.uid);
@@ -110,14 +100,10 @@
             if (isSupervisor) {
                 const psicologosSupervisionados = new Map();
                 todosOsRegistros.forEach(reg => {
-                    if(reg.psicologoUid && reg.psicologoNome) {
-                        psicologosSupervisionados.set(reg.psicologoUid, reg.psicologoNome);
-                    }
+                    if(reg.psicologoUid && reg.psicologoNome) { psicologosSupervisionados.set(reg.psicologoUid, reg.psicologoNome); }
                 });
                 filtroPsicologoSelect.innerHTML = '<option value="">Todos os Profissionais</option>';
-                psicologosSupervisionados.forEach((nome, uid) => {
-                    filtroPsicologoSelect.innerHTML += `<option value="${uid}">${nome}</option>`;
-                });
+                psicologosSupervisionados.forEach((nome, uid) => { filtroPsicologoSelect.innerHTML += `<option value="${uid}">${nome}</option>`; });
             }
             aplicarFiltros();
         } catch (error) {
@@ -127,6 +113,7 @@
     }
     
     function preencherFormulario(dados) {
+        if (!form) return;
         form.reset();
         documentIdField.value = dados.id || '';
         for (const key in dados) {
@@ -137,21 +124,19 @@
                         if (key === 'psicologoNome') field.value = dados.psicologoUid || '';
                         else if (key === 'supervisorNome') field.value = dados.supervisorUid || '';
                         else field.value = dados[key];
-                    } else {
-                        field.value = dados[key];
-                    }
+                    } else { field.value = dados[key]; }
                 }
             }
         }
-        listaContainer.style.display = 'none';
-        formContainer.style.display = 'block';
-        deleteBtn.style.display = 'block';
-        pdfBtn.style.display = 'block';
+        if(listaContainer) listaContainer.style.display = 'none';
+        if(formContainer) formContainer.style.display = 'block';
+        if(pdfBtn) pdfBtn.style.display = 'block';
         document.getElementById('paciente-iniciais').disabled = true;
         if (psicologoSelect) psicologoSelect.disabled = true;
     }
 
     function verificarCamposGatilho() {
+        if (!form) return false;
         const supervisor = form.elements['supervisorNome'].value;
         const inicioTerapia = form.elements['terapiaInicio'].value;
         const pacienteIniciais = form.elements['pacienteIniciais'].value;
@@ -193,60 +178,52 @@
         }
     };
 
-    listaRegistros.addEventListener('click', async (e) => {
-        const item = e.target.closest('.registro-item');
-        if (item) {
-            const docId = item.dataset.id;
-            try {
-                const docSnap = await supervisaoCollection.doc(docId).get();
-                if (docSnap.exists) {
-                    await popularSelects();
-                    preencherFormulario({ id: docId, ...docSnap.data() });
-                } else {
-                    alert("Este registro não foi encontrado. Pode ter sido excluído.");
-                    carregarRegistros();
+    if(listaRegistros) {
+        listaRegistros.addEventListener('click', async (e) => {
+            const item = e.target.closest('.registro-item');
+            if (item) {
+                const docId = item.dataset.id;
+                try {
+                    const docSnap = await supervisaoCollection.doc(docId).get();
+                    if (docSnap.exists) {
+                        await popularSelects();
+                        preencherFormulario({ id: docId, ...docSnap.data() });
+                    } else {
+                        alert("Este registro não foi encontrado. Pode ter sido excluído.");
+                        carregarRegistros();
+                    }
+                } catch (error) {
+                    console.error("Erro ao abrir registro:", error);
+                    alert("Não foi possível carregar os detalhes deste registro.");
                 }
-            } catch (error) {
-                console.error("Erro ao abrir registro:", error);
-                alert("Não foi possível carregar os detalhes deste registro.");
             }
-        }
-    });
-
-    form.addEventListener('input', debounce(autoSaveForm, 2000));
-    form.addEventListener('change', debounce(autoSaveForm, 2000));
-
-    deleteBtn.addEventListener('click', async () => {
-        const docId = documentIdField.value;
-        if (docId && confirm("Tem certeza que deseja excluir este acompanhamento? Esta ação não pode ser desfeita.")) {
-            try {
-                await supervisaoCollection.doc(docId).delete();
-                alert("Registro excluído com sucesso.");
-                showSupervisaoDashboard();
-            } catch (error) {
-                alert("Erro ao excluir o registro.");
-                console.error("Erro ao excluir:", error);
-            }
-        }
-    });
-
-    pdfBtn.addEventListener('click', function() {
-        this.textContent = 'Gerando PDF...';
-        this.disabled = true;
-        const formToPrint = document.getElementById('ficha-supervisao');
-        const paciente = formToPrint.elements['pacienteIniciais'].value || 'paciente';
-        const data = formToPrint.elements['supervisaoData'].value || new Date().toISOString().split('T')[0];
-        const filename = `Acompanhamento_${paciente.replace(/\s+/g, '_')}_${data}.pdf`;
-        const options = { margin: 10, filename: filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, logging: false }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-        html2pdf().from(formToPrint).set(options).save().then(() => {
-            this.textContent = 'Exportar para PDF';
-            this.disabled = false;
-        }).catch(err => {
-            console.error("Erro ao gerar PDF:", err);
-            this.textContent = 'Erro! Tente Novamente';
-            this.disabled = false;
         });
-    });
+    }
+
+    if(form) {
+        form.addEventListener('input', debounce(autoSaveForm, 2000));
+        form.addEventListener('change', debounce(autoSaveForm, 2000));
+    }
+
+    if(pdfBtn) {
+        pdfBtn.addEventListener('click', function() {
+            this.textContent = 'Gerando PDF...';
+            this.disabled = true;
+            const elementToPrint = document.getElementById('form-container');
+            const paciente = form.elements['pacienteIniciais'].value || 'paciente';
+            const data = form.elements['supervisaoData'].value || new Date().toISOString().split('T')[0];
+            const filename = `Acompanhamento_${paciente.replace(/\s+/g, '_')}_${data}.pdf`;
+            const options = { margin: 10, filename: filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, logging: false }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+            html2pdf().from(elementToPrint).set(options).save().then(() => {
+                this.textContent = 'Exportar para PDF';
+                this.disabled = false;
+            }).catch(err => {
+                console.error("Erro ao gerar PDF:", err);
+                this.textContent = 'Erro! Tente Novamente';
+                this.disabled = false;
+            });
+        });
+    }
     
     async function init() {
         const userDoc = await db.collection("usuarios").doc(currentUser.uid).get();
@@ -268,16 +245,13 @@
         else if (window.formSupervisaoMode === 'new') {
             if(listaContainer) listaContainer.style.display = 'none';
             if(formContainer) formContainer.style.display = 'block';
-            if(deleteBtn) deleteBtn.style.display = 'none';
             if(pdfBtn) pdfBtn.style.display = 'none';
             const pacienteIniciaisInput = document.getElementById('paciente-iniciais');
             if(pacienteIniciaisInput) pacienteIniciaisInput.disabled = false;
             if(psicologoSelect) psicologoSelect.disabled = false;
             if(form) form.reset();
             if(documentIdField) documentIdField.value = '';
-            
             await popularSelects();
-
             if (psicologoSelect && psicologoSelect.value === currentUser.uid) {
                 psicologoSelect.disabled = true;
             }

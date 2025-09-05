@@ -14,16 +14,72 @@
                 <h1>Painel do Supervisor</h1>
             </div>
             <a href="../index.html" class="secondary-action-button">&larr; Voltar para a Intranet Principal</a>
-            <div id="supervisor-grid-container">
-                <div class="loading-spinner"></div>
-            </div>
+
+            <div id="meu-perfil-container">
+                <h2>Meu Perfil</h2>
+                <div id="supervisor-card-aqui">
+                    <div class="loading-spinner"></div>
+                </div>
+                </div>
+
+            <hr style="margin: 30px 0;">
+
+            <div id="meus-supervisionados-container">
+                <h2>Meus Supervisionados</h2>
+                <p class="page-subtitle">Abaixo estão todos os acompanhamentos onde você foi selecionado(a) como supervisor(a).</p>
+                </div>
         </div>
 
         <div id="view-content-area" style="display: none;"></div>
     </div>
 
     <div id="edit-profile-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Perfil de Supervisor</h2>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-profile-form">
+                    <input type="hidden" id="editing-uid">
+                    <div class="form-group photo-edit-section">
+                        <label>Foto de Perfil</label>
+                        <div class="photo-preview-wrapper">
+                            <img id="profile-photo-preview" src="../assets/img/default-user.png" alt="Pré-visualização da foto">
+                            <button type="button" id="change-photo-btn" class="secondary-button">Alterar Foto</button>
+                            <input type="file" id="photo-file-input" accept="image/*" style="display: none;">
+                            <small>Para melhores resultados, use uma imagem quadrada (ex: 300x300 pixels).</small>
+                        </div>
+                    </div>
+                    <p><strong>Instrução:</strong> Para listas (como especialização, atuação), coloque um item por linha.</p>
+                    <div class="form-group">
+                        <label for="edit-formacao">Formação (Ex: Psicóloga)</label>
+                        <input type="text" id="edit-formacao">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-especializacao">Especialização (um por linha)</label>
+                        <textarea id="edit-especializacao" rows="5"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-atuacao">Atuação (um por linha)</label>
+                        <textarea id="edit-atuacao" rows="5"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-supervisaoInfo">Informações de Supervisão (um por linha)</label>
+                        <textarea id="edit-supervisaoInfo" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-diasHorarios">Dias e Horários (um por linha)</label>
+                        <textarea id="edit-diasHorarios" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-edit-btn" class="secondary-button">Cancelar</button>
+                <button id="save-profile-btn" class="action-button">Salvar Alterações</button>
+            </div>
         </div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>

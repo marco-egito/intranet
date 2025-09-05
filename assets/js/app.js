@@ -132,7 +132,11 @@ document.addEventListener('DOMContentLoaded', function() {
             plantao: { titulo: 'Intranet Plantão', descricao: 'Escalas, contatos e procedimentos.', url: '#', roles: ['admin', 'plantao'], icon: icons.plantao },
             rh: { titulo: 'Recursos Humanos', descricao: 'Informações sobre vagas e comunicados.', url: '#', roles: ['admin', 'rh'], icon: icons.rh },
             servico_social: { titulo: 'Intranet Serviço Social', descricao: 'Documentos e orientações do S.S.', url: '#', roles: ['admin', 'servico_social'], icon: icons.servico_social },
-            supervisao: { titulo: 'Intranet Supervisão', descricao: 'Acompanhamento de equipes e feedback.', url: '#', roles: ['admin', 'supervisao'], icon: icons.supervisao },
+            supervisao: { 
+                    titulo: 'Intranet Supervisão', 
+                    descricao: 'Acompanhamento de equipes e feedback.', 
+                    url: './pages/supervisao-painel.html', 
+                    roles: ['admin', 'supervisor'], icon: icons.supervisao },
         };
 
         let cardsParaMostrar = [];

@@ -240,3 +240,9 @@ tr:nth-child(even) { background-color: #f9f9f9; }
     content: '→';
     font-size: 22px;
 }
+/* NOVO: Estilo para o container principal dos painéis (Admin/Supervisor) */
+.admin-panel-container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+}

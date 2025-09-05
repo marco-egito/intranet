@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+        // ALTERAÇÃO: A lógica de permissão foi aprimorada
     function renderSupervisaoCards() {
         if (!supervisaoModulesGrid) return;
         supervisaoModulesGrid.innerHTML = '';
@@ -81,19 +82,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 descricao: 'Visualize todas as fichas que você preencheu ou supervisionou.',
                 roles: ['admin', 'supervisor'], // Apenas roles de gestão
                 professions: ['Psicólogo', 'Psicopedagoga', 'Musicoterapeuta'] // Profissões que podem ver suas fichas
-                }
-           };
+            }
         };
 
         for (const key in supervisaoModules) {
             const module = supervisaoModules[key];
-            const hasPermission = module.roles.some(role => currentUserRoles.includes(role));
+            const userRoles = currentUserData.funcoes || [];
+            const userProfession = currentUserData.profissao || '';
+
+            // Verifica se o usuário tem a função necessária
+            const hasRolePermission = module.roles.some(role => userRoles.includes(role));
+            // Verifica se o usuário tem a profissão necessária
+            const hasProfessionPermission = module.professions.includes(userProfession);
+            
+            // O usuário tem permissão se tiver a função OU a profissão
+            const hasPermission = hasRolePermission || hasProfessionPermission;
+
             if (hasPermission) {
                 const card = document.createElement('div');
                 card.className = 'module-card';
-                card.dataset.view = key;
-                card.dataset.mode = module.mode;
-                card.innerHTML = `<div class="card-icon">${module.icon}</div><div class="card-content"><h3>${module.titulo}</h3><p>${module.descricao}</p></div>`;
+                card.dataset.view = key === 'nova_ficha' ? 'formulario_supervisao' : 'formulario_supervisao';
+                card.dataset.mode = key === 'nova_ficha' ? 'new' : 'list';
+                card.innerHTML = `<div class="card-icon">${key === 'nova_ficha' ? icons.form : icons.list}</div><div class="card-content"><h3>${module.titulo}</h3><p>${module.descricao}</p></div>`;
                 supervisaoModulesGrid.appendChild(card);
             }
         }
@@ -102,17 +112,20 @@ document.addEventListener('DOMContentLoaded', function() {
     supervisaoModulesGrid.addEventListener('click', (e) => {
         const card = e.target.closest('.module-card');
         if (card) {
-            loadView('formulario_supervisao', card.dataset.mode);
+            loadView(card.dataset.view, card.dataset.mode);
         }
     });
 
+    // ALTERAÇÃO: Armazena o objeto de dados completo do usuário
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             try {
                 const userDoc = await db.collection("usuarios").doc(user.uid).get();
                 if (userDoc.exists) {
-                    currentUserRoles = userDoc.data().funcoes || [];
+                    currentUserData = userDoc.data(); // Salva todos os dados
                     renderSupervisaoCards();
+                } else {
+                    supervisaoModulesGrid.innerHTML = '<h2>Usuário não encontrado.</h2>';
                 }
             } catch(error) {
                  supervisaoModulesGrid.innerHTML = '<h2>Erro ao verificar permissões.</h2>';

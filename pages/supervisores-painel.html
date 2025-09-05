@@ -28,6 +28,16 @@
             </div>
             <div class="modal-body">
                 <form id="edit-profile-form">
+                    <input type="hidden" id="editing-uid"> <div class="form-group photo-edit-section">
+                        <label>Foto de Perfil</label>
+                        <div class="photo-preview-wrapper">
+                            <img id="profile-photo-preview" src="../assets/img/default-user.png" alt="Pré-visualização da foto">
+                            <button type="button" id="change-photo-btn" class="secondary-button">Alterar Foto</button>
+                            <input type="file" id="photo-file-input" accept="image/*" style="display: none;">
+                            <small>Para melhores resultados, use uma imagem quadrada (ex: 300x300 pixels).</small>
+                        </div>
+                    </div>
+                    
                     <p><strong>Instrução:</strong> Para listas (como especialização, atuação), coloque um item por linha.</p>
                     
                     <div class="form-group">
@@ -62,6 +72,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
     <script src="../assets/js/supervisores.js"></script>
 </body>
 </html>

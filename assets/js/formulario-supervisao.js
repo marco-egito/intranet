@@ -44,9 +44,8 @@
 
             const [supervisoresSnapshot, psicologosSnapshot] = await Promise.all([
                 supervisoresQuery.get(),
-                psicologosSnapshot.get()
+                psicologosQuery.get() // Corrigido!
             ]);
-
             supervisorSelect.innerHTML = '<option value="">Selecione um supervisor</option>';
             psicologoSelect.innerHTML = '<option value="">Selecione um psicólogo</option>';
 

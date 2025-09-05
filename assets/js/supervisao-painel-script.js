@@ -73,17 +73,16 @@ document.addEventListener('DOMContentLoaded', function() {
             nova_ficha: {
                 titulo: 'Ficha de Supervisão',
                 descricao: 'Clique aqui para preencher uma nova ficha.',
-                roles: ['admin', 'supervisor', 'psicologo', 'psicopedagogo', 'musicoterapeuta'], // Quem pode criar fichas
-                icon: icons.form,
-                mode: 'new'
+                roles: ['admin', 'supervisor'], // Apenas roles de gestão
+                professions: ['Psicólogo', 'Psicopedagoga', 'Musicoterapeuta'] // Profissões que podem preencher
             },
             visualizar: {
                 titulo: 'Acompanhamentos',
                 descricao: 'Visualize todas as fichas que você preencheu ou supervisionou.',
-                roles: ['admin', 'supervisor', 'psicologo', 'psicopedagogo', 'musicoterapeuta'], // Quem pode ver fichas
-                icon: icons.list,
-                mode: 'list'
-            }
+                roles: ['admin', 'supervisor'], // Apenas roles de gestão
+                professions: ['Psicólogo', 'Psicopedagoga', 'Musicoterapeuta'] // Profissões que podem ver suas fichas
+                }
+           };
         };
 
         for (const key in supervisaoModules) {

@@ -1,4 +1,4 @@
-// assets/js/cobranca_mensal.js (Versão 1 - Refatorado)
+// assets/js/cobranca_mensal.js (Versão 2 - Migração para UID)
 (function() {
     if (!db) {
         console.error("Instância do Firestore (db) não encontrada.");
@@ -18,7 +18,6 @@
         if (!appContent) return;
         appContent.innerHTML = '<div class="loading-spinner"></div>';
         try {
-            // ALTERAÇÃO: Agora busca a grade da coleção 'administrativo' também.
             const [usuariosSnapshot, gradesSnapshot, configSnapshot] = await Promise.all([
                 db.collection('usuarios').get(),
                 db.collection('administrativo').doc('grades').get(),
@@ -26,7 +25,7 @@
             ]);
 
             DB.profissionais = usuariosSnapshot.docs.map(doc => doc.data());
-            DB.grades = gradesSnapshot.exists ? gradesSnapshot.data() : {}; // Dados da grade atualizados
+            DB.grades = gradesSnapshot.exists ? gradesSnapshot.data() : {};
             const configData = configSnapshot.exists ? configSnapshot.data() : {};
             
             DB.valores = configData.valores || {};
@@ -72,50 +71,48 @@
             </tr></thead><tbody>`;
         
         let resumoCalculado = [];
-        // ALTERAÇÃO: Lógica de cálculo de horas substituída pela do "Resumo de Horas"
         DB.profissionais.forEach(prof => {
             if (!prof.username || prof.inativo || prof.primeiraFase === true || prof.fazAtendimento !== true) {
                 return;
             }
-            
             let horasOnline = 0;
             let horasPresencial = 0;
-
             for (const key in DB.grades) {
-                const profissionalNaGrade = DB.grades[key];
-                if (profissionalNaGrade === prof.username) {
-                    if (key.startsWith('online.')) {
-                        horasOnline++;
-                    } else if (key.startsWith('presencial.')) {
-                        horasPresencial++;
-                    }
+                if (DB.grades[key] === prof.username) {
+                    if (key.startsWith('online.')) horasOnline++;
+                    else if (key.startsWith('presencial.')) horasPresencial++;
                 }
             }
-            
             const totalDivida = (horasOnline * (DB.valores.online || 0)) + (horasPresencial * (DB.valores.presencial || 0));
-            resumoCalculado.push({ nome: prof.nome, totalDivida: totalDivida });
+            resumoCalculado.push({ nome: prof.nome, uid: prof.uid, totalDivida: totalDivida });
         });
 
         resumoCalculado.sort((a,b) => a.nome.localeCompare(b.nome));
 
         resumoCalculado.forEach(resumo => {
-            const nomeKey = sanitizeKey(resumo.nome);
-            const cobrancaProf = (DB.cobranca[ano] && DB.cobranca[ano][nomeKey]) ? DB.cobranca[ano][nomeKey] : {};
-            
+            const profId = resumo.uid;
+            const nomeKey_antigo = sanitizeKey(resumo.nome);
+
             let anoPassado = ano;
             let mesPassadoIndex = mesIndex - 1;
             if (mesPassadoIndex < 0) { mesPassadoIndex = 11; anoPassado--; }
             const mesPassado = meses[mesPassadoIndex];
-            const valorMesPassado = (DB.cobranca[anoPassado]?.[nomeKey]?.[mesPassado]) || 0;
-            
-            let valorParaExibir = 0;
-            if (cobrancaProf[mes] !== undefined) {
-                valorParaExibir = cobrancaProf[mes];
-            } else if (isCurrentMonthView) {
+
+            let valorMesPassado = DB.cobranca[anoPassado]?.[profId]?.[mesPassado];
+            if (valorMesPassado === undefined) {
+                valorMesPassado = DB.cobranca[anoPassado]?.[nomeKey_antigo]?.[mesPassado] || 0;
+            }
+
+            let valorParaExibir = DB.cobranca[ano]?.[profId]?.[mes];
+            if (valorParaExibir === undefined) {
+                valorParaExibir = DB.cobranca[ano]?.[nomeKey_antigo]?.[mes];
+            }
+            if (valorParaExibir === undefined && isCurrentMonthView) {
                 valorParaExibir = resumo.totalDivida;
             }
+            valorParaExibir = valorParaExibir || 0;
             
-            tableHtml += `<tr data-nome-key="${nomeKey}" data-valor-original="${valorParaExibir.toFixed(2)}">
+            tableHtml += `<tr data-prof-id="${profId}" data-valor-original="${valorParaExibir.toFixed(2)}">
                 <td>${resumo.nome}</td>
                 <td>R$ ${valorMesPassado.toFixed(2).replace('.',',')}</td>
                 <td>R$ ${valorParaExibir.toFixed(2).replace('.',',')}</td>
@@ -130,10 +127,71 @@
     appContent.addEventListener('click', async (e) => {
         const target = e.target;
         
-        if (target.classList.contains('row-edit-btn')) { /* ...código inalterado... */ }
-        if (target.classList.contains('row-cancel-btn')) { /* ...código inalterado... */ }
-        if (target.classList.contains('row-save-btn')) { /* ...código inalterado... */ }
-        if (target.classList.contains('whatsapp-btn')) { /* ...código inalterado... */ }
+        if (target.classList.contains('row-edit-btn')) {
+            e.preventDefault();
+            const row = target.closest('tr');
+            const valorOriginal = parseFloat(row.dataset.valorOriginal);
+            const valorCell = row.cells[2];
+            const acoesCell = row.cells[3];
+            valorCell.innerHTML = `<input type="number" class="edit-valor-input" step="0.01" value="${valorOriginal.toFixed(2)}">`;
+            acoesCell.innerHTML = `<button class="action-button save-btn row-save-btn">Salvar</button><button class="action-button cancel-btn row-cancel-btn">Cancelar</button>`;
+        }
+
+        if (target.classList.contains('row-cancel-btn')) {
+            e.preventDefault();
+            const ano = parseInt(document.getElementById('cobranca-ano-selector').value);
+            const mesIndex = parseInt(document.getElementById('cobranca-mes-selector').value);
+            renderCobranca(ano, mesIndex);
+        }
+
+        if (target.classList.contains('row-save-btn')) {
+            e.preventDefault();
+            target.disabled = true;
+            target.textContent = 'Salvando...';
+
+            const row = target.closest('tr');
+            const profId = row.dataset.profId;
+            const input = row.querySelector('.edit-valor-input');
+            const novoValor = parseFloat(input.value);
+            const ano = parseInt(document.getElementById('cobranca-ano-selector').value);
+            const mesIndex = parseInt(document.getElementById('cobranca-mes-selector').value);
+            const mes = meses[mesIndex];
+
+            if (isNaN(novoValor) || !profId) {
+                window.showToast('Valor inválido ou ID do profissional não encontrado.', 'error');
+                renderCobranca(ano, mesIndex);
+                return;
+            }
+            
+            const path = `cobranca.${ano}.${profId}.${mes}`;
+            try {
+                await db.collection('financeiro').doc('configuracoes').update({ [path]: novoValor });
+                if (!DB.cobranca[ano]) DB.cobranca[ano] = {};
+                if (!DB.cobranca[ano][profId]) DB.cobranca[ano][profId] = {};
+                DB.cobranca[ano][profId][mes] = novoValor;
+                window.showToast(`Valor salvo com sucesso!`, 'success');
+            } catch (err) {
+                console.error("Erro ao salvar:", err);
+                window.showToast("Ocorreu um erro ao salvar.", 'error');
+            } finally {
+                renderCobranca(ano, mesIndex);
+            }
+        }
+        
+        if (target.classList.contains('whatsapp-btn')) {
+            e.preventDefault();
+            const nome = target.dataset.nome;
+            const profInfo = DB.profissionais.find(p => p.nome === nome);
+            const contato = profInfo ? (profInfo.contato || '').replace(/\D/g, '') : '';
+            if(!contato) { alert(`Contato para ${nome} não encontrado.`); return; }
+            
+            const template = DB.Mensagens.cobranca || 'Olá, {nomeProfissional}! Lembrete do repasse de R$ {valor} referente ao mês de {mes}.';
+            const ano = document.getElementById('cobranca-ano-selector').value;
+            const mes = meses[document.getElementById('cobranca-mes-selector').value];
+            let message = template.replace('{nomeProfissional}', nome).replace('{valor}', target.dataset.valor).replace('{mes}', `${mes.charAt(0).toUpperCase() + mes.slice(1)}/${ano}`);
+            
+            window.open(`https://wa.me/55${contato}?text=${encodeURIComponent(message)}`, '_blank');
+        }
     });
     
     appContent.addEventListener('change', function(e) {

@@ -1,4 +1,9 @@
-// assets/js/cobranca_mensal.js (Versão 2 - Migração para UID)
+(function() {
+    if (!db) {
+        console.error("Instância do Firestore (db) não encontrada.");
+        return;
+    }
+    // assets/js/cobranca_mensal.js (Versão 2 - Migração para UID)
 async function init() {
     // ---- CÓDIGO TEMPORÁRIO PARA EXECUTAR A MIGRAÇÃO ----
     // Remova este bloco após a migração ser bem-sucedida
@@ -24,12 +29,6 @@ async function init() {
         }
     }
     // ---- FIM DO CÓDIGO TEMPORÁRIO ----
-(function() {
-    if (!db) {
-        console.error("Instância do Firestore (db) não encontrada.");
-        return;
-    }
-
     const appContent = document.getElementById('cobranca-mensal-content');
     let DB = { profissionais: [], grades: {}, valores: {}, cobranca: {}, Mensagens: {} };
     const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];

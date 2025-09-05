@@ -134,16 +134,17 @@ document.addEventListener('DOMContentLoaded', function() {
             servico_social: { titulo: 'Intranet Serviço Social', descricao: 'Documentos e orientações do S.S.', url: '#', roles: ['admin', 'servico_social'], icon: icons.servico_social },
             supervisao: { 
                     titulo: 'Intranet Supervisão', 
-                    descricao: 'Acompanhamento de equipes e feedback.', 
+                    descricao: 'Preencha e visualize suas fichas de acompanhamento.', 
                     url: './pages/supervisao-painel.html', 
-                    roles: ['admin', 'supervisor', 'atendimento'], icon: icons.supervisao 
+                    roles: ['admin', 'assistente', 'psicologo', 'psicopedagogo', 'musicoterapeuta'], 
+                    icon: icons.supervisao  
             },
            supervisores: { 
-                        titulo: 'Supervisores', 
+                        titulo: 'Painel do Supervisor', 
                         descricao: 'Conheça os perfis e horários dos supervisores.', 
                         url: './pages/supervisores-painel.html', // APONTA PARA A NOVA PÁGINA
-                        roles: ['admin', 'supervisor', 'assistente', 'psicologo', 'psicopedagogo', 'musicoterapeuta'], // Todos podem ver
-                        icon: icons.supervisao // Reutilizando o ícone de supervisão
+                        roles: ['admin', 'supervisor'], // Apenas estas funções podem ver este card
+                        icon: icons.rh // Usando um ícone diferente para distinguir
                     },
         };
 

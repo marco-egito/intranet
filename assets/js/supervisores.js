@@ -51,7 +51,7 @@ const db = firebase.firestore();
         try {
             const query = db.collection('usuarios')
                 .where('funcoes', 'array-contains', 'supervisor')
-                .where('inativo', '!=', true)
+                .where('inativo', '==', false)
                 .orderBy('nome');
             const snapshot = await query.get();
             container.innerHTML = '';

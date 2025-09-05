@@ -1,4 +1,4 @@
-// assets/js/formulario-supervisao.js (Versão 6 - Completo com Auto-Save Aprimorado)
+// assets/js/formulario-supervisao.js (Versão 7 - Completo com Auto-Save Aprimorado)
 (function() {
     if (!db || !auth.currentUser) {
         console.error("Firestore ou usuário não autenticado não encontrado.");
@@ -44,12 +44,9 @@
                 .where('profissao', 'in', ['Psicólogo', 'Psicopedagoga', 'Musicoterapeuta'])
                 .where('inativo', '!=', true);
             const [supervisoresSnapshot, psicologosSnapshot] = await Promise.all([supervisoresQuery.get(), psicologosQuery.get()]);
-
             supervisorSelect.innerHTML = '<option value="">Selecione um supervisor</option>';
             psicologoSelect.innerHTML = '<option value="">Selecione um psicólogo</option>';
-            
             let isCurrentUserAPsicologo = false;
-
             psicologosSnapshot.forEach(doc => {
                 const user = doc.data();
                 psicologoSelect.innerHTML += `<option value="${user.uid}">${user.nome}</option>`;
@@ -57,16 +54,13 @@
                     isCurrentUserAPsicologo = true;
                 }
             });
-
             supervisoresSnapshot.forEach(doc => {
                 const user = doc.data();
                 supervisorSelect.innerHTML += `<option value="${user.uid}">${user.nome}</option>`;
             });
-
             if (isCurrentUserAPsicologo) {
                 psicologoSelect.value = currentUser.uid;
             }
-
         } catch (error) {
             console.error("Erro ao popular selects:", error);
             supervisorSelect.innerHTML = '<option value="">Erro ao carregar</option>';
@@ -85,10 +79,7 @@
             const div = document.createElement('div');
             div.className = 'registro-item';
             div.dataset.id = registro.id;
-            div.innerHTML = `
-                <span><strong>Paciente:</strong> ${registro.pacienteIniciais || 'N/A'}</span>
-                <span><strong>Psicólogo(a):</strong> ${registro.psicologoNome || 'N/A'}</span>
-                <span><strong>Data:</strong> ${registro.supervisaoData ? new Date(registro.supervisaoData + 'T00:00:00').toLocaleDateString('pt-BR') : 'N/A'}</span>`;
+            div.innerHTML = `<span><strong>Paciente:</strong> ${registro.pacienteIniciais || 'N/A'}</span><span><strong>Psicólogo(a):</strong> ${registro.psicologoNome || 'N/A'}</span><span><strong>Data:</strong> ${registro.supervisaoData ? new Date(registro.supervisaoData + 'T00:00:00').toLocaleDateString('pt-BR') : 'N/A'}</span>`;
             listaRegistros.appendChild(div);
         });
     }
@@ -155,17 +146,7 @@
         deleteBtn.style.display = 'block';
         pdfBtn.style.display = 'block';
         document.getElementById('paciente-iniciais').disabled = true;
-    }
-
-    function verificarCamposGatilho() {
-        const supervisor = form.elements['supervisorNome'].value;
-        const inicioTerapia = form.elements['terapiaInicio'].value;
-        const pacienteIniciais = form.elements['pacienteIniciais'].value;
-        const pacienteIdade = form.elements['pacienteIdade'].value;
-        const pacienteGenero = form.elements['pacienteGenero'].value;
-        const pacienteSessoes = form.elements['pacienteSessoes'].value;
-        const pacienteApresentacao = form.elements['pacienteApresentacao'].value;
-        return supervisor && inicioTerapia && pacienteIniciais && pacienteIdade && pacienteGenero && pacienteSessoes && pacienteApresentacao;
+        if (psicologoSelect) psicologoSelect.disabled = true;
     }
 
     const autoSaveForm = async () => {
@@ -199,15 +180,29 @@
         }
     };
 
+    function verificarCamposGatilho() {
+        const supervisor = form.elements['supervisorNome'].value;
+        const inicioTerapia = form.elements['terapiaInicio'].value;
+        const pacienteIniciais = form.elements['pacienteIniciais'].value;
+        const pacienteIdade = form.elements['pacienteIdade'].value;
+        const pacienteGenero = form.elements['pacienteGenero'].value;
+        const pacienteSessoes = form.elements['pacienteSessoes'].value;
+        const pacienteApresentacao = form.elements['pacienteApresentacao'].value;
+        return supervisor && inicioTerapia && pacienteIniciais && pacienteIdade && pacienteGenero && pacienteSessoes && pacienteApresentacao;
+    }
+
     listaRegistros.addEventListener('click', async (e) => {
         const item = e.target.closest('.registro-item');
         if (item) {
             const docId = item.dataset.id;
             try {
                 const docSnap = await supervisaoCollection.doc(docId).get();
-                if (docSnap.exists()) {
+                if (docSnap.exists) {
                     await popularSelects();
                     preencherFormulario({ id: docId, ...docSnap.data() });
+                } else {
+                    alert("Este registro não foi encontrado. Pode ter sido excluído.");
+                    carregarRegistros();
                 }
             } catch (error) {
                 console.error("Erro ao abrir registro:", error);
@@ -240,13 +235,7 @@
         const paciente = formToPrint.elements['pacienteIniciais'].value || 'paciente';
         const data = formToPrint.elements['supervisaoData'].value || new Date().toISOString().split('T')[0];
         const filename = `Acompanhamento_${paciente.replace(/\s+/g, '_')}_${data}.pdf`;
-        const options = {
-            margin:       10,
-            filename:     filename,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true, logging: false },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
+        const options = { margin: 10, filename: filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, logging: false }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
         html2pdf().from(formToPrint).set(options).save().then(() => {
             this.textContent = 'Exportar para PDF';
             this.disabled = false;
@@ -274,7 +263,12 @@
             if(pacienteIniciaisInput) pacienteIniciaisInput.disabled = false;
             if(form) form.reset();
             if(documentIdField) documentIdField.value = '';
-            popularSelects();
+            
+            await popularSelects();
+
+            if (psicologoSelect && psicologoSelect.value === currentUser.uid) {
+                psicologoSelect.disabled = true;
+            }
         } else {
             if(listaContainer) listaContainer.style.display = 'block';
             if(formContainer) formContainer.style.display = 'none';

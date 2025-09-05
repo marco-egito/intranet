@@ -6,9 +6,19 @@
             <h1>Meus Acompanhamentos de Supervisão</h1>
         </div>
         <p class="page-subtitle">Abaixo estão os registros que você preencheu ou que você está supervisionando. Clique em um item para visualizar ou editar.</p>
-        <div id="lista-registros">
-            <p>Carregando registros...</p>
+        
+        <div id="filtros-container" style="display: none;">
+            <div id="filtro-supervisor-view" style="display: none;" class="filtro-grupo">
+                <label for="filtro-psicologo">Filtrar por Profissional:</label>
+                <select id="filtro-psicologo"><option value="">Todos</option></select>
+            </div>
+            <div class="filtro-grupo">
+                <label for="filtro-paciente">Filtrar por Iniciais do Paciente:</label>
+                <input type="search" id="filtro-paciente" placeholder="Digite as iniciais...">
+            </div>
         </div>
+
+        <div id="lista-registros"><p>Carregando registros...</p></div>
     </div>
     
     <div id="form-container" style="display: none;">
@@ -17,9 +27,9 @@
             <input type="hidden" id="document-id" name="documentId">
 
             <div class="view-header-band">
-                <h1>Ficha de Acompanhamento</h1>
+                 <h1>Ficha de Acompanhamento</h1>
             </div>
-
+            
             <div class="section-subtitle">Identificação Geral</div>
             <div class="form-group">
                 <label for="supervisor-nome">Nome do supervisor(a):</label>

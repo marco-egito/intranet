@@ -1,4 +1,4 @@
-// assets/js/formulario-supervisao.js (Versão 8 - Completo e Corrigido)
+// assets/js/formulario-supervisao.js (Versão 8 - Completo com Abertura Direta)
 (function() {
     if (!db || !auth.currentUser) {
         console.error("Firestore ou usuário não autenticado não encontrado.");
@@ -40,14 +40,11 @@
     async function popularSelects() {
         try {
             const supervisoresQuery = db.collection('usuarios').where('funcoes', 'array-contains', 'supervisor').where('inativo', '!=', true);
-            const psicologosQuery = db.collection('usuarios')
-                .where('profissao', 'in', ['Psicólogo', 'Psicopedagoga', 'Musicoterapeuta'])
-                .where('inativo', '!=', true);
+            const psicologosQuery = db.collection('usuarios').where('profissao', 'in', ['Psicólogo', 'Psicopedagoga', 'Musicoterapeuta']).where('inativo', '!=', true);
             const [supervisoresSnapshot, psicologosSnapshot] = await Promise.all([supervisoresQuery.get(), psicologosQuery.get()]);
             supervisorSelect.innerHTML = '<option value="">Selecione um supervisor</option>';
             psicologoSelect.innerHTML = '<option value="">Selecione um psicólogo</option>';
             let isCurrentUserAPsicologo = false;
-            
             psicologosSnapshot.forEach(doc => {
                 const user = doc.data();
                 if (user && user.nome && user.uid) {
@@ -57,14 +54,12 @@
                     }
                 }
             });
-            
             supervisoresSnapshot.forEach(doc => {
                 const user = doc.data();
                 if (user && user.nome && user.uid) {
                     supervisorSelect.innerHTML += `<option value="${user.uid}">${user.nome}</option>`;
                 }
             });
-
             if (isCurrentUserAPsicologo) {
                 psicologoSelect.value = currentUser.uid;
             }
@@ -261,7 +256,16 @@
         }
         if(filtrosContainer) filtrosContainer.style.display = 'flex';
         
-        if (window.formSupervisaoMode === 'new') {
+        if (window.formSupervisaoInitialDocId) {
+            const docId = window.formSupervisaoInitialDocId;
+            const docSnap = await supervisaoCollection.doc(docId).get();
+            if (docSnap.exists) {
+                await popularSelects();
+                preencherFormulario({ id: docId, ...docSnap.data() });
+            }
+            window.formSupervisaoInitialDocId = null;
+        }
+        else if (window.formSupervisaoMode === 'new') {
             if(listaContainer) listaContainer.style.display = 'none';
             if(formContainer) formContainer.style.display = 'block';
             if(deleteBtn) deleteBtn.style.display = 'none';

@@ -1,4 +1,4 @@
-// assets/js/resumo_horas.js (Versão 1 - Refatorado)
+// assets/js/resumo_horas.js (Versão 2 - Com Filtros)
 (function() {
     if (!db) {
         console.error("Instância do Firestore (db) não encontrada.");
@@ -12,10 +12,14 @@
         appContent.innerHTML = '<div class="loading-spinner"></div>';
 
         try {
-            // Busca os dados do Firestore em paralelo.
-            // ALTERAÇÃO: Agora busca a grade da coleção 'administrativo'.
+            // ALTERAÇÃO 1: A busca agora filtra por 'fazAtendimento'.
+            // Isso requer o índice composto (fazAtendimento, nome) que já criamos.
+            const usuariosQuery = db.collection('usuarios')
+                .where("fazAtendimento", "==", true)
+                .orderBy('nome');
+
             const [usuariosSnapshot, gradesSnapshot, configSnapshot] = await Promise.all([
-                db.collection('usuarios').orderBy('nome').get(),
+                usuariosQuery.get(),
                 db.collection('administrativo').doc('grades').get(),
                 db.collection('financeiro').doc('configuracoes').get()
             ]);
@@ -26,20 +30,18 @@
             const valores = configData.valores || { online: 0, presencial: 0 };
 
             let resumoCalculado = [];
-
-            // NOVA LÓGICA DE CONTAGEM DE HORAS
+            
             usuarios.forEach(prof => {
-                // Pula profissionais sem username ou inativos
-                if (!prof.username || prof.inativo) return;
+                // ALTERAÇÃO 2: Adicionado filtro para pular profissionais na 'primeiraFase'.
+                if (!prof.username || prof.inativo || prof.primeiraFase === true) {
+                    return;
+                }
                 
                 let horasOnline = 0;
                 let horasPresencial = 0;
 
-                // Itera sobre todas as entradas na grade de horários
                 for (const key in gradesData) {
                     const profissionalNaGrade = gradesData[key];
-
-                    // Compara o username na grade com o username do profissional atual
                     if (profissionalNaGrade === prof.username) {
                         if (key.startsWith('online.')) {
                             horasOnline++;
@@ -53,7 +55,7 @@
                 const dividaPresencial = horasPresencial * (valores.presencial || 0);
 
                 resumoCalculado.push({
-                    nome: prof.nome, // Mostra o nome completo na tabela
+                    nome: prof.nome,
                     totalDivida: dividaOnline + dividaPresencial,
                     horasOnline,
                     horasPresencial,
@@ -63,7 +65,6 @@
                 });
             });
 
-            // O código para renderizar a tabela permanece o mesmo.
             let tableHtml = `
                 <div class="table-wrapper">
                     <table>

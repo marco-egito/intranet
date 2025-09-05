@@ -85,6 +85,16 @@
             <div class="form-group"><label for="obs-finais">Observações finais relevantes:</label><textarea id="obs-finais" name="obsFinais" rows="3"></textarea></div>
             <div class="form-group"><label for="data-alta">Data da alta:</label><input type="date" id="data-alta" name="dataAlta"></div>
             <div class="form-group"><label for="assinatura-supervisor">Assinatura do supervisor:</label><input type="text" id="assinatura-supervisor" name="assinaturaSupervisor"></div>
+        <div class="view-container" id="supervisao-view">
+            <div id="form-container" style="display: none;">
+                <form id="ficha-supervisao">
+                    </form>
+                
+                <button id="pdf-btn" class="action-button" style="display: none; background-color: #17a2b8;">Exportar para PDF</button>
+        
+                <button id="delete-btn" class="secondary-button" style="display: none; background-color: #dc3545;">Excluir Acompanhamento</button>
+            </div>
+</div>
         </form>
         <button id="delete-btn" class="secondary-button" style="display: none; background-color: #dc3545;">Excluir Acompanhamento</button>
     </div>

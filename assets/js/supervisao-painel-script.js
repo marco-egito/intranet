@@ -123,6 +123,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const userDoc = await db.collection("usuarios").doc(user.uid).get();
                 if (userDoc.exists) {
                     currentUserData = userDoc.data(); // Salva todos os dados
+                    // --- LINHA DE DEPURAÇÃO ADICIONADA AQUI ---
+                    console.log("DADOS DO USUÁRIO LOGADO:", { 
+                        nome: currentUserData.nome, 
+                        funcoes: currentUserData.funcoes, 
+                        profissao: currentUserData.profissao 
+                    });
+                    // -----------------------------------------
                     renderSupervisaoCards();
                 } else {
                     supervisaoModulesGrid.innerHTML = '<h2>Usuário não encontrado.</h2>';

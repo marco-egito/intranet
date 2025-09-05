@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     titulo: 'Intranet Supervisão', 
                     descricao: 'Acompanhamento de equipes e feedback.', 
                     url: './pages/supervisao-painel.html', 
-                    roles: ['admin', 'supervisor'], icon: icons.supervisao },
+                    roles: ['admin', 'supervisor', 'atendimento'], icon: icons.supervisao },
         };
 
         let cardsParaMostrar = [];

@@ -13,19 +13,23 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("[DEBUG] Ponto 1: DOM carregado. Iniciando script.");
-
-    if (!db || !auth) {
-        console.error("[DEBUG] Erro Crítico: Instância do Firebase não encontrada.");
-        return;
+window.showSupervisorDashboard = function() {
+    const dashboardContent = document.getElementById('supervisor-dashboard-content');
+    const viewContentArea = document.getElementById('view-content-area');
+    if(viewContentArea) {
+        viewContentArea.style.display = 'none';
+        viewContentArea.innerHTML = '';
     }
+    if(dashboardContent) dashboardContent.style.display = 'block';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (!db || !auth) return;
 
     const dashboardContent = document.getElementById('supervisor-dashboard-content');
     const viewContentArea = document.getElementById('view-content-area');
     const perfilContainer = document.getElementById('supervisor-card-aqui');
     const supervisionadosContainer = document.getElementById('meus-supervisionados-container');
-    
     let currentUser = null;
 
     const modal = document.getElementById('edit-profile-modal');
@@ -33,12 +37,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const cancelBtn = document.getElementById('cancel-edit-btn');
     const closeModalBtns = document.querySelectorAll('.close-modal-btn');
     const editingUidField = document.getElementById('editing-uid');
-
-    window.showSupervisorDashboard = function() {
-        if(viewContentArea) viewContentArea.style.display = 'none';
-        if(viewContentArea) viewContentArea.innerHTML = '';
-        if(dashboardContent) dashboardContent.style.display = 'block';
-    }
 
     async function loadFormularioView(docId) {
         if (!dashboardContent || !viewContentArea) return;
@@ -51,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!htmlResponse.ok) throw new Error('HTML não encontrado');
             viewContentArea.innerHTML = await htmlResponse.text();
             const existingScript = document.querySelector('script[data-view-script="formulario-supervisao"]');
-            if(existingScript) existingScript.remove();
+            if (existingScript) existingScript.remove();
             if (!document.querySelector('link[href*="formulario-supervisao.css"]')) {
                 const link = document.createElement('link');
                 link.rel = 'stylesheet';
@@ -73,10 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
         editingUidField.value = uid;
         try {
             const userDoc = await db.collection('usuarios').doc(uid).get();
-            if (!userDoc.exists) {
-                alert("Documento do usuário não foi encontrado.");
-                return;
-            }
+            if (!userDoc.exists) { alert("Documento do usuário não foi encontrado."); return; }
             const data = userDoc.data();
             document.getElementById('profile-photo-preview').src = data.fotoUrl || '../assets/img/default-user.png';
             document.getElementById('edit-formacao').value = data.formacao || '';
@@ -91,9 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function closeEditModal() {
-        if (modal) modal.style.display = 'none';
-    }
+    function closeEditModal() { if (modal) modal.style.display = 'none'; }
 
     function criarCardSupervisor(prof) {
         const especializacaoHTML = (prof.especializacao || []).map(item => `<li>${item}</li>`).join('');
@@ -127,33 +120,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function carregarPainelSupervisor() {
-        console.log("[DEBUG] Ponto 4: Função carregarPainelSupervisor iniciada.");
-        if (!currentUser || !perfilContainer || !supervisionadosContainer) {
-            console.error("[DEBUG] Erro: Elementos essenciais do painel não encontrados.");
-            return;
-        }
-
+        if (!currentUser || !perfilContainer || !supervisionadosContainer) return;
         try {
-            console.log("[DEBUG] Ponto 5: Buscando perfil do supervisor logado...");
             const doc = await db.collection('usuarios').doc(currentUser.uid).get();
-            console.log("[DEBUG] Ponto 6: Busca do perfil concluída.");
             if (doc.exists) {
                 perfilContainer.innerHTML = criarCardSupervisor(doc.data());
-                console.log("[DEBUG] Ponto 7: Card do perfil renderizado.");
             } else {
                 perfilContainer.innerHTML = '<p>Seu perfil não foi encontrado.</p>';
             }
         } catch (error) {
-            console.error("[DEBUG] Erro na Etapa 1 (carregar perfil):", error);
+            console.error("Erro ao carregar perfil:", error);
             perfilContainer.innerHTML = '<p style="color:red;">Erro ao carregar seu perfil.</p>';
         }
-
         try {
-            console.log("[DEBUG] Ponto 8: Buscando lista de supervisionados...");
             const supervisaoQuery = db.collection('supervisao').where('supervisorUid', '==', currentUser.uid).orderBy('supervisaoData', 'desc');
             const snapshot = await supervisaoQuery.get();
-            console.log(`[DEBUG] Ponto 9: Busca de supervisionados concluída. Encontrados ${snapshot.size} registros.`);
-
             let listaHTML = '';
             if (snapshot.empty) {
                 listaHTML = '<p>Nenhum acompanhamento encontrado para sua supervisão.</p>';
@@ -167,30 +148,38 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>`;
                 });
             }
-            const containerDaLista = supervisionadosContainer.querySelector('#lista-registros') || document.createElement('div');
-            containerDaLista.id = 'lista-registros';
-            containerDaLista.innerHTML = listaHTML;
-            if(!supervisionadosContainer.querySelector('#lista-registros')) {
+            let containerDaLista = supervisionadosContainer.querySelector('#lista-registros');
+            if (!containerDaLista) {
+                containerDaLista = document.createElement('div');
+                containerDaLista.id = 'lista-registros';
                 supervisionadosContainer.appendChild(containerDaLista);
             }
-            console.log("[DEBUG] Ponto 10: Lista de supervisionados renderizada.");
-
+            containerDaLista.innerHTML = listaHTML;
         } catch (error) {
-            console.error("[DEBUG] Erro na Etapa 2 (carregar supervisionados):", error);
+            console.error("Erro ao carregar supervisionados:", error);
             supervisionadosContainer.innerHTML += '<p style="color:red;">Erro ao carregar a lista de acompanhamentos.</p>';
         }
     }
 
     auth.onAuthStateChanged(async user => {
-        console.log("[DEBUG] Ponto 2: onAuthStateChanged disparado.");
         if (user) {
             currentUser = user;
-            console.log("[DEBUG] Ponto 3: Usuário autenticado. Verificando permissões...");
             const userDoc = await db.collection('usuarios').doc(user.uid).get();
             if (userDoc.exists && userDoc.data().funcoes?.includes('supervisor')) {
-                const editButton = document.getElementById('edit-profile-main-btn');
-                if(editButton) editButton.addEventListener('click', () => openEditModal(currentUser.uid));
-                if(supervisionadosContainer) {
+                if (!document.getElementById('edit-profile-main-btn')) {
+                    const editButton = document.createElement('button');
+                    editButton.id = 'edit-profile-main-btn';
+                    editButton.className = 'action-button';
+                    editButton.textContent = 'Editar Meu Perfil';
+                    editButton.style.marginBottom = '20px';
+                    editButton.addEventListener('click', () => openEditModal(currentUser.uid));
+                    const containerPrincipal = document.querySelector('.admin-panel-container');
+                    const refElement = document.getElementById('supervisor-grid-container');
+                    if (containerPrincipal && refElement) {
+                        containerPrincipal.insertBefore(editButton, refElement);
+                    }
+                }
+                if (supervisionadosContainer) {
                     supervisionadosContainer.addEventListener('click', (e) => {
                         const item = e.target.closest('.registro-item');
                         if (item) {
@@ -201,11 +190,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 carregarPainelSupervisor();
             } else {
-                console.log("[DEBUG] Acesso negado. Usuário não é supervisor ou documento não existe.");
-                document.querySelector('.admin-panel-container').innerHTML = '<h2>Acesso Negado</h2><p>Esta área é exclusiva para supervisores.</p><a href="../index.html" class="secondary-action-button">&larr; Voltar</a>';
+                const mainContainer = document.querySelector('.admin-panel-container');
+                if(mainContainer) mainContainer.innerHTML = '<h2>Acesso Negado</h2><p>Esta área é exclusiva para supervisores.</p><a href="../index.html" class="secondary-action-button">&larr; Voltar</a>';
             }
         } else {
-            console.log("[DEBUG] Usuário não está logado. Redirecionando...");
             window.location.href = '../index.html';
         }
     });
@@ -241,7 +229,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
     if (cancelBtn) cancelBtn.addEventListener('click', closeEditModal);
     if (closeModalBtns) closeModalBtns.forEach(btn => btn.addEventListener('click', closeEditModal));
     if (modal) {

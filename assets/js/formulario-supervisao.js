@@ -1,4 +1,4 @@
-// assets/js/formulario-supervisao.js (Versão 4 - Corrigido)
+// assets/js/formulario-supervisao.js (Versão 5 - Com Filtros e PDF)
 (function() {
     if (!db || !auth.currentUser) {
         console.error("Firestore ou usuário não autenticado não encontrado.");
@@ -18,6 +18,7 @@
     const psicologoSelect = document.getElementById('psicologo-nome');
     const listaRegistros = document.getElementById('lista-registros');
     const deleteBtn = document.getElementById('delete-btn');
+    const pdfBtn = document.getElementById('pdf-btn');
     const documentIdField = document.getElementById('document-id');
     const filtrosContainer = document.getElementById('filtros-container');
     const filtroSupervisorView = document.getElementById('filtro-supervisor-view');
@@ -42,21 +43,13 @@
             const psicologosQuery = db.collection('usuarios')
                 .where('profissao', 'in', ['Psicólogo', 'Psicopedagoga', 'Musicoterapeuta'])
                 .where('inativo', '!=', true);
-
-            // --- LINHA CORRIGIDA ABAIXO ---
-            const [supervisoresSnapshot, psicologosSnapshot] = await Promise.all([
-                supervisoresQuery.get(),
-                psicologosQuery.get() // Estava com o nome errado aqui
-            ]);
-
+            const [supervisoresSnapshot, psicologosSnapshot] = await Promise.all([supervisoresQuery.get(), psicologosQuery.get()]);
             supervisorSelect.innerHTML = '<option value="">Selecione um supervisor</option>';
             psicologoSelect.innerHTML = '<option value="">Selecione um psicólogo</option>';
-
             supervisoresSnapshot.forEach(doc => {
                 const user = doc.data();
                 supervisorSelect.innerHTML += `<option value="${user.uid}">${user.nome}</option>`;
             });
-
             psicologosSnapshot.forEach(doc => {
                 const user = doc.data();
                 psicologoSelect.innerHTML += `<option value="${user.uid}">${user.nome}</option>`;
@@ -147,6 +140,7 @@
         listaContainer.style.display = 'none';
         formContainer.style.display = 'block';
         deleteBtn.style.display = 'block';
+        pdfBtn.style.display = 'block';
         document.getElementById('paciente-iniciais').disabled = true;
     }
 
@@ -215,29 +209,57 @@
             }
         }
     });
+
+    pdfBtn.addEventListener('click', function() {
+        this.textContent = 'Gerando PDF...';
+        this.disabled = true;
+        const formToPrint = document.getElementById('ficha-supervisao');
+        const paciente = formToPrint.elements['pacienteIniciais'].value || 'paciente';
+        const data = formToPrint.elements['supervisaoData'].value || new Date().toISOString().split('T')[0];
+        const filename = `Acompanhamento_${paciente.replace(/\s+/g, '_')}_${data}.pdf`;
+        const options = {
+            margin:       10,
+            filename:     filename,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, logging: false },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().from(formToPrint).set(options).save().then(() => {
+            this.textContent = 'Exportar para PDF';
+            this.disabled = false;
+        }).catch(err => {
+            console.error("Erro ao gerar PDF:", err);
+            this.textContent = 'Erro! Tente Novamente';
+            this.disabled = false;
+        });
+    });
     
     async function init() {
         const userDoc = await db.collection("usuarios").doc(currentUser.uid).get();
         if (userDoc.exists && userDoc.data().funcoes?.includes('supervisor')) {
             isSupervisor = true;
-            filtroSupervisorView.style.display = 'block';
+            if(filtroSupervisorView) filtroSupervisorView.style.display = 'block';
         }
-        filtrosContainer.style.display = 'flex';
+        if(filtrosContainer) filtrosContainer.style.display = 'flex';
+        
         if (window.formSupervisaoMode === 'new') {
-            listaContainer.style.display = 'none';
-            formContainer.style.display = 'block';
-            deleteBtn.style.display = 'none';
-            document.getElementById('paciente-iniciais').disabled = false;
-            form.reset();
-            documentIdField.value = '';
+            if(listaContainer) listaContainer.style.display = 'none';
+            if(formContainer) formContainer.style.display = 'block';
+            if(deleteBtn) deleteBtn.style.display = 'none';
+            if(pdfBtn) pdfBtn.style.display = 'none';
+            const pacienteIniciaisInput = document.getElementById('paciente-iniciais');
+            if(pacienteIniciaisInput) pacienteIniciaisInput.disabled = false;
+            if(form) form.reset();
+            if(documentIdField) documentIdField.value = '';
             popularSelects();
         } else {
-            listaContainer.style.display = 'block';
-            formContainer.style.display = 'none';
+            if(listaContainer) listaContainer.style.display = 'block';
+            if(formContainer) formContainer.style.display = 'none';
             carregarRegistros();
         }
-        filtroPacienteInput.addEventListener('input', aplicarFiltros);
-        filtroPsicologoSelect.addEventListener('change', aplicarFiltros);
+        
+        if(filtroPacienteInput) filtroPacienteInput.addEventListener('input', aplicarFiltros);
+        if(filtroPsicologoSelect) filtroPsicologoSelect.addEventListener('change', aplicarFiltros);
     }
 
     init();

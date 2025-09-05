@@ -206,3 +206,46 @@
     border-top: 1px solid #ddd;
     border-radius: 0 0 8px 8px;
 }
+
+/* Botão de Editar no Card (só para Admins) */
+.supervisor-card-right {
+    position: relative; /* Necessário para posicionar o botão de editar */
+}
+.edit-supervisor-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background-color: #ffc107;
+    color: black;
+    border: none;
+    padding: 6px 10px;
+    font-size: 0.8em;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Seção de foto no modal */
+.photo-edit-section {
+    text-align: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+}
+.photo-preview-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+#profile-photo-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #ddd;
+}
+#change-photo-btn {
+    width: auto;
+    padding: 8px 15px;
+    font-size: 0.9em;
+}

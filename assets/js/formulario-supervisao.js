@@ -1,4 +1,4 @@
-// assets/js/formulario-supervisao.js (Versão 2 - Completo)
+// assets/js/formulario-supervisao.js (Versão 4 - Corrigido)
 (function() {
     if (!db || !auth.currentUser) {
         console.error("Firestore ou usuário não autenticado não encontrado.");
@@ -10,7 +10,6 @@
     const currentUser = auth.currentUser;
     const supervisaoCollection = db.collection('supervisao');
     
-    // Elementos da UI
     const listaContainer = document.getElementById('lista-acompanhamentos-container');
     const formContainer = document.getElementById('form-container');
     const form = document.getElementById('ficha-supervisao');
@@ -20,10 +19,14 @@
     const listaRegistros = document.getElementById('lista-registros');
     const deleteBtn = document.getElementById('delete-btn');
     const documentIdField = document.getElementById('document-id');
-
+    const filtrosContainer = document.getElementById('filtros-container');
+    const filtroSupervisorView = document.getElementById('filtro-supervisor-view');
+    const filtroPsicologoSelect = document.getElementById('filtro-psicologo');
+    const filtroPacienteInput = document.getElementById('filtro-paciente');
+    
+    let todosOsRegistros = [];
+    let isSupervisor = false;
     let debounceTimer;
-
-    // --- FUNÇÕES AUXILIARES ---
 
     function debounce(func, delay) {
         let timeout;
@@ -33,8 +36,6 @@
         };
     }
 
-    // --- FUNÇÕES PRINCIPAIS DE DADOS E RENDERIZAÇÃO ---
-
     async function popularSelects() {
         try {
             const supervisoresQuery = db.collection('usuarios').where('funcoes', 'array-contains', 'supervisor').where('inativo', '!=', true);
@@ -42,10 +43,12 @@
                 .where('profissao', 'in', ['Psicólogo', 'Psicopedagoga', 'Musicoterapeuta'])
                 .where('inativo', '!=', true);
 
+            // --- LINHA CORRIGIDA ABAIXO ---
             const [supervisoresSnapshot, psicologosSnapshot] = await Promise.all([
                 supervisoresQuery.get(),
-                psicologosQuery.get() // Corrigido!
+                psicologosQuery.get() // Estava com o nome errado aqui
             ]);
+
             supervisorSelect.innerHTML = '<option value="">Selecione um supervisor</option>';
             psicologoSelect.innerHTML = '<option value="">Selecione um psicólogo</option>';
 
@@ -65,46 +68,59 @@
         }
     }
 
+    function renderizarLista(registrosParaRenderizar) {
+        listaRegistros.innerHTML = '';
+        if (registrosParaRenderizar.length === 0) {
+            listaRegistros.innerHTML = '<p>Nenhum acompanhamento encontrado com os filtros atuais.</p>';
+            return;
+        }
+        const registrosOrdenados = registrosParaRenderizar.sort((a, b) => new Date(b.supervisaoData) - new Date(a.supervisaoData));
+        registrosOrdenados.forEach(registro => {
+            const div = document.createElement('div');
+            div.className = 'registro-item';
+            div.dataset.id = registro.id;
+            div.innerHTML = `
+                <span><strong>Paciente:</strong> ${registro.pacienteIniciais || 'N/A'}</span>
+                <span><strong>Psicólogo(a):</strong> ${registro.psicologoNome || 'N/A'}</span>
+                <span><strong>Data:</strong> ${registro.supervisaoData ? new Date(registro.supervisaoData + 'T00:00:00').toLocaleDateString('pt-BR') : 'N/A'}</span>`;
+            listaRegistros.appendChild(div);
+        });
+    }
+
+    function aplicarFiltros() {
+        const pacienteTermo = filtroPacienteInput.value.toLowerCase();
+        const psicologoUidSelecionado = isSupervisor ? filtroPsicologoSelect.value : '';
+        let registrosFiltrados = todosOsRegistros.filter(reg => {
+            const pacienteMatch = !pacienteTermo || (reg.pacienteIniciais && reg.pacienteIniciais.toLowerCase().includes(pacienteTermo));
+            const psicologoMatch = !isSupervisor || !psicologoUidSelecionado || reg.psicologoUid === psicologoUidSelecionado;
+            return pacienteMatch && psicologoMatch;
+        });
+        renderizarLista(registrosFiltrados);
+    }
+    
     async function carregarRegistros() {
-        if (!listaRegistros) return;
         listaRegistros.innerHTML = '<p>Carregando...</p>';
         try {
             const comoPsicologoQuery = supervisaoCollection.where('psicologoUid', '==', currentUser.uid);
             const comoSupervisorQuery = supervisaoCollection.where('supervisorUid', '==', currentUser.uid);
-
-            const [psicologoSnapshot, supervisorSnapshot] = await Promise.all([
-                comoPsicologoQuery.get(),
-                comoSupervisorQuery.get()
-            ]);
-
+            const [psicologoSnapshot, supervisorSnapshot] = await Promise.all([ comoPsicologoQuery.get(), comoSupervisorQuery.get() ]);
             const registrosMap = new Map();
             psicologoSnapshot.forEach(doc => registrosMap.set(doc.id, { id: doc.id, ...doc.data() }));
             supervisorSnapshot.forEach(doc => registrosMap.set(doc.id, { id: doc.id, ...doc.data() }));
-
-            listaRegistros.innerHTML = '';
-            if (registrosMap.size === 0) {
-                listaRegistros.innerHTML = '<p>Nenhum acompanhamento encontrado.</p>';
-                return;
+            todosOsRegistros = Array.from(registrosMap.values());
+            if (isSupervisor) {
+                const psicologosSupervisionados = new Map();
+                todosOsRegistros.forEach(reg => {
+                    if(reg.psicologoUid && reg.psicologoNome) {
+                        psicologosSupervisionados.set(reg.psicologoUid, reg.psicologoNome);
+                    }
+                });
+                filtroPsicologoSelect.innerHTML = '<option value="">Todos os Profissionais</option>';
+                psicologosSupervisionados.forEach((nome, uid) => {
+                    filtroPsicologoSelect.innerHTML += `<option value="${uid}">${nome}</option>`;
+                });
             }
-
-            // Ordena os registros pela data da supervisão, da mais recente para a mais antiga
-            const registrosOrdenados = Array.from(registrosMap.values()).sort((a, b) => {
-                const dateA = new Date(a.supervisaoData);
-                const dateB = new Date(b.supervisaoData);
-                return dateB - dateA; // Ordem decrescente
-            });
-
-            registrosOrdenados.forEach(registro => {
-                const div = document.createElement('div');
-                div.className = 'registro-item';
-                div.dataset.id = registro.id;
-                div.innerHTML = `
-                    <span><strong>Paciente:</strong> ${registro.pacienteIniciais || 'N/A'}</span>
-                    <span><strong>Psicólogo(a):</strong> ${registro.psicologoNome || 'N/A'}</span>
-                    <span><strong>Data:</strong> ${registro.supervisaoData ? new Date(registro.supervisaoData + 'T00:00:00').toLocaleDateString('pt-BR') : 'N/A'}</span>`;
-                listaRegistros.appendChild(div);
-            });
-
+            aplicarFiltros();
         } catch (error) {
             console.error("Erro ao carregar registros:", error);
             listaRegistros.innerHTML = '<p style="color:red;">Ocorreu um erro ao buscar os dados.</p>';
@@ -114,28 +130,20 @@
     function preencherFormulario(dados) {
         form.reset();
         documentIdField.value = dados.id || '';
-
         for (const key in dados) {
             if (Object.prototype.hasOwnProperty.call(dados, key)) {
                 const field = form.elements[key];
                 if (field) {
                     if (field.tagName === 'SELECT') {
-                        // O nome do campo no formulário é 'psicologoNome' e 'supervisorNome', mas o valor salvo é o UID.
-                        // O valor do 'select' deve ser o UID correspondente.
-                        if (key === 'psicologoNome') {
-                            field.value = dados.psicologoUid || '';
-                        } else if (key === 'supervisorNome') {
-                            field.value = dados.supervisorUid || '';
-                        } else {
-                            field.value = dados[key];
-                        }
+                        if (key === 'psicologoNome') field.value = dados.psicologoUid || '';
+                        else if (key === 'supervisorNome') field.value = dados.supervisorUid || '';
+                        else field.value = dados[key];
                     } else {
                         field.value = dados[key];
                     }
                 }
             }
         }
-        
         listaContainer.style.display = 'none';
         formContainer.style.display = 'block';
         deleteBtn.style.display = 'block';
@@ -148,17 +156,14 @@
             if (saveStatus) saveStatus.textContent = 'Preencha as iniciais do paciente para salvar.';
             return;
         }
-        
         if (saveStatus) saveStatus.textContent = 'Salvando...';
         const formData = new FormData(form);
         const dataToSave = Object.fromEntries(formData.entries());
-
         dataToSave.psicologoUid = psicologoSelect.value;
         dataToSave.supervisorUid = supervisorSelect.value;
         dataToSave.psicologoNome = psicologoSelect.options[psicologoSelect.selectedIndex]?.text || '';
         dataToSave.supervisorNome = supervisorSelect.options[supervisorSelect.selectedIndex]?.text || '';
         dataToSave.lastUpdated = new Date();
-
         try {
             const docId = documentIdField.value;
             if (docId) {
@@ -177,8 +182,6 @@
         }
     };
 
-    // --- EVENT LISTENERS ---
-
     listaRegistros.addEventListener('click', async (e) => {
         const item = e.target.closest('.registro-item');
         if (item) {
@@ -186,7 +189,7 @@
             try {
                 const docSnap = await supervisaoCollection.doc(docId).get();
                 if (docSnap.exists()) {
-                    await popularSelects(); // Garante que os selects estejam prontos
+                    await popularSelects();
                     preencherFormulario({ id: docId, ...docSnap.data() });
                 }
             } catch (error) {
@@ -205,28 +208,37 @@
             try {
                 await supervisaoCollection.doc(docId).delete();
                 alert("Registro excluído com sucesso.");
-                showSupervisaoDashboard(); // Volta para a tela de cards
+                showSupervisaoDashboard();
             } catch (error) {
                 alert("Erro ao excluir o registro.");
                 console.error("Erro ao excluir:", error);
             }
         }
     });
-
-    // --- LÓGICA DE INICIALIZAÇÃO DA PÁGINA ---
-
-    // A variável `window.formSupervisaoMode` é definida pelo script do painel antes de carregar esta tela
-    if (window.formSupervisaoMode === 'new') {
-        listaContainer.style.display = 'none';
-        formContainer.style.display = 'block';
-        deleteBtn.style.display = 'none';
-        document.getElementById('paciente-iniciais').disabled = false;
-        form.reset();
-        documentIdField.value = '';
-        popularSelects();
-    } else { // modo 'list'
-        listaContainer.style.display = 'block';
-        formContainer.style.display = 'none';
-        carregarRegistros();
+    
+    async function init() {
+        const userDoc = await db.collection("usuarios").doc(currentUser.uid).get();
+        if (userDoc.exists && userDoc.data().funcoes?.includes('supervisor')) {
+            isSupervisor = true;
+            filtroSupervisorView.style.display = 'block';
+        }
+        filtrosContainer.style.display = 'flex';
+        if (window.formSupervisaoMode === 'new') {
+            listaContainer.style.display = 'none';
+            formContainer.style.display = 'block';
+            deleteBtn.style.display = 'none';
+            document.getElementById('paciente-iniciais').disabled = false;
+            form.reset();
+            documentIdField.value = '';
+            popularSelects();
+        } else {
+            listaContainer.style.display = 'block';
+            formContainer.style.display = 'none';
+            carregarRegistros();
+        }
+        filtroPacienteInput.addEventListener('input', aplicarFiltros);
+        filtroPsicologoSelect.addEventListener('change', aplicarFiltros);
     }
+
+    init();
 })();

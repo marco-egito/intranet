@@ -240,9 +240,46 @@ tr:nth-child(even) { background-color: #f9f9f9; }
     content: '→';
     font-size: 22px;
 }
-/* NOVO: Estilo para o container principal dos painéis (Admin/Supervisor) */
+/* --- NOVOS ESTILOS ADICIONADOS NO FINAL --- */
 .admin-panel-container {
     max-width: 1200px;
     margin: 20px auto;
     padding: 0 20px;
+}
+.view-header-band {
+    background-color: #04396d;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+.view-header-band h1 {
+    color: white !important;
+    margin: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+    text-align: center;
+    font-size: 1.6em;
+}
+.secondary-action-button {
+    background-color: #1d70b7;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 0.9em;
+    margin-bottom: 20px;
+    transition: background-color 0.2s;
+}
+.secondary-action-button:hover { background-color: #185abc; }
+.page-subtitle {
+    text-align: center;
+    font-weight: bold;
+    color: #333;
+    font-size: 1.1em;
+    margin-top: 10px;
+    margin-bottom: 25px;
 }

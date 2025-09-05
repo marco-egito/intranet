@@ -99,4 +99,80 @@ exports.criarUsuarioComDados = onCall(async (request) => {
         if (error.code === 'auth/email-already-exists') throw new HttpsError('already-exists', 'O e-mail fornecido já está em uso.');
         throw new HttpsError("internal", "Ocorreu um erro em 'criarUsuarioComDados'.");
     }
+    exports.migrarChavesDeCobranca = onCall(async (request) => {
+    // Segurança: Apenas admins podem executar esta função
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "Você precisa estar autenticado.");
+    }
+    const adminDoc = await db.collection("usuarios").doc(request.auth.uid).get();
+    if (!adminDoc.exists || !adminDoc.data().funcoes?.includes("admin")) {
+        throw new HttpsError("permission-denied", "Você não tem permissão para executar esta operação.");
+    }
+
+    console.log("Iniciando migração de chaves de cobrança...");
+
+    const [usuariosSnapshot, configDoc] = await Promise.all([
+        db.collection("usuarios").get(),
+        db.collection("financeiro").doc("configuracoes").get(),
+    ]);
+
+    if (!configDoc.exists) {
+        throw new HttpsError("not-found", "Documento de configurações não encontrado.");
+    }
+
+    const usuarios = usuariosSnapshot.docs.map(doc => doc.data());
+    const oldCobrancaData = configDoc.data().cobranca || {};
+    const newCobrancaData = JSON.parse(JSON.stringify(oldCobrancaData)); // Cópia profunda
+    let chavesMigradas = 0;
+    let chavesNaoEncontradas = [];
+
+    // Função auxiliar para encontrar o usuário correspondente à chave antiga
+    const findUserByOldKey = (oldKey) => {
+        const oldKeyParts = oldKey.replace(/_/g, " ").split(/\s+/);
+        const oldFirst = oldKeyParts[0];
+        const oldLast = oldKeyParts[oldKeyParts.length - 1];
+
+        const potentialMatches = usuarios.filter(u => 
+            u.nome && u.nome.startsWith(oldFirst) && u.nome.endsWith(oldLast)
+        );
+        
+        // Retorna o usuário apenas se encontrar uma correspondência única e exata
+        if (potentialMatches.length === 1) {
+            return potentialMatches[0];
+        }
+        return null;
+    };
+
+    for (const year in newCobrancaData) {
+        for (const oldKey in newCobrancaData[year]) {
+            // Tenta encontrar um usuário que corresponda à chave antiga
+            const user = findUserByOldKey(oldKey);
+
+            if (user && user.uid) {
+                // Se encontrou, e a nova chave (UID) ainda não existe, faz a troca
+                if (!newCobrancaData[year][user.uid]) {
+                    console.log(`Migrando chave: "${oldKey}" para UID: "${user.uid}"`);
+                    // Copia os dados para a nova chave (UID)
+                    newCobrancaData[year][user.uid] = newCobrancaData[year][oldKey];
+                    // Apaga a chave antiga
+                    delete newCobrancaData[year][oldKey];
+                    chavesMigradas++;
+                }
+            } else {
+                console.log(`Não foi possível encontrar uma correspondência única para a chave antiga: "${oldKey}"`);
+                chavesNaoEncontradas.push(oldKey);
+            }
+        }
+    }
+
+    if (chavesMigradas > 0) {
+        await db.collection("financeiro").doc("configuracoes").update({
+            cobranca: newCobrancaData
+        });
+    }
+
+    const message = `Migração concluída. ${chavesMigradas} chaves foram migradas com sucesso.`;
+    console.log(message);
+    return { status: "success", message, chavesNaoEncontradas };
+
 });

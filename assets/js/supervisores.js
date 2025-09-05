@@ -11,40 +11,87 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage(); // Inicia o Storage
+const storage = firebase.storage();
 
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
+    if (!db || !auth) {
+        console.error("Firebase não inicializado.");
+        return;
+    }
+
+    const dashboardContent = document.getElementById('supervisor-dashboard-content');
+    const viewContentArea = document.getElementById('view-content-area');
     const perfilContainer = document.getElementById('supervisor-card-aqui');
     const supervisionadosContainer = document.getElementById('meus-supervisionados-container');
+    
     let currentUser = null;
 
-    // Elementos do Modal
+    // Elementos do Modal (são definidos aqui dentro para garantir que o DOM está carregado)
     const modal = document.getElementById('edit-profile-modal');
     const saveProfileBtn = document.getElementById('save-profile-btn');
     const cancelBtn = document.getElementById('cancel-edit-btn');
     const closeModalBtns = document.querySelectorAll('.close-modal-btn');
     const editingUidField = document.getElementById('editing-uid');
 
-    // Função que abre o modal e carrega os dados do supervisor logado
+    // Função para voltar da visualização do formulário para o dashboard
+    window.showSupervisorDashboard = function() {
+        if(viewContentArea) viewContentArea.style.display = 'none';
+        if(viewContentArea) viewContentArea.innerHTML = '';
+        if(dashboardContent) dashboardContent.style.display = 'block';
+    }
+
+    // Função que carrega a view do formulário de supervisão
+    async function loadFormularioView(docId) {
+        if (!dashboardContent || !viewContentArea) return;
+
+        dashboardContent.style.display = 'none';
+        viewContentArea.style.display = 'block';
+        viewContentArea.innerHTML = '<h2>Carregando Formulário...</h2><div class="loading-spinner"></div>';
+
+        // Guarda o ID do documento a ser aberto para o próximo script usar
+        window.formSupervisaoInitialDocId = docId; 
+
+        try {
+            const htmlResponse = await fetch('./formulario-supervisao.html');
+            if (!htmlResponse.ok) throw new Error('HTML não encontrado');
+            viewContentArea.innerHTML = await htmlResponse.text();
+
+            const existingScript = document.querySelector('script[data-view-script="formulario-supervisao"]');
+            if(existingScript) existingScript.remove();
+
+            if (!document.querySelector('link[href*="formulario-supervisao.css"]')) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = '../assets/css/formulario-supervisao.css';
+                document.head.appendChild(link);
+            }
+            const script = document.createElement('script');
+            script.src = '../assets/js/formulario-supervisao.js';
+            script.dataset.viewScript = 'formulario-supervisao';
+            document.body.appendChild(script);
+
+        } catch (error) {
+            console.error('Erro ao carregar a view do formulário:', error);
+            viewContentArea.innerHTML = '<h2>Erro ao carregar o formulário.</h2>';
+        }
+    }
+
     async function openEditModal(uid) {
         if (!uid || !modal) return;
         editingUidField.value = uid;
-
         try {
             const userDoc = await db.collection('usuarios').doc(uid).get();
             if (!userDoc.exists) {
-                alert("Seu documento de usuário não foi encontrado.");
+                alert("Documento do usuário não foi encontrado.");
                 return;
             }
             const data = userDoc.data();
-
             document.getElementById('profile-photo-preview').src = data.fotoUrl || '../assets/img/default-user.png';
             document.getElementById('edit-formacao').value = data.formacao || '';
             document.getElementById('edit-especializacao').value = (data.especializacao || []).join('\n');
             document.getElementById('edit-atuacao').value = (data.atuacao || []).join('\n');
             document.getElementById('edit-supervisaoInfo').value = (data.supervisaoInfo || []).join('\n');
             document.getElementById('edit-diasHorarios').value = (data.diasHorarios || []).join('\n');
-            
             modal.style.display = 'flex';
         } catch (error) {
             console.error("Erro ao carregar dados do perfil:", error);
@@ -55,14 +102,12 @@ const storage = firebase.storage(); // Inicia o Storage
     function closeEditModal() {
         if (modal) modal.style.display = 'none';
     }
-    
-    // A função que cria o HTML do card de perfil
+
     function criarCardSupervisor(prof) {
         const especializacaoHTML = (prof.especializacao || []).map(item => `<li>${item}</li>`).join('');
         const atuacaoHTML = (prof.atuacao || []).map(item => `<li>${item}</li>`).join('');
         const supervisaoHTML = (prof.supervisaoInfo || []).map(item => `<li>${item}</li>`).join('');
         const horariosHTML = (prof.diasHorarios || []).map(item => `<li>${item}</li>`).join('');
-
         return `
             <div class="supervisor-card">
                 <div class="supervisor-card-left">
@@ -86,14 +131,11 @@ const storage = firebase.storage(); // Inicia o Storage
                     ${supervisaoHTML ? `<h4>Supervisão</h4><ul>${supervisaoHTML}</ul>` : ''}
                     ${horariosHTML ? `<h4>Dias e Horários</h4><ul>${horariosHTML}</ul>` : ''}
                 </div>
-            </div>
-        `;
+            </div>`;
     }
 
     async function carregarPainelSupervisor() {
         if (!currentUser || !perfilContainer || !supervisionadosContainer) return;
-
-        // 1. Carregar e exibir o card do próprio supervisor
         try {
             const doc = await db.collection('usuarios').doc(currentUser.uid).get();
             if (doc.exists) {
@@ -105,65 +147,56 @@ const storage = firebase.storage(); // Inicia o Storage
             console.error("Erro ao carregar perfil:", error);
             perfilContainer.innerHTML = '<p style="color:red;">Erro ao carregar seu perfil.</p>';
         }
-
-        // 2. Carregar e exibir a lista de acompanhamentos supervisionados
         try {
             const supervisaoQuery = db.collection('supervisao').where('supervisorUid', '==', currentUser.uid).orderBy('supervisaoData', 'desc');
             const snapshot = await supervisaoQuery.get();
-
-            let listaHTML = '<div id="lista-registros"></div>';
-            const listaContainer = document.createElement('div');
-            
+            let listaHTML = '';
             if (snapshot.empty) {
-                listaContainer.innerHTML = '<p>Nenhum acompanhamento encontrado para sua supervisão.</p>';
+                listaHTML = '<p>Nenhum acompanhamento encontrado para sua supervisão.</p>';
             } else {
                 snapshot.forEach(doc => {
                     const registro = { id: doc.id, ...doc.data() };
-                    // Reutiliza o estilo da lista de acompanhamentos
-                    listaContainer.innerHTML += `
-                        <div class="registro-item" data-id="${registro.id}">
-                            <span><strong>Paciente:</strong> ${registro.pacienteIniciais || 'N/A'}</span>
-                            <span><strong>Psicólogo(a):</strong> ${registro.psicologoNome || 'N/A'}</span>
-                            <span><strong>Data:</strong> ${registro.supervisaoData ? new Date(registro.supervisaoData + 'T00:00:00').toLocaleDateString('pt-BR') : 'N/A'}</span>
-                        </div>`;
+                    listaHTML += `<div class="registro-item" data-id="${registro.id}">
+                        <span><strong>Paciente:</strong> ${registro.pacienteIniciais || 'N/A'}</span>
+                        <span><strong>Psicólogo(a):</strong> ${registro.psicologoNome || 'N/A'}</span>
+                        <span><strong>Data:</strong> ${registro.supervisaoData ? new Date(registro.supervisaoData + 'T00:00:00').toLocaleDateString('pt-BR') : 'N/A'}</span>
+                    </div>`;
                 });
             }
-            // Adiciona a lista ao container principal, evitando duplicatas
-            const oldLista = supervisionadosContainer.querySelector('#lista-registros');
-            if(oldLista) oldLista.remove();
-            supervisionadosContainer.appendChild(listaContainer);
-            listaContainer.id = 'lista-registros';
-
+            const containerDaLista = supervisionadosContainer.querySelector('#lista-registros') || document.createElement('div');
+            containerDaLista.id = 'lista-registros';
+            containerDaLista.innerHTML = listaHTML;
+            if(!supervisionadosContainer.querySelector('#lista-registros')) {
+                supervisionadosContainer.appendChild(containerDaLista);
+            }
         } catch (error) {
             console.error("Erro ao carregar supervisionados:", error);
             supervisionadosContainer.innerHTML += '<p style="color:red;">Erro ao carregar a lista de acompanhamentos.</p>';
         }
     }
 
-    // --- LÓGICA DE AUTENTICAÇÃO E INICIALIZAÇÃO ---
     auth.onAuthStateChanged(async user => {
         if (user) {
             currentUser = user;
             const userDoc = await db.collection('usuarios').doc(user.uid).get();
             if (userDoc.exists && userDoc.data().funcoes?.includes('supervisor')) {
+                const editButton = document.getElementById('edit-profile-main-btn');
+                if(editButton) editButton.addEventListener('click', () => openEditModal(currentUser.uid));
+                if(supervisionadosContainer) {
+                    supervisionadosContainer.addEventListener('click', (e) => {
+                        const item = e.target.closest('.registro-item');
+                        if (item) {
+                            const docId = item.dataset.id;
+                            loadFormularioView(docId);
+                        }
+                    });
+                }
                 carregarPainelSupervisor();
             } else {
                 document.querySelector('.admin-panel-container').innerHTML = '<h2>Acesso Negado</h2><p>Esta área é exclusiva para supervisores.</p><a href="../index.html" class="secondary-action-button">&larr; Voltar</a>';
             }
         } else {
             window.location.href = '../index.html';
-        }
-    });
-    
-    // --- EVENT LISTENERS PARA O PAINEL ---
-    const editButton = document.getElementById('edit-profile-main-btn');
-    if(editButton) editButton.addEventListener('click', () => openEditModal(currentUser.uid));
-
-    supervisionadosContainer.addEventListener('click', (e) => {
-        const item = e.target.closest('.registro-item');
-        if (item) {
-            // Futuramente, esta ação abrirá o formulário para edição/visualização
-            alert("Funcionalidade para abrir o formulário do supervisionado será implementada aqui.");
         }
     });
 
@@ -188,7 +221,7 @@ const storage = firebase.storage(); // Inicia o Storage
                 await db.collection('usuarios').doc(uidToEdit).update(dataToUpdate);
                 alert("Perfil atualizado com sucesso!");
                 closeEditModal();
-                carregarPainelSupervisor(); // Recarrega o painel para mostrar as alterações
+                carregarPainelSupervisor();
             } catch (error) {
                 console.error("Erro ao salvar perfil:", error);
                 alert("Ocorreu um erro ao salvar o perfil.");
@@ -198,11 +231,9 @@ const storage = firebase.storage(); // Inicia o Storage
             }
         });
     }
-
     if (cancelBtn) cancelBtn.addEventListener('click', closeEditModal);
     if (closeModalBtns) closeModalBtns.forEach(btn => btn.addEventListener('click', closeEditModal));
     if (modal) {
         modal.addEventListener('click', e => { if (e.target === modal) closeEditModal(); });
     }
-
-})();
+});

@@ -1,8 +1,9 @@
-// assets/js/formulario-supervisao.js (Versão 1)
+// assets/js/formulario-supervisao.js (Versão 2 - Completo)
 (function() {
     if (!db || !auth.currentUser) {
         console.error("Firestore ou usuário não autenticado não encontrado.");
-        document.getElementById('supervisao-view').innerHTML = '<h2>Erro de autenticação. Por favor, recarregue a página.</h2>';
+        const view = document.getElementById('supervisao-view');
+        if(view) view.innerHTML = '<h2>Erro de autenticação. Por favor, recarregue a página.</h2>';
         return;
     }
 
@@ -10,7 +11,7 @@
     const supervisaoCollection = db.collection('supervisao');
     
     // Elementos da UI
-    const showFormBtn = document.getElementById('show-form-btn');
+    const listaContainer = document.getElementById('lista-acompanhamentos-container');
     const formContainer = document.getElementById('form-container');
     const form = document.getElementById('ficha-supervisao');
     const saveStatus = document.getElementById('save-status');
@@ -22,15 +23,28 @@
 
     let debounceTimer;
 
-    // Carrega a lista inicial de supervisores e psicólogos
+    // --- FUNÇÕES AUXILIARES ---
+
+    function debounce(func, delay) {
+        let timeout;
+        return (...args) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
+
+    // --- FUNÇÕES PRINCIPAIS DE DADOS E RENDERIZAÇÃO ---
+
     async function popularSelects() {
         try {
             const supervisoresQuery = db.collection('usuarios').where('funcoes', 'array-contains', 'supervisor').where('inativo', '!=', true);
-            const psicologosQuery = db.collection('usuarios').where('fazAtendimento', '==', true).where('inativo', '!=', true);
+            const psicologosQuery = db.collection('usuarios')
+                .where('profissao', 'in', ['Psicólogo', 'Psicopedagoga', 'Musicoterapeuta'])
+                .where('inativo', '!=', true);
 
             const [supervisoresSnapshot, psicologosSnapshot] = await Promise.all([
                 supervisoresQuery.get(),
-                psicologosQuery.get()
+                psicologosSnapshot.get()
             ]);
 
             supervisorSelect.innerHTML = '<option value="">Selecione um supervisor</option>';
@@ -52,11 +66,10 @@
         }
     }
 
-    // Carrega os registros que o usuário logado pode ver
     async function carregarRegistros() {
+        if (!listaRegistros) return;
         listaRegistros.innerHTML = '<p>Carregando...</p>';
         try {
-            // Duas buscas: uma para registros onde ele é o psicólogo, outra onde ele é o supervisor
             const comoPsicologoQuery = supervisaoCollection.where('psicologoUid', '==', currentUser.uid);
             const comoSupervisorQuery = supervisaoCollection.where('supervisorUid', '==', currentUser.uid);
 
@@ -75,14 +88,21 @@
                 return;
             }
 
-            registrosMap.forEach(registro => {
+            // Ordena os registros pela data da supervisão, da mais recente para a mais antiga
+            const registrosOrdenados = Array.from(registrosMap.values()).sort((a, b) => {
+                const dateA = new Date(a.supervisaoData);
+                const dateB = new Date(b.supervisaoData);
+                return dateB - dateA; // Ordem decrescente
+            });
+
+            registrosOrdenados.forEach(registro => {
                 const div = document.createElement('div');
                 div.className = 'registro-item';
                 div.dataset.id = registro.id;
                 div.innerHTML = `
                     <span><strong>Paciente:</strong> ${registro.pacienteIniciais || 'N/A'}</span>
                     <span><strong>Psicólogo(a):</strong> ${registro.psicologoNome || 'N/A'}</span>
-                    <span><strong>Data:</strong> ${registro.supervisaoData || 'N/A'}</span>`;
+                    <span><strong>Data:</strong> ${registro.supervisaoData ? new Date(registro.supervisaoData + 'T00:00:00').toLocaleDateString('pt-BR') : 'N/A'}</span>`;
                 listaRegistros.appendChild(div);
             });
 
@@ -92,92 +112,93 @@
         }
     }
     
-    // Preenche o formulário com os dados de um registro existente
     function preencherFormulario(dados) {
         form.reset();
         documentIdField.value = dados.id || '';
 
         for (const key in dados) {
-            const field = form.elements[key];
-            if (field) {
-                // Lida com a seleção correta nos <select>
-                if (field.tagName === 'SELECT') {
-                    // O valor salvo é o UID, então usamos isso para selecionar a option
-                    const uidToSelect = key === 'psicologoNome' ? dados.psicologoUid : dados.supervisorUid;
-                    field.value = uidToSelect;
-                } else {
-                    field.value = dados[key];
+            if (Object.prototype.hasOwnProperty.call(dados, key)) {
+                const field = form.elements[key];
+                if (field) {
+                    if (field.tagName === 'SELECT') {
+                        // O nome do campo no formulário é 'psicologoNome' e 'supervisorNome', mas o valor salvo é o UID.
+                        // O valor do 'select' deve ser o UID correspondente.
+                        if (key === 'psicologoNome') {
+                            field.value = dados.psicologoUid || '';
+                        } else if (key === 'supervisorNome') {
+                            field.value = dados.supervisorUid || '';
+                        } else {
+                            field.value = dados[key];
+                        }
+                    } else {
+                        field.value = dados[key];
+                    }
                 }
             }
         }
         
+        listaContainer.style.display = 'none';
         formContainer.style.display = 'block';
-        showFormBtn.style.display = 'none';
         deleteBtn.style.display = 'block';
-        document.getElementById('paciente-iniciais').disabled = true; // Impede a alteração da chave de identificação do caso
+        document.getElementById('paciente-iniciais').disabled = true;
     }
 
-    // Salva os dados do formulário (cria um novo ou atualiza um existente)
     const autoSaveForm = async () => {
         const pacienteIniciais = form.elements['pacienteIniciais'].value.trim();
         if (!pacienteIniciais) {
-            saveStatus.textContent = 'Preencha as iniciais do paciente para salvar.';
+            if (saveStatus) saveStatus.textContent = 'Preencha as iniciais do paciente para salvar.';
             return;
         }
         
-        saveStatus.textContent = 'Salvando...';
+        if (saveStatus) saveStatus.textContent = 'Salvando...';
         const formData = new FormData(form);
         const dataToSave = Object.fromEntries(formData.entries());
 
-        // Adiciona os UIDs para as regras de segurança
         dataToSave.psicologoUid = psicologoSelect.value;
         dataToSave.supervisorUid = supervisorSelect.value;
-
-        // Adiciona os nomes para fácil visualização na lista
         dataToSave.psicologoNome = psicologoSelect.options[psicologoSelect.selectedIndex]?.text || '';
         dataToSave.supervisorNome = supervisorSelect.options[supervisorSelect.selectedIndex]?.text || '';
+        dataToSave.lastUpdated = new Date();
 
         try {
             const docId = documentIdField.value;
-            if (docId) { // Atualiza um documento existente
+            if (docId) {
                 await supervisaoCollection.doc(docId).set(dataToSave, { merge: true });
-            } else { // Cria um novo documento
+            } else {
                 const newDocRef = await supervisaoCollection.add(dataToSave);
-                documentIdField.value = newDocRef.id; // Atualiza o ID no campo oculto para os próximos salvamentos
+                documentIdField.value = newDocRef.id;
             }
-            saveStatus.textContent = 'Salvo ✓';
-            setTimeout(() => { saveStatus.textContent = ''; }, 2500);
+            if (saveStatus) {
+                saveStatus.textContent = 'Salvo ✓';
+                setTimeout(() => { saveStatus.textContent = ''; }, 2500);
+            }
         } catch (error) {
             console.error("Erro ao salvar:", error);
-            saveStatus.textContent = 'Erro ao salvar!';
+            if (saveStatus) saveStatus.textContent = 'Erro ao salvar!';
         }
     };
 
-    // --- Event Listeners ---
-    showFormBtn.addEventListener('click', () => {
-        form.reset();
-        documentIdField.value = '';
-        formContainer.style.display = 'block';
-        showFormBtn.style.display = 'none';
-        deleteBtn.style.display = 'none';
-        document.getElementById('paciente-iniciais').disabled = false;
-    });
+    // --- EVENT LISTENERS ---
 
     listaRegistros.addEventListener('click', async (e) => {
         const item = e.target.closest('.registro-item');
         if (item) {
             const docId = item.dataset.id;
-            const docSnap = await supervisaoCollection.doc(docId).get();
-            if (docSnap.exists()) {
-                preencherFormulario({ id: docId, ...docSnap.data() });
+            try {
+                const docSnap = await supervisaoCollection.doc(docId).get();
+                if (docSnap.exists()) {
+                    await popularSelects(); // Garante que os selects estejam prontos
+                    preencherFormulario({ id: docId, ...docSnap.data() });
+                }
+            } catch (error) {
+                console.error("Erro ao abrir registro:", error);
+                alert("Não foi possível carregar os detalhes deste registro.");
             }
         }
     });
 
-    form.addEventListener('input', () => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(autoSaveForm, 2000); // Salva 2 segundos após a última digitação
-    });
+    form.addEventListener('input', debounce(autoSaveForm, 2000));
+    form.addEventListener('change', debounce(autoSaveForm, 2000));
 
     deleteBtn.addEventListener('click', async () => {
         const docId = documentIdField.value;
@@ -186,7 +207,6 @@
                 await supervisaoCollection.doc(docId).delete();
                 alert("Registro excluído com sucesso.");
                 showSupervisaoDashboard(); // Volta para a tela de cards
-                carregarRegistros(); // Recarrega a lista
             } catch (error) {
                 alert("Erro ao excluir o registro.");
                 console.error("Erro ao excluir:", error);
@@ -194,7 +214,20 @@
         }
     });
 
-    // Inicialização da página
-    popularSelects();
-    carregarRegistros();
+    // --- LÓGICA DE INICIALIZAÇÃO DA PÁGINA ---
+
+    // A variável `window.formSupervisaoMode` é definida pelo script do painel antes de carregar esta tela
+    if (window.formSupervisaoMode === 'new') {
+        listaContainer.style.display = 'none';
+        formContainer.style.display = 'block';
+        deleteBtn.style.display = 'none';
+        document.getElementById('paciente-iniciais').disabled = false;
+        form.reset();
+        documentIdField.value = '';
+        popularSelects();
+    } else { // modo 'list'
+        listaContainer.style.display = 'block';
+        formContainer.style.display = 'none';
+        carregarRegistros();
+    }
 })();

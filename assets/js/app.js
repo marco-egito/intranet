@@ -136,7 +136,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     titulo: 'Intranet Supervisão', 
                     descricao: 'Acompanhamento de equipes e feedback.', 
                     url: './pages/supervisao-painel.html', 
-                    roles: ['admin', 'supervisor', 'atendimento'], icon: icons.supervisao },
+                    roles: ['admin', 'supervisor', 'atendimento'], icon: icons.supervisao 
+            },
+           supervisores: { 
+                        titulo: 'Supervisores', 
+                        descricao: 'Conheça os perfis e horários dos supervisores.', 
+                        url: './pages/supervisores-painel.html', // APONTA PARA A NOVA PÁGINA
+                        roles: ['admin', 'supervisor', 'assistente', 'psicologo', 'psicopedagogo', 'musicoterapeuta'], // Todos podem ver
+                        icon: icons.supervisao // Reutilizando o ícone de supervisão
+                    },
         };
 
         let cardsParaMostrar = [];

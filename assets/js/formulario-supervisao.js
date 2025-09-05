@@ -1,4 +1,4 @@
-// assets/js/formulario-supervisao.js (Versão 7 - Completo com Auto-Save Aprimorado)
+// assets/js/formulario-supervisao.js (Versão 8 - Completo e Corrigido)
 (function() {
     if (!db || !auth.currentUser) {
         console.error("Firestore ou usuário não autenticado não encontrado.");
@@ -47,17 +47,24 @@
             supervisorSelect.innerHTML = '<option value="">Selecione um supervisor</option>';
             psicologoSelect.innerHTML = '<option value="">Selecione um psicólogo</option>';
             let isCurrentUserAPsicologo = false;
+            
             psicologosSnapshot.forEach(doc => {
                 const user = doc.data();
-                psicologoSelect.innerHTML += `<option value="${user.uid}">${user.nome}</option>`;
-                if (user.uid === currentUser.uid) {
-                    isCurrentUserAPsicologo = true;
+                if (user && user.nome && user.uid) {
+                    psicologoSelect.innerHTML += `<option value="${user.uid}">${user.nome}</option>`;
+                    if (user.uid === currentUser.uid) {
+                        isCurrentUserAPsicologo = true;
+                    }
                 }
             });
+            
             supervisoresSnapshot.forEach(doc => {
                 const user = doc.data();
-                supervisorSelect.innerHTML += `<option value="${user.uid}">${user.nome}</option>`;
+                if (user && user.nome && user.uid) {
+                    supervisorSelect.innerHTML += `<option value="${user.uid}">${user.nome}</option>`;
+                }
             });
+
             if (isCurrentUserAPsicologo) {
                 psicologoSelect.value = currentUser.uid;
             }
@@ -149,6 +156,17 @@
         if (psicologoSelect) psicologoSelect.disabled = true;
     }
 
+    function verificarCamposGatilho() {
+        const supervisor = form.elements['supervisorNome'].value;
+        const inicioTerapia = form.elements['terapiaInicio'].value;
+        const pacienteIniciais = form.elements['pacienteIniciais'].value;
+        const pacienteIdade = form.elements['pacienteIdade'].value;
+        const pacienteGenero = form.elements['pacienteGenero'].value;
+        const pacienteSessoes = form.elements['pacienteSessoes'].value;
+        const pacienteApresentacao = form.elements['pacienteApresentacao'].value;
+        return supervisor && inicioTerapia && pacienteIniciais && pacienteIdade && pacienteGenero && pacienteSessoes && pacienteApresentacao;
+    }
+
     const autoSaveForm = async () => {
         if (!verificarCamposGatilho()) {
             if (saveStatus) saveStatus.textContent = 'Preencha os campos de Identificação para salvar.';
@@ -179,17 +197,6 @@
             if (saveStatus) saveStatus.textContent = 'Erro ao salvar!';
         }
     };
-
-    function verificarCamposGatilho() {
-        const supervisor = form.elements['supervisorNome'].value;
-        const inicioTerapia = form.elements['terapiaInicio'].value;
-        const pacienteIniciais = form.elements['pacienteIniciais'].value;
-        const pacienteIdade = form.elements['pacienteIdade'].value;
-        const pacienteGenero = form.elements['pacienteGenero'].value;
-        const pacienteSessoes = form.elements['pacienteSessoes'].value;
-        const pacienteApresentacao = form.elements['pacienteApresentacao'].value;
-        return supervisor && inicioTerapia && pacienteIniciais && pacienteIdade && pacienteGenero && pacienteSessoes && pacienteApresentacao;
-    }
 
     listaRegistros.addEventListener('click', async (e) => {
         const item = e.target.closest('.registro-item');
@@ -261,6 +268,7 @@
             if(pdfBtn) pdfBtn.style.display = 'none';
             const pacienteIniciaisInput = document.getElementById('paciente-iniciais');
             if(pacienteIniciaisInput) pacienteIniciaisInput.disabled = false;
+            if(psicologoSelect) psicologoSelect.disabled = false;
             if(form) form.reset();
             if(documentIdField) documentIdField.value = '';
             

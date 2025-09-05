@@ -44,6 +44,34 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+/* --- NOVOS ESTILOS PARA OS FILTROS --- */
+#filtros-container {
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+#filtros-container .filtro-grupo {
+    flex: 1;
+    min-width: 250px;
+}
+
+#filtros-container label {
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #555;
+}
+
+#filtros-container input,
+#filtros-container select {
+    width: 100%;
+    margin-top: 5px;
+}
     flex-wrap: wrap;
     gap: 15px;
 }

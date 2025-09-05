@@ -13,6 +13,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
+// A função para voltar agora é global (ligada à 'window') para ser acessível pelo HTML
 window.showSupervisorDashboard = function() {
     const dashboardContent = document.getElementById('supervisor-dashboard-content');
     const viewContentArea = document.getElementById('view-content-area');
@@ -24,12 +25,16 @@ window.showSupervisorDashboard = function() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    if (!db || !auth) return;
+    if (!db || !auth) {
+        console.error("Firebase não inicializado.");
+        return;
+    }
 
     const dashboardContent = document.getElementById('supervisor-dashboard-content');
     const viewContentArea = document.getElementById('view-content-area');
     const perfilContainer = document.getElementById('supervisor-card-aqui');
     const supervisionadosContainer = document.getElementById('meus-supervisionados-container');
+    
     let currentUser = null;
 
     const modal = document.getElementById('edit-profile-modal');
@@ -43,13 +48,17 @@ document.addEventListener('DOMContentLoaded', function() {
         dashboardContent.style.display = 'none';
         viewContentArea.style.display = 'block';
         viewContentArea.innerHTML = '<h2>Carregando Formulário...</h2><div class="loading-spinner"></div>';
-        window.formSupervisaoInitialDocId = docId;
+        
+        window.formSupervisaoInitialDocId = docId; // Passa o ID do documento para o próximo script
+
         try {
             const htmlResponse = await fetch('./formulario-supervisao.html');
             if (!htmlResponse.ok) throw new Error('HTML não encontrado');
             viewContentArea.innerHTML = await htmlResponse.text();
+            
             const existingScript = document.querySelector('script[data-view-script="formulario-supervisao"]');
-            if (existingScript) existingScript.remove();
+            if(existingScript) existingScript.remove();
+
             if (!document.querySelector('link[href*="formulario-supervisao.css"]')) {
                 const link = document.createElement('link');
                 link.rel = 'stylesheet';
@@ -60,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
             script.src = '../assets/js/formulario-supervisao.js';
             script.dataset.viewScript = 'formulario-supervisao';
             document.body.appendChild(script);
+
         } catch (error) {
             console.error('Erro ao carregar a view do formulário:', error);
             viewContentArea.innerHTML = '<h2>Erro ao carregar o formulário.</h2>';
@@ -71,7 +81,10 @@ document.addEventListener('DOMContentLoaded', function() {
         editingUidField.value = uid;
         try {
             const userDoc = await db.collection('usuarios').doc(uid).get();
-            if (!userDoc.exists) { alert("Documento do usuário não foi encontrado."); return; }
+            if (!userDoc.exists) {
+                alert("Documento do usuário não foi encontrado.");
+                return;
+            }
             const data = userDoc.data();
             document.getElementById('profile-photo-preview').src = data.fotoUrl || '../assets/img/default-user.png';
             document.getElementById('edit-formacao').value = data.formacao || '';
@@ -86,7 +99,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function closeEditModal() { if (modal) modal.style.display = 'none'; }
+    function closeEditModal() {
+        if (modal) modal.style.display = 'none';
+    }
 
     function criarCardSupervisor(prof) {
         const especializacaoHTML = (prof.especializacao || []).map(item => `<li>${item}</li>`).join('');
@@ -174,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     editButton.style.marginBottom = '20px';
                     editButton.addEventListener('click', () => openEditModal(currentUser.uid));
                     const containerPrincipal = document.querySelector('.admin-panel-container');
-                    const refElement = document.getElementById('supervisor-grid-container');
+                    const refElement = document.getElementById('supervisor-grid-container') || containerPrincipal.children[1];
                     if (containerPrincipal && refElement) {
                         containerPrincipal.insertBefore(editButton, refElement);
                     }

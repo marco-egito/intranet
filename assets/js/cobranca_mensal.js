@@ -1,34 +1,10 @@
+// assets/js/cobranca_mensal.js (Versão 3 - com Gatilho de Migração)
 (function() {
     if (!db) {
         console.error("Instância do Firestore (db) não encontrada.");
         return;
     }
-    // assets/js/cobranca_mensal.js (Versão 2 - Migração para UID)
-async function init() {
-    // ---- CÓDIGO TEMPORÁRIO PARA EXECUTAR A MIGRAÇÃO ----
-    // Remova este bloco após a migração ser bem-sucedida
-    const jaMigrou = localStorage.getItem('cobrancaMigrada');
-    if (!jaMigrou) {
-        if (confirm("Você deseja executar a migração de dados de cobrança agora? Esta ação só precisa ser feita uma vez e pode levar um momento.")) {
-            console.log("Executando migração...");
-            appContent.innerHTML = '<h2>Migrando dados, por favor aguarde...</h2>';
-            const migrar = firebase.functions().httpsCallable('migrarChavesDeCobranca');
-            try {
-                const resultado = await migrar();
-                alert("Migração Concluída!\n" + resultado.data.message);
-                console.log("Resultado da Migração:", resultado.data);
-                localStorage.setItem('cobrancaMigrada', 'true');
-                window.location.reload(); // Recarrega a página para ver o resultado
-            } catch (error) {
-                alert("ERRO na migração: " + error.message);
-                console.error(error);
-            }
-            return; // Para a execução normal para focar na migração
-        } else {
-            localStorage.setItem('cobrancaMigrada', 'true'); // Não pergunta de novo
-        }
-    }
-    // ---- FIM DO CÓDIGO TEMPORÁRIO ----
+
     const appContent = document.getElementById('cobranca-mensal-content');
     let DB = { profissionais: [], grades: {}, valores: {}, cobranca: {}, Mensagens: {} };
     const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
@@ -38,9 +14,8 @@ async function init() {
         return key.replace(/\.|\$|\[|\]|#|\//g, '_');
     }
 
-    async function fetchData() {
-        if (!appContent) return;
-        appContent.innerHTML = '<div class="loading-spinner"></div>';
+    // Esta função agora está dentro do init para ter acesso ao appContent
+    async function fetchDataAndRender() {
         try {
             const [usuariosSnapshot, gradesSnapshot, configSnapshot] = await Promise.all([
                 db.collection('usuarios').get(),
@@ -64,6 +39,46 @@ async function init() {
         }
     }
 
+    async function init() {
+        // ---- CÓDIGO TEMPORÁRIO PARA EXECUTAR A MIGRAÇÃO ----
+        // Remova este bloco após a migração ser bem-sucedida
+        const jaMigrou = localStorage.getItem('cobrancaMigrada');
+        if (!jaMigrou) {
+            if (confirm("Você deseja executar a migração de dados de cobrança agora? Esta ação só precisa ser feita uma vez e pode levar um momento.")) {
+                console.log("Executando migração...");
+                appContent.innerHTML = '<h2>Migrando dados, por favor aguarde... Isso pode levar até um minuto.</h2><div class="loading-spinner"></div>';
+                
+                // Precisamos garantir que a instância do functions está disponível
+                const functions = firebase.functions();
+                const migrar = functions.httpsCallable('migrarChavesDeCobranca');
+                
+                try {
+                    const resultado = await migrar();
+                    alert("Migração Concluída!\n" + resultado.data.message);
+                    console.log("Resultado da Migração:", resultado.data);
+                    if(resultado.data.chavesNaoEncontradas && resultado.data.chavesNaoEncontradas.length > 0) {
+                        alert("Atenção: Algumas chaves antigas não encontraram uma correspondência de usuário e não foram migradas. Verifique o console (F12) para detalhes.");
+                    }
+                    localStorage.setItem('cobrancaMigrada', 'true');
+                    window.location.reload(); // Recarrega a página para ver o resultado
+                } catch (error) {
+                    alert("ERRO na migração: " + error.message);
+                    console.error(error);
+                }
+                return; // Para a execução normal para focar na migração
+            } else {
+                localStorage.setItem('cobrancaMigrada', 'true'); // Não pergunta de novo se o usuário cancelar
+            }
+        }
+        // ---- FIM DO CÓDIGO TEMPORÁRIO ----
+
+        if (!appContent) return;
+        appContent.innerHTML = '<div class="loading-spinner"></div>';
+        
+        // Continua com a execução normal se a migração não for executada
+        fetchDataAndRender();
+    }
+    
     function renderCobranca(ano, mesIndex) {
         const mes = meses[mesIndex];
         const date = new Date();
@@ -172,7 +187,6 @@ async function init() {
             e.preventDefault();
             target.disabled = true;
             target.textContent = 'Salvando...';
-
             const row = target.closest('tr');
             const profId = row.dataset.profId;
             const input = row.querySelector('.edit-valor-input');
@@ -180,13 +194,11 @@ async function init() {
             const ano = parseInt(document.getElementById('cobranca-ano-selector').value);
             const mesIndex = parseInt(document.getElementById('cobranca-mes-selector').value);
             const mes = meses[mesIndex];
-
             if (isNaN(novoValor) || !profId) {
                 window.showToast('Valor inválido ou ID do profissional não encontrado.', 'error');
                 renderCobranca(ano, mesIndex);
                 return;
             }
-            
             const path = `cobranca.${ano}.${profId}.${mes}`;
             try {
                 await db.collection('financeiro').doc('configuracoes').update({ [path]: novoValor });
@@ -208,12 +220,10 @@ async function init() {
             const profInfo = DB.profissionais.find(p => p.nome === nome);
             const contato = profInfo ? (profInfo.contato || '').replace(/\D/g, '') : '';
             if(!contato) { alert(`Contato para ${nome} não encontrado.`); return; }
-            
             const template = DB.Mensagens.cobranca || 'Olá, {nomeProfissional}! Lembrete do repasse de R$ {valor} referente ao mês de {mes}.';
             const ano = document.getElementById('cobranca-ano-selector').value;
             const mes = meses[document.getElementById('cobranca-mes-selector').value];
             let message = template.replace('{nomeProfissional}', nome).replace('{valor}', target.dataset.valor).replace('{mes}', `${mes.charAt(0).toUpperCase() + mes.slice(1)}/${ano}`);
-            
             window.open(`https://wa.me/55${contato}?text=${encodeURIComponent(message)}`, '_blank');
         }
     });
@@ -226,5 +236,5 @@ async function init() {
         }
     });
 
-    fetchData();
+    init();
 })();

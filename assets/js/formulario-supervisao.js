@@ -1,4 +1,4 @@
-// assets/js/formulario-supervisao.js (Versão 5 - Com Filtros e PDF)
+// assets/js/formulario-supervisao.js (Versão 6 - Completo com Auto-Save Aprimorado)
 (function() {
     if (!db || !auth.currentUser) {
         console.error("Firestore ou usuário não autenticado não encontrado.");
@@ -44,16 +44,29 @@
                 .where('profissao', 'in', ['Psicólogo', 'Psicopedagoga', 'Musicoterapeuta'])
                 .where('inativo', '!=', true);
             const [supervisoresSnapshot, psicologosSnapshot] = await Promise.all([supervisoresQuery.get(), psicologosQuery.get()]);
+
             supervisorSelect.innerHTML = '<option value="">Selecione um supervisor</option>';
             psicologoSelect.innerHTML = '<option value="">Selecione um psicólogo</option>';
+            
+            let isCurrentUserAPsicologo = false;
+
+            psicologosSnapshot.forEach(doc => {
+                const user = doc.data();
+                psicologoSelect.innerHTML += `<option value="${user.uid}">${user.nome}</option>`;
+                if (user.uid === currentUser.uid) {
+                    isCurrentUserAPsicologo = true;
+                }
+            });
+
             supervisoresSnapshot.forEach(doc => {
                 const user = doc.data();
                 supervisorSelect.innerHTML += `<option value="${user.uid}">${user.nome}</option>`;
             });
-            psicologosSnapshot.forEach(doc => {
-                const user = doc.data();
-                psicologoSelect.innerHTML += `<option value="${user.uid}">${user.nome}</option>`;
-            });
+
+            if (isCurrentUserAPsicologo) {
+                psicologoSelect.value = currentUser.uid;
+            }
+
         } catch (error) {
             console.error("Erro ao popular selects:", error);
             supervisorSelect.innerHTML = '<option value="">Erro ao carregar</option>';
@@ -144,10 +157,20 @@
         document.getElementById('paciente-iniciais').disabled = true;
     }
 
+    function verificarCamposGatilho() {
+        const supervisor = form.elements['supervisorNome'].value;
+        const inicioTerapia = form.elements['terapiaInicio'].value;
+        const pacienteIniciais = form.elements['pacienteIniciais'].value;
+        const pacienteIdade = form.elements['pacienteIdade'].value;
+        const pacienteGenero = form.elements['pacienteGenero'].value;
+        const pacienteSessoes = form.elements['pacienteSessoes'].value;
+        const pacienteApresentacao = form.elements['pacienteApresentacao'].value;
+        return supervisor && inicioTerapia && pacienteIniciais && pacienteIdade && pacienteGenero && pacienteSessoes && pacienteApresentacao;
+    }
+
     const autoSaveForm = async () => {
-        const pacienteIniciais = form.elements['pacienteIniciais'].value.trim();
-        if (!pacienteIniciais) {
-            if (saveStatus) saveStatus.textContent = 'Preencha as iniciais do paciente para salvar.';
+        if (!verificarCamposGatilho()) {
+            if (saveStatus) saveStatus.textContent = 'Preencha os campos de Identificação para salvar.';
             return;
         }
         if (saveStatus) saveStatus.textContent = 'Salvando...';

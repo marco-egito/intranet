@@ -8,7 +8,6 @@ const firebaseConfig = {
         messagingSenderId: "1041518416343",
         appId: "1:1041518416343:web:0a11c03c205b802ed7bb92"
 };
-
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -41,8 +40,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (user) {
                     const userDoc = await db.collection("usuarios").doc(user.uid).get();
                     if (userDoc.exists && userDoc.data().funcoes?.length > 0) {
-                        const funcoes = userDoc.data().funcoes;
-                        renderDashboard(user, funcoes);
+                        const userData = userDoc.data();
+                        renderDashboard(user, userData);
                         setupInactivityListeners();
                     } else {
                         renderAccessDenied();
@@ -86,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('denied-logout').addEventListener('click', () => auth.signOut());
     }
 
-    function renderDashboard(user, funcoes) {
+    function renderDashboard(user, userData) {
         appContainer.innerHTML = `
             <header class="main-header">
                 <h1>Intranet EuPsico</h1>
@@ -100,20 +99,19 @@ document.addEventListener('DOMContentLoaded', function() {
             <div id="nav-links" class="modules-grid"></div>
         `;
         document.getElementById('logout-button').addEventListener('click', () => auth.signOut());
-        renderModuleCards(funcoes);
+        renderModuleCards(userData);
     }
 
-    function renderModuleCards(funcoes) {
+    function renderModuleCards(userData) {
         const navLinks = document.getElementById('nav-links');
         if (!navLinks) return;
         navLinks.innerHTML = '';
         
         const icons = {
             intranet: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 12c0-5.25-4.25-9.5-9.5-9.5S2.5 6.75 2.5 12s4.25 9.5 9.5 9.5s9.5-4.25 9.5-9.5Z"/><path d="M12 2.5v19"/><path d="M2.5 12h19"/></svg>`,
-            administrativo: `<svg xmlns="http://www.w.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>`,
+            administrativo: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>`,
             captacao: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>`,
             financeiro: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
-            gestao: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
             grupos: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
             marketing: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>`,
             plantao: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
@@ -123,8 +121,8 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         const areas = {
-            intranet: { titulo: 'Intranet Geral', descricao: 'Avisos, notícias e informações para todos.', url: 'URL_DA_INTRANET_GERAL_AQUI', roles: ['todos'], icon: icons.intranet },
-            administrativo: { titulo: 'Intranet Administrativo', descricao: 'Processos, documentos e organização.', url: './pages/administrativo-painel.html', roles: ['admin', 'administrativo', 'assistente'], icon: icons.administrativo },
+            intranet: { titulo: 'Intranet Geral', descricao: 'Avisos, notícias e informações para todos.', url: '#', roles: ['todos'], icon: icons.intranet },
+            administrativo: { titulo: 'Intranet Administrativo', descricao: 'Processos, documentos e organização.', url: './pages/administrativo-painel.html', roles: ['admin', 'gestor', 'assistente'], icon: icons.administrativo },
             captacao: { titulo: 'Intranet Captação', descricao: 'Ferramentas e informações para captação.', url: '#', roles: ['admin', 'captacao'], icon: icons.captacao },
             financeiro: { titulo: 'Intranet Financeiro', descricao: 'Painel de controle financeiro e relatórios.', url: './pages/painel.html', roles: ['admin', 'financeiro'], icon: icons.financeiro },
             grupos: { titulo: 'Intranet Grupos', descricao: 'Informações e materiais para grupos.', url: '#', roles: ['admin', 'grupos'], icon: icons.grupos },
@@ -132,45 +130,50 @@ document.addEventListener('DOMContentLoaded', function() {
             plantao: { titulo: 'Intranet Plantão', descricao: 'Escalas, contatos e procedimentos.', url: '#', roles: ['admin', 'plantao'], icon: icons.plantao },
             rh: { titulo: 'Recursos Humanos', descricao: 'Informações sobre vagas e comunicados.', url: '#', roles: ['admin', 'rh'], icon: icons.rh },
             servico_social: { titulo: 'Intranet Serviço Social', descricao: 'Documentos e orientações do S.S.', url: '#', roles: ['admin', 'servico_social'], icon: icons.servico_social },
+            supervisores: { titulo: 'Painel do Supervisor', descricao: 'Acesse seu perfil e acompanhamentos.', url: './pages/supervisores-painel.html', roles: ['admin', 'supervisor'], icon: icons.rh },
             supervisao: { 
-                    titulo: 'Intranet Supervisão', 
-                    descricao: 'Preencha e visualize suas fichas de acompanhamento.', 
-                    url: './pages/supervisao-painel.html', 
-                    roles: ['admin', 'assistente', 'psicologo', 'psicopedagogo', 'musicoterapeuta'], 
-                    icon: icons.supervisao  
+                titulo: 'Intranet Supervisão', 
+                descricao: 'Preencha e visualize suas fichas de acompanhamento.', 
+                url: './pages/supervisao-painel.html', 
+                roles: ['admin', 'assistente'],
+                professions: ['Psicólogo', 'Psicopedagoga', 'Musicoterapeuta']
             },
-           supervisores: { 
-                        titulo: 'Painel do Supervisor', 
-                        descricao: 'Conheça os perfis e horários dos supervisores.', 
-                        url: './pages/supervisores-painel.html', // APONTA PARA A NOVA PÁGINA
-                        roles: ['admin', 'supervisor'], // Apenas estas funções podem ver este card
-                        icon: icons.rh // Usando um ícone diferente para distinguir
-                    },
         };
+
+        const userFuncoes = (userData.funcoes || []).map(f => f.toLowerCase());
+        const userProfissao = userData.profissao || '';
 
         let cardsParaMostrar = [];
 
         for (const key in areas) {
             const area = areas[key];
-            const temPermissao = funcoes.includes('admin') || area.roles.includes('todos') || area.roles.some(role => funcoes.includes(role));
+            const rolesLowerCase = (area.roles || []).map(r => r.toLowerCase());
+
+            let temPermissao = false;
+            
+            if (userFuncoes.includes('admin')) {
+                temPermissao = true;
+            } else if (rolesLowerCase.includes('todos')) {
+                temPermissao = true;
+            } else if (rolesLowerCase.some(role => userFuncoes.includes(role))) {
+                temPermissao = true;
+            } else if (area.professions && area.professions.includes(userProfissao)) {
+                temPermissao = true;
+            }
+
             if (temPermissao) {
                 cardsParaMostrar.push(area);
             }
         }
 
-        cardsParaMostrar.sort((a, b) => {
-            if (a.titulo.includes('Intranet Geral')) return -1;
-            if (b.titulo.includes('Intranet Geral')) return 1;
-            return a.titulo.localeCompare(b.titulo);
-        });
+        cardsParaMostrar.sort((a, b) => a.titulo.localeCompare(b.titulo));
         
         cardsParaMostrar.forEach(config => {
             const card = document.createElement('a');
             card.href = config.url;
             card.className = 'module-card';
-
             card.innerHTML = `
-                <div class="card-icon">${config.icon}</div>
+                <div class="card-icon">${config.icon || icons.intranet}</div>
                 <div class="card-content">
                     <h3>${config.titulo}</h3>
                     <p>${config.descricao}</p>
@@ -180,6 +183,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Inicia a aplicação
     handleAuth();
 });

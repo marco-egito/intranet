@@ -1,4 +1,29 @@
 // assets/js/cobranca_mensal.js (Versão 2 - Migração para UID)
+async function init() {
+    // ---- CÓDIGO TEMPORÁRIO PARA EXECUTAR A MIGRAÇÃO ----
+    // Remova este bloco após a migração ser bem-sucedida
+    const jaMigrou = localStorage.getItem('cobrancaMigrada');
+    if (!jaMigrou) {
+        if (confirm("Você deseja executar a migração de dados de cobrança agora? Esta ação só precisa ser feita uma vez e pode levar um momento.")) {
+            console.log("Executando migração...");
+            appContent.innerHTML = '<h2>Migrando dados, por favor aguarde...</h2>';
+            const migrar = firebase.functions().httpsCallable('migrarChavesDeCobranca');
+            try {
+                const resultado = await migrar();
+                alert("Migração Concluída!\n" + resultado.data.message);
+                console.log("Resultado da Migração:", resultado.data);
+                localStorage.setItem('cobrancaMigrada', 'true');
+                window.location.reload(); // Recarrega a página para ver o resultado
+            } catch (error) {
+                alert("ERRO na migração: " + error.message);
+                console.error(error);
+            }
+            return; // Para a execução normal para focar na migração
+        } else {
+            localStorage.setItem('cobrancaMigrada', 'true'); // Não pergunta de novo
+        }
+    }
+    // ---- FIM DO CÓDIGO TEMPORÁRIO ----
 (function() {
     if (!db) {
         console.error("Instância do Firestore (db) não encontrada.");

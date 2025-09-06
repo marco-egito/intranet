@@ -14,17 +14,48 @@ if (!firebase.apps.length) {
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+const viewContentArea = document.getElementById('view-content-area');
+const dashboardContent = document.getElementById('supervisor-dashboard-content');
+
 // Função para voltar ao painel principal de cards
 window.showSupervisorDashboard = function() {
-    document.getElementById('view-content-area').style.display = 'none';
-    document.getElementById('supervisor-dashboard-content').style.display = 'block';
+    viewContentArea.style.display = 'none';
+    viewContentArea.innerHTML = ''; // Limpa o conteúdo da view
+    dashboardContent.style.display = 'block';
 };
+
+// --- INÍCIO DA NOVA FUNÇÃO ---
+// Função global para carregar a visualização do formulário de qualquer script filho
+window.loadFormularioView = async function(docId) {
+    dashboardContent.style.display = 'none';
+    viewContentArea.style.display = 'block';
+    viewContentArea.innerHTML = '<div class="loading-spinner"></div>';
+
+    try {
+        const response = await fetch('./formulario-supervisao.html');
+        if (!response.ok) throw new Error('Falha ao carregar o HTML do formulário');
+        viewContentArea.innerHTML = await response.text();
+        
+        // Passa o ID do documento para o script do formulário
+        window.formSupervisaoInitialDocId = docId;
+
+        // Anexa o script do formulário para executá-lo
+        const script = document.createElement('script');
+        script.src = '../assets/js/formulario-supervisao.js';
+        script.dataset.viewScript = 'formulario-supervisao';
+        document.body.appendChild(script);
+
+    } catch (error) {
+        console.error("Erro ao carregar view do formulário:", error);
+        viewContentArea.innerHTML = `<h2>Erro ao carregar.</h2><button onclick="showSupervisorDashboard()">Voltar</button>`;
+    }
+};
+// --- FIM DA NOVA FUNÇÃO ---
+
 
 document.addEventListener('DOMContentLoaded', function() {
     if (!auth) return;
 
-    const dashboardContent = document.getElementById('supervisor-dashboard-content');
-    const viewContentArea = document.getElementById('view-content-area');
     const supervisorCardsGrid = document.getElementById('supervisor-cards-grid');
 
     const icons = {
@@ -88,8 +119,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const userDoc = await db.collection('usuarios').doc(user.uid).get();
             if (userDoc.exists) {
                 const funcoes = userDoc.data().funcoes || [];
-                // --- CORREÇÃO APLICADA AQUI ---
-                // Verifica se o array 'funcoes' inclui 'supervisor' OU 'admin'
                 if (funcoes.includes('supervisor') || funcoes.includes('admin')) {
                     renderSupervisorCards();
                 } else {

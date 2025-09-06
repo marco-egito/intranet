@@ -1,4 +1,4 @@
-// assets/js/view-meu-perfil.js (Versão 3 - Com modo de visualização)
+// assets/js/view-meu-perfil.js (Versão 4 - Botão condicional e layout)
 (function() {
     if (!window.firebase || !auth || !db) {
         console.error("Firebase não inicializado.");
@@ -11,9 +11,9 @@
     let fetchedSupervisors = []; 
     let isAdmin = false; 
 
-    // A lógica do Modal de Edição não precisa de alterações e permanece aqui...
+    // A lógica do Modal de Edição permanece a mesma
     const modal = document.getElementById('edit-profile-modal');
-    if(modal) { // Verifica se o modal existe na página antes de adicionar listeners
+    if(modal) {
         const form = document.getElementById('edit-profile-form');
         const photoEditSection = document.querySelector('.photo-edit-section');
 
@@ -79,25 +79,25 @@
         if (!currentUser || !gridContainer) return;
         
         try {
-            // --- INÍCIO DA ALTERAÇÃO ---
-            // Verifica se o script pai definiu o modo de visualização
             const forceAll = window.PROFILE_VIEW_MODE === 'all';
-            window.PROFILE_VIEW_MODE = null; // Limpa a variável para não afetar outras telas
+            window.PROFILE_VIEW_MODE = null;
 
             const userDoc = await db.collection('usuarios').doc(currentUser.uid).get();
             if (!userDoc.exists) throw new Error("Usuário logado não encontrado.");
             
             const userData = userDoc.data();
-            isAdmin = userData.funcoes && userData.funcoes.includes('admin');
+            const funcoes = userData.funcoes || [];
+            isAdmin = funcoes.includes('admin');
+            
+            // ALTERAÇÃO 1: Verifica se o usuário logado é admin OU supervisor.
+            const podeEditar = funcoes.includes('admin') || funcoes.includes('supervisor');
 
             let query;
-            // A condição agora é: "force o modo todos" OU "o usuário é admin"
             if (forceAll || isAdmin) {
                 query = db.collection('usuarios').where('funcoes', 'array-contains', 'supervisor').where('inativo', '==', false).orderBy('nome');
             } else {
                 query = db.collection('usuarios').where(firebase.firestore.FieldPath.documentId(), '==', currentUser.uid);
             }
-            // --- FIM DA ALTERAÇÃO ---
 
             const snapshot = await query.get();
             fetchedSupervisors = []; 
@@ -111,7 +111,8 @@
 
             gridContainer.innerHTML = ''; 
             fetchedSupervisors.forEach(supervisor => {
-                const cardElement = createSupervisorCard(supervisor);
+                // ALTERAÇÃO 2: Passa a permissão de edição para a função que cria o card.
+                const cardElement = createSupervisorCard(supervisor, podeEditar);
                 gridContainer.appendChild(cardElement);
             });
 
@@ -121,7 +122,8 @@
         }
     }
 
-    function createSupervisorCard(supervisor) {
+    // ALTERAÇÃO 3: A função agora aceita um segundo parâmetro para saber se mostra o botão.
+    function createSupervisorCard(supervisor, podeEditar) {
         const card = document.createElement('div');
         card.className = 'supervisor-card';
 
@@ -133,7 +135,6 @@
         const photoName = supervisor.foto || `${supervisor.nome.toLowerCase().split(' ')[0]}.png`;
         const photoUrl = `../assets/img/supervisores/${photoName}`;
 
-        // A lógica para criar o card não muda
         card.innerHTML = `
             <div class="supervisor-card-left">
                 <h2>${supervisor.nome || 'Nome Indisponível'}</h2>
@@ -149,7 +150,8 @@
                 </div>
             </div>
             <div class="supervisor-card-right">
-                <button class="edit-supervisor-btn" data-uid="${supervisor.uid}">Editar</button>
+                ${podeEditar ? `<button class="edit-supervisor-btn" data-uid="${supervisor.uid}">Editar</button>` : ''}
+                
                 <div class="profile-header">PERFIL PROFISSIONAL</div>
                 <h4>Formação</h4>
                 <ul>${toList(supervisor.formacao)}</ul>

@@ -1,8 +1,8 @@
-// assets/js/view-meu-perfil.js (Versão 4 - Botão condicional e layout)
+// assets/js/view-meu-perfil.js (Versão 5 - Com edição de foto por URL)
 (function() {
     if (!window.firebase || !auth || !db) {
         console.error("Firebase não inicializado.");
-        document.getElementById('supervisor-grid-container').innerHTML = '<p style="color:red;">Erro de inicialização. Verifique o console.</p>';
+        document.getElementById('supervisor-grid-container').innerHTML = '<p style="color:red;">Erro de inicialização.</p>';
         return;
     }
 
@@ -11,7 +11,6 @@
     let fetchedSupervisors = []; 
     let isAdmin = false; 
 
-    // A lógica do Modal de Edição permanece a mesma
     const modal = document.getElementById('edit-profile-modal');
     if(modal) {
         const form = document.getElementById('edit-profile-form');
@@ -22,7 +21,12 @@
             if (!supervisorData) return;
 
             form.elements['editing-uid'].value = supervisorData.uid;
-            form.elements['edit-formacao'].value = Array.isArray(supervisorData.formacao) ? supervisorData.formacao.join('\n') : supervisorData.formacao || '';
+
+            // ALTERAÇÃO 2: Preenche o preview da imagem e o campo de texto com a URL.
+            document.getElementById('profile-photo-preview').src = supervisorData.fotoUrl || '../assets/img/default-user.png';
+            document.getElementById('edit-fotoUrl').value = supervisorData.fotoUrl || '';
+
+            form.elements['edit-formacao'].value = supervisorData.formacao || ''; // Assumindo que formação é um campo de texto simples
             form.elements['edit-especializacao'].value = Array.isArray(supervisorData.especializacao) ? supervisorData.especializacao.join('\n') : supervisorData.especializacao || '';
             form.elements['edit-atuacao'].value = Array.isArray(supervisorData.atuacao) ? supervisorData.atuacao.join('\n') : supervisorData.atuacao || '';
             form.elements['edit-supervisaoInfo'].value = Array.isArray(supervisorData.supervisaoInfo) ? supervisorData.supervisaoInfo.join('\n') : supervisorData.supervisaoInfo || '';
@@ -45,7 +49,9 @@
             if (!uid) return;
 
             const updateData = {
-                formacao: form.elements['edit-formacao'].value.split('\n').filter(line => line.trim() !== ''),
+                // ALTERAÇÃO 3: Lê a URL do novo campo de texto para salvar no Firestore.
+                fotoUrl: document.getElementById('edit-fotoUrl').value.trim(),
+                formacao: form.elements['edit-formacao'].value,
                 especializacao: form.elements['edit-especializacao'].value.split('\n').filter(line => line.trim() !== ''),
                 atuacao: form.elements['edit-atuacao'].value.split('\n').filter(line => line.trim() !== ''),
                 supervisaoInfo: form.elements['edit-supervisaoInfo'].value.split('\n').filter(line => line.trim() !== ''),
@@ -74,7 +80,6 @@
         });
     }
 
-
     async function loadProfiles() {
         if (!currentUser || !gridContainer) return;
         
@@ -88,8 +93,6 @@
             const userData = userDoc.data();
             const funcoes = userData.funcoes || [];
             isAdmin = funcoes.includes('admin');
-            
-            // ALTERAÇÃO 1: Verifica se o usuário logado é admin OU supervisor.
             const podeEditar = funcoes.includes('admin') || funcoes.includes('supervisor');
 
             let query;
@@ -111,7 +114,6 @@
 
             gridContainer.innerHTML = ''; 
             fetchedSupervisors.forEach(supervisor => {
-                // ALTERAÇÃO 2: Passa a permissão de edição para a função que cria o card.
                 const cardElement = createSupervisorCard(supervisor, podeEditar);
                 gridContainer.appendChild(cardElement);
             });
@@ -122,7 +124,6 @@
         }
     }
 
-    // ALTERAÇÃO 3: A função agora aceita um segundo parâmetro para saber se mostra o botão.
     function createSupervisorCard(supervisor, podeEditar) {
         const card = document.createElement('div');
         card.className = 'supervisor-card';
@@ -132,8 +133,8 @@
             return Array.isArray(data) ? data.map(item => `<li>${item}</li>`).join('') : `<li>${data}</li>`;
         };
 
-        const photoName = supervisor.foto || `${supervisor.nome.toLowerCase().split(' ')[0]}.png`;
-        const photoUrl = `../assets/img/supervisores/${photoName}`;
+        // ALTERAÇÃO 1: Padroniza o uso de 'fotoUrl' para exibir a imagem.
+        const photoUrl = supervisor.fotoUrl || '../assets/img/default-user.png';
 
         card.innerHTML = `
             <div class="supervisor-card-left">
@@ -151,10 +152,9 @@
             </div>
             <div class="supervisor-card-right">
                 ${podeEditar ? `<button class="edit-supervisor-btn" data-uid="${supervisor.uid}">Editar</button>` : ''}
-                
                 <div class="profile-header">PERFIL PROFISSIONAL</div>
                 <h4>Formação</h4>
-                <ul>${toList(supervisor.formacao)}</ul>
+                <ul><li>${supervisor.formacao || 'Não informado'}</li></ul>
                 <h4>Especialização</h4>
                 <ul>${toList(supervisor.especializacao)}</ul>
                 <h4>Áreas de Atuação</h4>

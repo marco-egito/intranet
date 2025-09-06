@@ -50,10 +50,10 @@
 .photo-container img.supervisor-photo {
     position: absolute;
     bottom: 0;
-    left: 30%;
-    transform: translateX(-50%);
-    width: clamp(200px, 20vw, 800px);
-    height: clamp(200px, 20vw, 800px);
+    left: 36%;
+   /* transform: translateX(-50%);*/
+    width: clamp(150x, 20vw, 800px);
+    height: clamp(150px, 20vw, 800px);
     border-radius: 8px; 
     object-fit: cover;
     image-rendering: -webkit-optimize-contrast; /* Adicione esta linha */

@@ -44,7 +44,7 @@
 .photo-container { margin-top: auto; position: relative; text-align: center; }
 .photo-container img.supervisor-photo {
     width: clamp(100px, 20vw, 350px);
-    height: clamp(100px, 20vw, 350px);
+    height: clamp(100px, 20vw, 150px);
     border-radius: 8px; 
     border: 4px 
     object-fit: cover;

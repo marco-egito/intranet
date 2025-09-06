@@ -6,246 +6,32 @@
     gap: 30px;
     margin-top: 20px;
 }
-
-.supervisor-card {
-    background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    display: flex;
-    overflow: hidden;
-    min-height: 550px;
-}
-
-.supervisor-card-left {
-    background-color: #38a9e4; /* Cor azul da imagem */
-    color: white;
-    padding: 25px;
-    width: 250px;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-}
-
-.supervisor-card-left h2 {
-    font-size: 1.6em;
-    margin: 0;
-    text-transform: uppercase;
-}
-
-.supervisor-card-left h3 {
-    background-color: #04396d; /* Azul escuro */
-    font-size: 1em;
-    padding: 8px;
-    text-align: center;
-    border-radius: 5px;
-    margin: 15px 0;
-    letter-spacing: 1px;
-}
-
-.contact-info {
-    list-style: none;
-    padding: 0;
-    margin: 10px 0;
-    font-size: 0.9em;
-}
-
-.contact-info li {
-    margin-bottom: 10px;
-}
-
-.photo-container {
-    margin-top: auto; /* Empurra a foto para baixo */
-    position: relative;
-    text-align: center;
-}
-
-.photo-container img.supervisor-photo {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    border: 4px solid white;
-    object-fit: cover;
-}
-
-.photo-container img.overlay-logo {
-    position: absolute;
-    bottom: 5px;
-    left: 10px;
-    width: 50px;
-    height: auto;
-}
-
-.supervisor-card-right {
-    padding: 25px;
-    flex-grow: 1;
-}
-
-.supervisor-card-right .profile-header {
-    background-color: #04396d;
-    color: white;
-    padding: 10px 15px;
-    border-radius: 5px;
-    text-align: center;
-    font-size: 1.2em;
-    font-weight: bold;
-    letter-spacing: 2px;
-    margin-bottom: 20px;
-}
-
-.supervisor-card-right h4 {
-    font-size: 0.9em;
-    text-transform: uppercase;
-    color: #04396d;
-    border-bottom: 2px solid #38a9e4;
-    padding-bottom: 5px;
-    margin-top: 20px;
-    margin-bottom: 10px;
-}
-
-.supervisor-card-right ul {
-    list-style: none;
-    padding-left: 0;
-    font-size: 0.95em;
-    line-height: 1.6;
-}
-
-.supervisor-card-right ul li::before {
-    content: '•';
-    color: #38a9e4;
-    font-weight: bold;
-    display: inline-block; 
-    width: 1em;
-    margin-left: -1em;
-}
-
-.loading-spinner { /* Spinner de carregamento */
-    border: 5px solid #f3f3f3; border-top: 5px solid #007bff;
-    border-radius: 50%; width: 40px; height: 40px;
-    animation: spin 1s linear infinite; margin: 50px auto;
-}
+.supervisor-card { background-color: #fff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; overflow: hidden; min-height: 550px; }
+.supervisor-card-left { background-color: #38a9e4; color: white; padding: 25px; width: 250px; display: flex; flex-direction: column; flex-shrink: 0; }
+.supervisor-card-left h2 { font-size: 1.6em; margin: 0; text-transform: uppercase; }
+.supervisor-card-left h3 { background-color: #04396d; font-size: 1em; padding: 8px; text-align: center; border-radius: 5px; margin: 15px 0; letter-spacing: 1px; }
+.contact-info { list-style: none; padding: 0; margin: 10px 0; font-size: 0.9em; }
+.contact-info li { margin-bottom: 10px; }
+.photo-container { margin-top: auto; position: relative; text-align: center; }
+.photo-container img.supervisor-photo { width: 150px; height: 150px; border-radius: 50%; border: 4px solid white; object-fit: cover; }
+.photo-container img.overlay-logo { position: absolute; bottom: 5px; left: 10px; width: 50px; height: auto; }
+.supervisor-card-right { padding: 25px; flex-grow: 1; position: relative; }
+.supervisor-card-right .profile-header { background-color: #04396d; color: white; padding: 10px 15px; border-radius: 5px; text-align: center; font-size: 1.2em; font-weight: bold; letter-spacing: 2px; margin-bottom: 20px; }
+.supervisor-card-right h4 { font-size: 0.9em; text-transform: uppercase; color: #04396d; border-bottom: 2px solid #38a9e4; padding-bottom: 5px; margin-top: 20px; margin-bottom: 10px; }
+.supervisor-card-right ul { list-style: none; padding-left: 0; font-size: 0.95em; line-height: 1.6; }
+.supervisor-card-right ul li::before { content: '•'; color: #38a9e4; font-weight: bold; display: inline-block; width: 1em; margin-left: -1em; }
+.loading-spinner { border: 5px solid #f3f3f3; border-top: 5px solid #007bff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 50px auto; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* --- NOVOS ESTILOS PARA O MODAL DE EDIÇÃO --- */
-
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background-color: #fff;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 700px;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 25px;
-    background-color: #0d2d4e;
-    color: white;
-    border-radius: 8px 8px 0 0;
-}
-
-.modal-header h2 {
-    margin: 0;
-    font-size: 1.2em;
-}
-
-.close-modal-btn {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 2em;
-    cursor: pointer;
-}
-
-.modal-body {
-    padding: 25px;
-    overflow-y: auto;
-}
-
-.modal-body .form-group {
-    margin-bottom: 15px;
-}
-
-.modal-body label {
-    font-weight: bold;
-    display: block;
-    margin-bottom: 5px;
-}
-
-.modal-body input, .modal-body textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1em;
-    box-sizing: border-box;
-}
-
-.modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    padding: 15px 25px;
-    background-color: #f1f1f1;
-    border-top: 1px solid #ddd;
-    border-radius: 0 0 8px 8px;
-}
-
-/* Botão de Editar no Card (só para Admins) */
-.supervisor-card-right {
-    position: relative; /* Necessário para posicionar o botão de editar */
-}
-.edit-supervisor-btn {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background-color: #ffc107;
-    color: black;
-    border: none;
-    padding: 6px 10px;
-    font-size: 0.8em;
-    font-weight: bold;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-/* Seção de foto no modal */
-.photo-edit-section {
-    text-align: center;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 20px;
-}
-.photo-preview-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-#profile-photo-preview {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid #ddd;
-}
-#change-photo-btn {
-    width: auto;
-    padding: 8px 15px;
-    font-size: 0.9em;
-}
+/* --- ESTILOS DO MODAL DE EDIÇÃO --- */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-content { background-color: #fff; border-radius: 8px; width: 90%; max-width: 700px; max-height: 90vh; display: flex; flex-direction: column; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; background-color: #0d2d4e; color: white; border-radius: 8px 8px 0 0; }
+.modal-header h2 { margin: 0; font-size: 1.2em; }
+.close-modal-btn { background: none; border: none; color: white; font-size: 2em; cursor: pointer; }
+.modal-body { padding: 25px; overflow-y: auto; }
+.modal-body .form-group { margin-bottom: 15px; }
+.modal-body label { font-weight: bold; display: block; margin-bottom: 5px; }
+.modal-body input, .modal-body textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 15px 25px; background-color: #f1f1f1; border-top: 1px solid #ddd; border-radius: 0 0 8px 8px; }
+.edit-supervisor-btn { position: absolute; top: 15px; right: 15px; background-color: #ffc107; color: black; border: none; padding: 6px 10px; font-size: 0.8em; font-weight: bold; border-radius: 4px; cursor: pointer; }

@@ -8,7 +8,6 @@ const firebaseConfig = {
   messagingSenderId: "1041518416343",
   appId: "1:1041518416343:web:0a11c03c205b802ed7bb92"
 };
-// 1. DECLARA AS VARIÁVEIS NO ESCOPO GLOBAL, MAS SEM VALOR
 let auth;
 let db;
 
@@ -17,7 +16,6 @@ document.addEventListener('DOMContentLoaded', function() {
         firebase.initializeApp(firebaseConfig);
     }
     
-    // 2. ATRIBUI OS VALORES AQUI DENTRO, TORNANDO-OS ACESSÍVEIS GLOBALMENTE
     auth = firebase.auth();
     db = firebase.firestore();
 
@@ -36,33 +34,66 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    async function loadView(viewName, mode = 'list') {
+    // --- FUNÇÃO ATUALIZADA ---
+    // Agora usa um "mapa de arquivos" para poder carregar diferentes views
+    async function loadView(viewName, mode = '') {
         if (!viewContentArea || !cardGridArea) return;
+
+        const fileMap = {
+            'formulario_supervisao': {
+                html: './formulario-supervisao.html',
+                js: '../assets/js/formulario-supervisao.js',
+                css: '../assets/css/formulario-supervisao.css'
+            },
+            'perfis_supervisores': { // A nova view que estamos adicionando
+                html: './view-meu-perfil.html',
+                js: '../assets/js/view-meu-perfil.js',
+                css: '../assets/css/supervisores.css'
+            }
+        };
+
+        const files = fileMap[viewName];
+        if (!files) {
+            console.error(`View "${viewName}" não encontrada no fileMap.`);
+            return;
+        }
 
         cardGridArea.style.display = 'none';
         viewContentArea.style.display = 'block';
         viewContentArea.innerHTML = '<div class="loading-spinner"></div>';
-
-        const existingScript = document.querySelector('script[data-view-script="formulario-supervisao"]');
+        
+        // Remove scripts antigos para evitar duplicidade
+        const existingScript = document.querySelector(`script[data-view-script]`);
         if (existingScript) existingScript.remove();
 
         try {
-            const htmlResponse = await fetch('./formulario-supervisao.html');
-            if (!htmlResponse.ok) throw new Error(`Erro ao carregar HTML: ${htmlResponse.statusText}`);
+            const htmlResponse = await fetch(files.html);
+            if (!htmlResponse.ok) throw new Error(`Erro ao carregar HTML: ${files.html}`);
             viewContentArea.innerHTML = await htmlResponse.text();
-            window.formSupervisaoMode = mode;
+            
+            // Lógica para o botão Voltar da view carregada
+            const backButton = document.getElementById('view-back-button');
+            if (backButton) {
+                backButton.addEventListener('click', showSupervisaoDashboard);
+            }
 
-            if (!document.querySelector(`link[data-view-style="formulario-supervisao"]`)) {
+            // Passa o modo (novo/lista) para a view de formulário, se aplicável
+            if (mode) {
+                window.formSupervisaoMode = mode;
+            }
+
+            // Carrega o CSS específico da view, se não estiver carregado
+            if (!document.querySelector(`link[href="${files.css}"]`)) {
                 const link = document.createElement('link');
                 link.rel = 'stylesheet';
-                link.href = '../assets/css/formulario-supervisao.css';
-                link.dataset.viewStyle = 'formulario-supervisao';
+                link.href = files.css;
                 document.head.appendChild(link);
             }
             
+            // Carrega o JS específico da view
             const script = document.createElement('script');
-            script.src = '../assets/js/formulario-supervisao.js';
-            script.dataset.viewScript = 'formulario-supervisao';
+            script.src = files.js;
+            script.dataset.viewScript = viewName; // Marca o script para poder removê-lo depois
             document.body.appendChild(script);
 
         } catch (error) {
@@ -79,12 +110,24 @@ document.addEventListener('DOMContentLoaded', function() {
             nova_ficha: {
                 titulo: 'Ficha de Supervisão',
                 descricao: 'Clique aqui para preencher uma nova ficha.',
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>'
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>',
+                view: 'formulario_supervisao', // Define qual view carregar
+                mode: 'new'
             },
             visualizar: {
                 titulo: 'Acompanhamentos',
                 descricao: 'Visualize todas as fichas que você preencheu ou supervisionou.',
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>'
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
+                view: 'formulario_supervisao',
+                mode: 'list'
+            },
+            // --- NOVO CARD ADICIONADO ---
+            supervisores: {
+                titulo: 'Supervisores',
+                descricao: 'Visualize os perfis de todos os supervisores.',
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
+                view: 'perfis_supervisores', // Aponta para a view de perfis
+                mode: ''
             }
         };
 
@@ -93,8 +136,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const module = supervisaoModules[key];
                 const card = document.createElement('div');
                 card.className = 'module-card';
-                card.dataset.view = 'formulario_supervisao';
-                card.dataset.mode = key === 'nova_ficha' ? 'new' : 'list';
+                card.dataset.view = module.view; // Usa a propriedade 'view'
+                card.dataset.mode = module.mode;
                 card.innerHTML = `<div class="card-icon">${module.icon}</div><div class="card-content"><h3>${module.titulo}</h3><p>${module.descricao}</p></div>`;
                 supervisaoModulesGrid.appendChild(card);
             }

@@ -11,31 +11,117 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage();
 
-// A função para voltar agora é global (ligada à 'window') para ser acessível pelo HTML
+// Funções globais para serem chamadas pelos botões "Voltar" nas views carregadas
 window.showSupervisorDashboard = function() {
-    const dashboardContent = document.getElementById('supervisor-dashboard-content');
-    const viewContentArea = document.getElementById('view-content-area');
-    if(viewContentArea) {
-        viewContentArea.style.display = 'none';
-        viewContentArea.innerHTML = '';
+    document.getElementById('view-content-area').style.display = 'none';
+    document.getElementById('supervisor-dashboard-content').style.display = 'block';
+};
+
+window.openEditModal = async function(uid) {
+    const modal = document.getElementById('edit-profile-modal');
+    const editingUidField = document.getElementById('editing-uid');
+    if (!uid || !modal) return;
+    editingUidField.value = uid;
+
+    try {
+        const userDoc = await db.collection('usuarios').doc(uid).get();
+        if (!userDoc.exists) { alert("Documento do usuário não foi encontrado."); return; }
+        const data = userDoc.data();
+        document.getElementById('profile-photo-preview').src = data.fotoUrl || '../assets/img/default-user.png';
+        document.getElementById('edit-formacao').value = data.formacao || '';
+        document.getElementById('edit-especializacao').value = (data.especializacao || []).join('\n');
+        document.getElementById('edit-atuacao').value = (data.atuacao || []).join('\n');
+        document.getElementById('edit-supervisaoInfo').value = (data.supervisaoInfo || []).join('\n');
+        document.getElementById('edit-diasHorarios').value = (data.diasHorarios || []).join('\n');
+        modal.style.display = 'flex';
+    } catch (error) {
+        console.error("Erro ao carregar dados do perfil:", error);
+        alert("Não foi possível carregar seus dados para edição.");
     }
-    if(dashboardContent) dashboardContent.style.display = 'block';
-}
+};
 
 document.addEventListener('DOMContentLoaded', function() {
-    if (!db || !auth) {
-        console.error("Firebase não inicializado.");
-        return;
-    }
+    if (!auth) return;
 
     const dashboardContent = document.getElementById('supervisor-dashboard-content');
     const viewContentArea = document.getElementById('view-content-area');
-    const perfilContainer = document.getElementById('supervisor-card-aqui');
-    const supervisionadosContainer = document.getElementById('meus-supervisionados-container');
+    const supervisorCardsGrid = document.getElementById('supervisor-cards-grid');
+    let currentUserData = {};
+
+    const icons = {
+        profile: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
+        list: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>`
+    };
     
-    let currentUser = null;
+    async function loadView(viewName) {
+        dashboardContent.style.display = 'none';
+        viewContentArea.style.display = 'block';
+        viewContentArea.innerHTML = '<div class="loading-spinner"></div>';
+        
+        const fileMap = {
+            'meu_perfil': { html: './view-meu-perfil.html', js: '../assets/js/view-meu-perfil.js' },
+            'meus_supervisionados': { html: './view-meus-supervisionados.html', js: '../assets/js/view-meus-supervisionados.js' }
+        };
+        const files = fileMap[viewName];
+
+        try {
+            const response = await fetch(files.html);
+            if (!response.ok) throw new Error (`HTML não encontrado: ${files.html}`);
+            viewContentArea.innerHTML = await response.text();
+            
+            const existingScript = document.querySelector(`script[data-view-script="${viewName}"]`);
+            if (existingScript) existingScript.remove();
+            
+            const script = document.createElement('script');
+            script.src = files.js;
+            script.dataset.viewScript = viewName;
+            document.body.appendChild(script);
+        } catch (error) {
+            console.error("Erro ao carregar view:", error);
+            viewContentArea.innerHTML = `<h2>Erro ao carregar.</h2><button onclick="showSupervisorDashboard()">Voltar</button>`;
+        }
+    }
+
+    function renderSupervisorCards() {
+        supervisorCardsGrid.innerHTML = '';
+        const modules = {
+            meu_perfil: { titulo: 'Meu Perfil e Edição', descricao: 'Visualize e edite suas informações de perfil.', icon: icons.profile },
+            meus_supervisionados: { titulo: 'Meus Supervisionados', descricao: 'Visualize os acompanhamentos que você supervisiona.', icon: icons.list }
+        };
+        for(const key in modules) {
+            const module = modules[key];
+            const card = document.createElement('div');
+            card.className = 'module-card';
+            card.dataset.view = key;
+            card.innerHTML = `<div class="card-icon">${module.icon}</div><div class="card-content"><h3>${module.titulo}</h3><p>${module.descricao}</p></div>`;
+            supervisorCardsGrid.appendChild(card);
+        }
+    }
+    
+    supervisorCardsGrid.addEventListener('click', (e) => {
+        const card = e.target.closest('.module-card');
+        if (card) {
+            loadView(card.dataset.view);
+        }
+    });
+
+    auth.onAuthStateChanged(async user => {
+        if (user) {
+            try {
+                const userDoc = await db.collection('usuarios').doc(user.uid).get();
+                if (userDoc.exists && userDoc.data().funcoes?.includes('supervisor')) {
+                    renderSupervisorCards();
+                } else {
+                    dashboardContent.innerHTML = '<h2>Acesso Negado</h2><p>Esta área é exclusiva para supervisores.</p>';
+                }
+            } catch (error) {
+                 dashboardContent.innerHTML = '<h2>Erro ao verificar permissões.</h2>';
+            }
+        } else {
+            window.location.href = '../index.html';
+        }
+    });
 
     const modal = document.getElementById('edit-profile-modal');
     const saveProfileBtn = document.getElementById('save-profile-btn');
@@ -43,182 +129,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeModalBtns = document.querySelectorAll('.close-modal-btn');
     const editingUidField = document.getElementById('editing-uid');
 
-    async function loadFormularioView(docId) {
-        if (!dashboardContent || !viewContentArea) return;
-        dashboardContent.style.display = 'none';
-        viewContentArea.style.display = 'block';
-        viewContentArea.innerHTML = '<h2>Carregando Formulário...</h2><div class="loading-spinner"></div>';
-        
-        window.formSupervisaoInitialDocId = docId; // Passa o ID do documento para o próximo script
+    if(cancelBtn) cancelBtn.addEventListener('click', () => modal.style.display = 'none');
+    if(closeModalBtns) closeModalBtns.forEach(btn => btn.addEventListener('click', () => modal.style.display = 'none'));
+    if(modal) modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
 
-        try {
-            const htmlResponse = await fetch('./formulario-supervisao.html');
-            if (!htmlResponse.ok) throw new Error('HTML não encontrado');
-            viewContentArea.innerHTML = await htmlResponse.text();
-            
-            const existingScript = document.querySelector('script[data-view-script="formulario-supervisao"]');
-            if(existingScript) existingScript.remove();
-
-            if (!document.querySelector('link[href*="formulario-supervisao.css"]')) {
-                const link = document.createElement('link');
-                link.rel = 'stylesheet';
-                link.href = '../assets/css/formulario-supervisao.css';
-                document.head.appendChild(link);
-            }
-            const script = document.createElement('script');
-            script.src = '../assets/js/formulario-supervisao.js';
-            script.dataset.viewScript = 'formulario-supervisao';
-            document.body.appendChild(script);
-
-        } catch (error) {
-            console.error('Erro ao carregar a view do formulário:', error);
-            viewContentArea.innerHTML = '<h2>Erro ao carregar o formulário.</h2>';
-        }
-    }
-
-    async function openEditModal(uid) {
-        if (!uid || !modal) return;
-        editingUidField.value = uid;
-        try {
-            const userDoc = await db.collection('usuarios').doc(uid).get();
-            if (!userDoc.exists) {
-                alert("Documento do usuário não foi encontrado.");
-                return;
-            }
-            const data = userDoc.data();
-            document.getElementById('profile-photo-preview').src = data.fotoUrl || '../assets/img/default-user.png';
-            document.getElementById('edit-formacao').value = data.formacao || '';
-            document.getElementById('edit-especializacao').value = (data.especializacao || []).join('\n');
-            document.getElementById('edit-atuacao').value = (data.atuacao || []).join('\n');
-            document.getElementById('edit-supervisaoInfo').value = (data.supervisaoInfo || []).join('\n');
-            document.getElementById('edit-diasHorarios').value = (data.diasHorarios || []).join('\n');
-            modal.style.display = 'flex';
-        } catch (error) {
-            console.error("Erro ao carregar dados do perfil:", error);
-            alert("Não foi possível carregar seus dados para edição.");
-        }
-    }
-
-    function closeEditModal() {
-        if (modal) modal.style.display = 'none';
-    }
-
-    function criarCardSupervisor(prof) {
-        const especializacaoHTML = (prof.especializacao || []).map(item => `<li>${item}</li>`).join('');
-        const atuacaoHTML = (prof.atuacao || []).map(item => `<li>${item}</li>`).join('');
-        const supervisaoHTML = (prof.supervisaoInfo || []).map(item => `<li>${item}</li>`).join('');
-        const horariosHTML = (prof.diasHorarios || []).map(item => `<li>${item}</li>`).join('');
-        return `
-            <div class="supervisor-card">
-                <div class="supervisor-card-left">
-                    <h2>${prof.nome || 'Nome não informado'}</h2>
-                    <h3>SUPERVISOR(A)</h3>
-                    <ul class="contact-info">
-                        <li>📧 ${prof.email || ''}</li>
-                        <li>📞 ${prof.contato || ''}</li>
-                        <li>🌐 www.eupsico.org.br</li>
-                    </ul>
-                    <div class="photo-container">
-                        <img src="${prof.fotoUrl || '../assets/img/default-user.png'}" alt="Foto de ${prof.nome}" class="supervisor-photo">
-                        <img src="../assets/img/logo-branca.png" alt="Logo EuPsico" class="overlay-logo">
-                    </div>
-                </div>
-                <div class="supervisor-card-right">
-                    <div class="profile-header">PERFIL</div>
-                    ${prof.formacao ? `<h4>Formação</h4><ul><li>${prof.formacao}</li></ul>` : ''}
-                    ${especializacaoHTML ? `<h4>Especialização</h4><ul>${especializacaoHTML}</ul>` : ''}
-                    ${atuacaoHTML ? `<h4>Atuação</h4><ul>${atuacaoHTML}</ul>` : ''}
-                    ${supervisaoHTML ? `<h4>Supervisão</h4><ul>${supervisaoHTML}</ul>` : ''}
-                    ${horariosHTML ? `<h4>Dias e Horários</h4><ul>${horariosHTML}</ul>` : ''}
-                </div>
-            </div>`;
-    }
-
-    async function carregarPainelSupervisor() {
-        if (!currentUser || !perfilContainer || !supervisionadosContainer) return;
-        try {
-            const doc = await db.collection('usuarios').doc(currentUser.uid).get();
-            if (doc.exists) {
-                perfilContainer.innerHTML = criarCardSupervisor(doc.data());
-            } else {
-                perfilContainer.innerHTML = '<p>Seu perfil não foi encontrado.</p>';
-            }
-        } catch (error) {
-            console.error("Erro ao carregar perfil:", error);
-            perfilContainer.innerHTML = '<p style="color:red;">Erro ao carregar seu perfil.</p>';
-        }
-        try {
-            const supervisaoQuery = db.collection('supervisao').where('supervisorUid', '==', currentUser.uid).orderBy('supervisaoData', 'desc');
-            const snapshot = await supervisaoQuery.get();
-            let listaHTML = '';
-            if (snapshot.empty) {
-                listaHTML = '<p>Nenhum acompanhamento encontrado para sua supervisão.</p>';
-            } else {
-                snapshot.forEach(doc => {
-                    const registro = { id: doc.id, ...doc.data() };
-                    listaHTML += `<div class="registro-item" data-id="${registro.id}">
-                        <span><strong>Paciente:</strong> ${registro.pacienteIniciais || 'N/A'}</span>
-                        <span><strong>Psicólogo(a):</strong> ${registro.psicologoNome || 'N/A'}</span>
-                        <span><strong>Data:</strong> ${registro.supervisaoData ? new Date(registro.supervisaoData + 'T00:00:00').toLocaleDateString('pt-BR') : 'N/A'}</span>
-                    </div>`;
-                });
-            }
-            let containerDaLista = supervisionadosContainer.querySelector('#lista-registros');
-            if (!containerDaLista) {
-                containerDaLista = document.createElement('div');
-                containerDaLista.id = 'lista-registros';
-                supervisionadosContainer.appendChild(containerDaLista);
-            }
-            containerDaLista.innerHTML = listaHTML;
-        } catch (error) {
-            console.error("Erro ao carregar supervisionados:", error);
-            supervisionadosContainer.innerHTML += '<p style="color:red;">Erro ao carregar a lista de acompanhamentos.</p>';
-        }
-    }
-
-    auth.onAuthStateChanged(async user => {
-        if (user) {
-            currentUser = user;
-            const userDoc = await db.collection('usuarios').doc(user.uid).get();
-            if (userDoc.exists && userDoc.data().funcoes?.includes('supervisor')) {
-                if (!document.getElementById('edit-profile-main-btn')) {
-                    const editButton = document.createElement('button');
-                    editButton.id = 'edit-profile-main-btn';
-                    editButton.className = 'action-button';
-                    editButton.textContent = 'Editar Meu Perfil';
-                    editButton.style.marginBottom = '20px';
-                    editButton.addEventListener('click', () => openEditModal(currentUser.uid));
-                    const containerPrincipal = document.querySelector('.admin-panel-container');
-                    const refElement = document.getElementById('supervisor-grid-container') || containerPrincipal.children[1];
-                    if (containerPrincipal && refElement) {
-                        containerPrincipal.insertBefore(editButton, refElement);
-                    }
-                }
-                if (supervisionadosContainer) {
-                    supervisionadosContainer.addEventListener('click', (e) => {
-                        const item = e.target.closest('.registro-item');
-                        if (item) {
-                            const docId = item.dataset.id;
-                            loadFormularioView(docId);
-                        }
-                    });
-                }
-                carregarPainelSupervisor();
-            } else {
-                const mainContainer = document.querySelector('.admin-panel-container');
-                if(mainContainer) mainContainer.innerHTML = '<h2>Acesso Negado</h2><p>Esta área é exclusiva para supervisores.</p><a href="../index.html" class="secondary-action-button">&larr; Voltar</a>';
-            }
-        } else {
-            window.location.href = '../index.html';
-        }
-    });
-
-    if (saveProfileBtn) {
+    if(saveProfileBtn) {
         saveProfileBtn.addEventListener('click', async () => {
             const uidToEdit = editingUidField.value;
             if (!uidToEdit) return;
+    
             saveProfileBtn.disabled = true;
             saveProfileBtn.textContent = 'Salvando...';
+    
             try {
                 const toArray = (textareaId) => {
                     const text = document.getElementById(textareaId).value;
@@ -233,8 +155,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 await db.collection('usuarios').doc(uidToEdit).update(dataToUpdate);
                 alert("Perfil atualizado com sucesso!");
-                closeEditModal();
-                carregarPainelSupervisor();
+                modal.style.display = 'none';
+                
+                // Recarrega a view de perfil se ela estiver aberta
+                if (document.querySelector('#perfil-container')) {
+                    const script = document.createElement('script');
+                    script.src = '../assets/js/view-meu-perfil.js';
+                    document.body.appendChild(script);
+                }
+
             } catch (error) {
                 console.error("Erro ao salvar perfil:", error);
                 alert("Ocorreu um erro ao salvar o perfil.");
@@ -243,10 +172,5 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveProfileBtn.textContent = 'Salvar Alterações';
             }
         });
-    }
-    if (cancelBtn) cancelBtn.addEventListener('click', closeEditModal);
-    if (closeModalBtns) closeModalBtns.forEach(btn => btn.addEventListener('click', closeEditModal));
-    if (modal) {
-        modal.addEventListener('click', e => { if (e.target === modal) closeEditModal(); });
     }
 });

@@ -14,11 +14,13 @@
 .contact-info li { margin-bottom: 10px; }
 .photo-container { margin-top: auto; position: relative; text-align: center; }
 .photo-container img.supervisor-photo {
-    width: 150px; 
-    height: 150px; 
+    width: 250px; 
+    height: 250px; 
     border-radius: 8px; 
     border: 4px 
-    object-fit: cover; }
+    object-fit: cover;
+    image-rendering: -webkit-optimize-contrast; /* Adicione esta linha */
+}
 .photo-container img.overlay-logo { position: absolute; bottom: 5px; left: 10px; width: 50px; height: auto; }
 .supervisor-card-right { padding: 25px; flex-grow: 1; position: relative; }
 .supervisor-card-right .profile-header { background-color: #04396d; color: white; padding: 10px 15px; border-radius: 5px; text-align: center; font-size: 1.2em; font-weight: bold; letter-spacing: 2px; margin-bottom: 20px; }

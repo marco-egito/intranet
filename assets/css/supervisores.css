@@ -6,11 +6,40 @@
     gap: 30px;
     margin-top: 20px;
 }
-.supervisor-card { background-color: #fff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; overflow: hidden; min-height: 550px; }
-.supervisor-card-left { background-color: #38a9e4; color: white; padding: 25px; width: 250px; display: flex; flex-direction: column; flex-shrink: 0; }
-.supervisor-card-left h2 { font-size: 1.6em; margin: 0; text-transform: uppercase; }
-.supervisor-card-left h3 { background-color: #04396d; font-size: 1em; padding: 8px; text-align: center; border-radius: 5px; margin: 15px 0; letter-spacing: 1px; }
-.contact-info { list-style: none; padding: 0; margin: 10px 0; font-size: 0.9em; }
+.supervisor-card { 
+    background-color: #fff; 
+    border-radius: 10px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+    display: flex; 
+    overflow: hidden; 
+    min-height: 550px; }
+.supervisor-card-left { 
+    background-color: #40b0df; 
+    color: white; 
+    padding: 25px; 
+    width: 250px; 
+    display: flex; 
+    flex-direction: column; 
+    flex-shrink: 0; }
+.supervisor-card-left h2 { 
+    font-size: clamp(1.4rem, 2vw, 2rem); /* Título principal */
+    margin: 0; 
+    text-transform: uppercase; }
+.supervisor-card-left h3 { 
+    background-color: #04396d; 
+    font-size: clamp(0.9rem, 1.5vw, 1.2rem); /* Subtítulo */ 
+    padding: 8px; 
+    text-align: center; 
+    border-radius: 5px; 
+    margin: 15px 0; 
+    letter-spacing: 1px;
+}
+.contact-info { 
+    list-style: none; 
+    padding: 0; 
+    margin: 10px 0; 
+    font-size: clamp(0.8rem, 1vw, 1rem); /* Informações de contato */
+}
 .contact-info li { margin-bottom: 10px; }
 .photo-container { margin-top: auto; position: relative; text-align: center; }
 .photo-container img.supervisor-photo {
@@ -23,9 +52,30 @@
 }
 .photo-container img.overlay-logo { position: absolute; bottom: 5px; left: 10px; width: 50px; height: auto; }
 .supervisor-card-right { padding: 25px; flex-grow: 1; position: relative; }
-.supervisor-card-right .profile-header { background-color: #04396d; color: white; padding: 10px 15px; border-radius: 5px; text-align: center; font-size: 1.2em; font-weight: bold; letter-spacing: 2px; margin-bottom: 20px; }
-.supervisor-card-right h4 { font-size: 0.9em; text-transform: uppercase; color: #04396d; border-bottom: 2px solid #38a9e4; padding-bottom: 5px; margin-top: 20px; margin-bottom: 10px; }
-.supervisor-card-right ul { list-style: none; padding-left: 0; font-size: 0.95em; line-height: 1.6; }
+.supervisor-card-right .profile-header { 
+    background-color: #04396d; 
+    color: white; 
+    padding: 10px 15px; 
+    border-radius: 5px; 
+    text-align: center; 
+    ffont-size: clamp(1rem, 2vw, 1.5rem); /* Cabeçalho do perfil */
+    font-weight: bold; 
+    letter-spacing: 2px; 
+    margin-bottom: 20px; 
+}
+.supervisor-card-right h4 { 
+    font-size: clamp(0.8rem, 1.2vw, 1rem); /* Subtítulo da seção */ 
+    text-transform: uppercase; 
+    color: #04396d; 
+    border-bottom: 2px solid #38a9e4; 
+    padding-bottom: 5px; 
+    margin-top: 20px; 
+    margin-bottom: 10px; }
+.supervisor-card-right ul { 
+    list-style: none; 
+    padding-left: 0; 
+    font-size: clamp(0.85rem, 1vw, 1rem); /* Lista de informações */ 
+    line-height: 1.6; }
 .supervisor-card-right ul li::before { content: '•'; color: #38a9e4; font-weight: bold; display: inline-block; width: 1em; margin-left: -1em; }
 .loading-spinner { border: 5px solid #f3f3f3; border-top: 5px solid #007bff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 50px auto; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

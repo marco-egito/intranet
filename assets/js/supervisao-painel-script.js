@@ -8,23 +8,24 @@ const firebaseConfig = {
   messagingSenderId: "1041518416343",
   appId: "1:1041518416343:web:0a11c03c205b802ed7bb92"
 };
-// Evita reinicialização se já estiver carregado
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-
-const auth = firebase.auth();
-const db = firebase.firestore();
+// 1. DECLARA AS VARIÁVEIS NO ESCOPO GLOBAL, MAS SEM VALOR
+let auth;
+let db;
 
 document.addEventListener('DOMContentLoaded', function() {
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    
+    // 2. ATRIBUI OS VALORES AQUI DENTRO, TORNANDO-OS ACESSÍVEIS GLOBALMENTE
+    auth = firebase.auth();
+    db = firebase.firestore();
+
     const cardGridArea = document.getElementById('card-grid-area');
     const viewContentArea = document.getElementById('view-content-area');
     const supervisaoModulesGrid = document.getElementById('supervisao-modules-grid');
-    let currentUserData = null; // Armazena os dados do usuário logado
+    let currentUserData = null; 
 
-    // --- INÍCIO DA CORREÇÃO ---
-    // Tornamos a função GLOBAL, associando-a ao objeto 'window'.
-    // Assim, o HTML carregado dinamicamente (onclick="...") consegue encontrá-la.
     window.showSupervisaoDashboard = function() {
         if (viewContentArea) {
             viewContentArea.style.display = 'none';
@@ -34,16 +35,14 @@ document.addEventListener('DOMContentLoaded', function() {
             cardGridArea.style.display = 'block';
         }
     }
-    // --- FIM DA CORREÇÃO ---
 
     async function loadView(viewName, mode = 'list') {
         if (!viewContentArea || !cardGridArea) return;
 
         cardGridArea.style.display = 'none';
         viewContentArea.style.display = 'block';
-        viewContentArea.innerHTML = '<div class="loading-spinner"></div>'; // Feedback visual
+        viewContentArea.innerHTML = '<div class="loading-spinner"></div>';
 
-        // Remove o script antigo para evitar execuções múltiplas
         const existingScript = document.querySelector('script[data-view-script="formulario-supervisao"]');
         if (existingScript) existingScript.remove();
 
@@ -51,11 +50,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const htmlResponse = await fetch('./formulario-supervisao.html');
             if (!htmlResponse.ok) throw new Error(`Erro ao carregar HTML: ${htmlResponse.statusText}`);
             viewContentArea.innerHTML = await htmlResponse.text();
-
-            // Passa o modo ('new' ou 'list') para o script do formulário através de uma variável global
             window.formSupervisaoMode = mode;
 
-            // Adiciona o CSS do formulário se ainda não existir
             if (!document.querySelector(`link[data-view-style="formulario-supervisao"]`)) {
                 const link = document.createElement('link');
                 link.rel = 'stylesheet';
@@ -63,8 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 link.dataset.viewStyle = 'formulario-supervisao';
                 document.head.appendChild(link);
             }
-
-            // Cria e anexa o script da view dinamicamente
+            
             const script = document.createElement('script');
             script.src = '../assets/js/formulario-supervisao.js';
             script.dataset.viewScript = 'formulario-supervisao';
@@ -93,13 +88,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
 
-        // Lógica de permissão simplificada: se o usuário tem dados, ele pode ver os módulos.
         if (currentUserData) {
             for (const key in supervisaoModules) {
                 const module = supervisaoModules[key];
                 const card = document.createElement('div');
                 card.className = 'module-card';
-                card.dataset.view = 'formulario_supervisao'; // Ambos os cards carregam a mesma view-base
+                card.dataset.view = 'formulario_supervisao';
                 card.dataset.mode = key === 'nova_ficha' ? 'new' : 'list';
                 card.innerHTML = `<div class="card-icon">${module.icon}</div><div class="card-content"><h3>${module.titulo}</h3><p>${module.descricao}</p></div>`;
                 supervisaoModulesGrid.appendChild(card);
@@ -121,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 const userDoc = await db.collection("usuarios").doc(user.uid).get();
                 if (userDoc.exists) {
-                    currentUserData = userDoc.data(); // Salva todos os dados do usuário
+                    currentUserData = userDoc.data();
                     renderSupervisaoCards();
                 } else {
                     supervisaoModulesGrid.innerHTML = '<h2>Usuário não encontrado no banco de dados.</h2>';
@@ -131,7 +125,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 supervisaoModulesGrid.innerHTML = '<h2>Erro ao verificar permissões. Tente recarregar a página.</h2>';
             }
         } else {
-            // Se não houver usuário, redireciona para a página de login
             window.location.href = '../index.html';
         }
     });

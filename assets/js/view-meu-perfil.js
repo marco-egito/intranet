@@ -1,4 +1,4 @@
-// assets/js/view-meu-perfil.js (Versão 5 - Com edição de foto por URL)
+// assets/js/view-meu-perfil.js (Versão 6 - Com caminhos relativos)
 (function() {
     if (!window.firebase || !auth || !db) {
         console.error("Firebase não inicializado.");
@@ -22,11 +22,14 @@
 
             form.elements['editing-uid'].value = supervisorData.uid;
 
-            // ALTERAÇÃO 2: Preenche o preview da imagem e o campo de texto com a URL.
-            document.getElementById('profile-photo-preview').src = supervisorData.fotoUrl || '../assets/img/default-user.png';
+            // Preenche o campo de texto com o caminho relativo salvo no DB
             document.getElementById('edit-fotoUrl').value = supervisorData.fotoUrl || '';
 
-            form.elements['edit-formacao'].value = supervisorData.formacao || ''; // Assumindo que formação é um campo de texto simples
+            // Constrói o caminho correto para o preview da imagem
+            const pathPrefix = window.location.pathname.includes('/pages/') ? '../' : './';
+            document.getElementById('profile-photo-preview').src = supervisorData.fotoUrl ? pathPrefix + supervisorData.fotoUrl : pathPrefix + 'assets/img/default-user.png';
+
+            form.elements['edit-formacao'].value = supervisorData.formacao || '';
             form.elements['edit-especializacao'].value = Array.isArray(supervisorData.especializacao) ? supervisorData.especializacao.join('\n') : supervisorData.especializacao || '';
             form.elements['edit-atuacao'].value = Array.isArray(supervisorData.atuacao) ? supervisorData.atuacao.join('\n') : supervisorData.atuacao || '';
             form.elements['edit-supervisaoInfo'].value = Array.isArray(supervisorData.supervisaoInfo) ? supervisorData.supervisaoInfo.join('\n') : supervisorData.supervisaoInfo || '';
@@ -48,8 +51,8 @@
             const uid = form.elements['editing-uid'].value;
             if (!uid) return;
 
-            const updateData = {
-                // ALTERAÇÃO 3: Lê a URL do novo campo de texto para salvar no Firestore.
+            // Salva apenas o caminho relativo (ex: 'assets/img/ana.png')
+            const dataToUpdate = {
                 fotoUrl: document.getElementById('edit-fotoUrl').value.trim(),
                 formacao: form.elements['edit-formacao'].value,
                 especializacao: form.elements['edit-especializacao'].value.split('\n').filter(line => line.trim() !== ''),
@@ -59,7 +62,7 @@
             };
 
             try {
-                await db.collection('usuarios').doc(uid).update(updateData);
+                await db.collection('usuarios').doc(uid).update(dataToUpdate);
                 closeEditModal();
                 loadProfiles();
             } catch (error) {
@@ -133,8 +136,11 @@
             return Array.isArray(data) ? data.map(item => `<li>${item}</li>`).join('') : `<li>${data}</li>`;
         };
 
-        // ALTERAÇÃO 1: Padroniza o uso de 'fotoUrl' para exibir a imagem.
-        const photoUrl = supervisor.fotoUrl || '../assets/img/default-user.png';
+        // --- LÓGICA DO CAMINHO RELATIVO ---
+        // 1. Determina o prefixo com base na URL da página atual
+        const pathPrefix = window.location.pathname.includes('/pages/') ? '../' : './';
+        // 2. Constrói o caminho completo da imagem para o atributo 'src'
+        const photoPath = supervisor.fotoUrl ? pathPrefix + supervisor.fotoUrl : pathPrefix + 'assets/img/default-user.png';
 
         card.innerHTML = `
             <div class="supervisor-card-left">
@@ -146,8 +152,8 @@
                     <li><strong>Email:</strong> ${supervisor.email || 'N/A'}</li>
                 </ul>
                 <div class="photo-container">
-                    <img src="${photoUrl}" alt="Foto de ${supervisor.nome}" class="supervisor-photo" onerror="this.onerror=null;this.src='../assets/img/default-user.png';">
-                    <img src="..assets/img/logo-branca.png" alt="Logo EuPsico" class="overlay-logo">
+                    <img src="${photoPath}" alt="Foto de ${supervisor.nome}" class="supervisor-photo" onerror="this.onerror=null;this.src='../assets/img/default-user.png';">
+                    <img src="${pathPrefix}assets/img/logo-branca.png" alt="Logo EuPsico" class="overlay-logo">
                 </div>
             </div>
             <div class="supervisor-card-right">

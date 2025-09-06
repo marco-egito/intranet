@@ -31,13 +31,16 @@
             <div class="modal-body">
                 <form id="edit-profile-form">
                     <input type="hidden" id="editing-uid">
+                    
                     <div class="form-group photo-edit-section">
                         <label>Foto de Perfil</label>
-                        <div class="photo-preview-wrapper">
-                            <img id="profile-photo-preview" src="../assets/img/default-user.png" alt="Pré-visualização da foto">
-                            <button type="button" id="change-photo-btn" class="secondary-button">Alterar Foto</button>
-                            <input type="file" id="photo-file-input" accept="image/*" style="display: none;">
-                            <small>Para melhores resultados, use uma imagem quadrada.</small>
+                        <div class="photo-preview-wrapper" style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+                            <img id="profile-photo-preview" src="../assets/img/default-user.png" alt="Pré-visualização da foto" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;">
+                            <div style="flex-grow: 1;">
+                                <label for="edit-fotoUrl">URL da Imagem:</label>
+                                <input type="text" id="edit-fotoUrl" placeholder="Cole aqui o link público da imagem">
+                                <small>Hospede a imagem em um site (como o Imgur) e cole o link aqui.</small>
+                            </div>
                         </div>
                     </div>
                     <p><strong>Instrução:</strong> Para listas, coloque um item por linha.</p>
@@ -58,7 +61,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="../assets/js/supervisores.js"></script>
 </body>

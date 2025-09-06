@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', function() {
         firebase.initializeApp(firebaseConfig);
     }
     
-    // 2. ATRIBUI OS VALORES AQUI DENTRO, TORNANDO-OS ACESSÍVEIS GLOBALMENTE
     auth = firebase.auth();
     db = firebase.firestore();
     
@@ -29,7 +28,9 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    window.showSupervisorDashboard = function() {
+    // --- CORREÇÃO APLICADA AQUI ---
+    // A função foi renomeada de showSupervisorDashboard para showSupervisaoDashboard
+    window.showSupervisaoDashboard = function() {
         viewContentArea.style.display = 'none';
         viewContentArea.innerHTML = '';
         dashboardContent.style.display = 'block';
@@ -62,7 +63,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error("Erro ao carregar view do formulário:", error);
-            viewContentArea.innerHTML = `<h2>Erro ao carregar.</h2><button onclick="showSupervisorDashboard()">Voltar</button>`;
+            // --- CORREÇÃO APLICADA AQUI ---
+            // Garante que o botão Voltar chame a função correta
+            viewContentArea.innerHTML = `<h2>Erro ao carregar.</h2><button onclick="showSupervisaoDashboard()">Voltar</button>`;
         }
     };
 
@@ -95,7 +98,8 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.appendChild(script);
         } catch (error) {
             console.error("Erro ao carregar view:", error);
-            viewContentArea.innerHTML = `<h2>Erro ao carregar.</h2><button onclick="showSupervisorDashboard()">Voltar</button>`;
+            // --- CORREÇÃO APLICADA AQUI ---
+            viewContentArea.innerHTML = `<h2>Erro ao carregar.</h2><button onclick="showSupervisaoDashboard()">Voltar</button>`;
         }
     }
 

@@ -1,21 +1,28 @@
-// assets/js/view-meu-perfil.js (Versão Final Corrigida)
+// assets/js/view-meu-perfil.js (Versão Final com Upload de Foto)
 (function() {
     if (!db || !auth.currentUser) {
         console.error("Firebase não inicializado ou usuário não logado.");
         return;
     }
 
+    // Inicializa o Firebase Storage AQUI
+    const storage = firebase.storage();
+
     const currentUser = auth.currentUser;
     const perfilContainer = document.getElementById('perfil-container');
 
-    // Elementos do Modal de Edição (agora pertencem a este script)
+    // Elementos do Modal de Edição
     const modal = document.getElementById('edit-profile-modal');
     const saveProfileBtn = document.getElementById('save-profile-btn');
     const cancelBtn = document.getElementById('cancel-edit-btn');
     const closeModalBtns = document.querySelectorAll('.close-modal-btn');
     const editingUidField = document.getElementById('editing-uid');
+    
+    // Elementos do Modal para Foto
+    const photoFileInput = document.getElementById('photo-file-input');
+    const changePhotoBtn = document.getElementById('change-photo-btn');
+    const photoPreview = document.getElementById('profile-photo-preview');
 
-    // A função de abrir o modal agora é definida e usada aqui
     window.openEditModal = async function(uid) {
         if (!uid || !modal) return;
         editingUidField.value = uid;
@@ -24,7 +31,7 @@
             const userDoc = await db.collection('usuarios').doc(uid).get();
             if (!userDoc.exists) { alert("Documento do usuário não foi encontrado."); return; }
             const data = userDoc.data();
-            document.getElementById('profile-photo-preview').src = data.fotoUrl || '../assets/img/default-user.png';
+            photoPreview.src = data.fotoUrl || '../assets/img/default-user.png';
             document.getElementById('edit-formacao').value = data.formacao || '';
             document.getElementById('edit-especializacao').value = (data.especializacao || []).join('\n');
             document.getElementById('edit-atuacao').value = (data.atuacao || []).join('\n');
@@ -80,6 +87,11 @@
             const doc = await db.collection('usuarios').doc(currentUser.uid).get();
             if (doc.exists) {
                 perfilContainer.innerHTML = criarCardSupervisor(doc.data());
+                // Depois de carregar o perfil, se o modal estiver aberto, atualiza a foto lá também
+                if (modal && modal.style.display === 'flex') {
+                    const data = doc.data();
+                    photoPreview.src = data.fotoUrl || '../assets/img/default-user.png';
+                }
             } else {
                 perfilContainer.innerHTML = '<p>Seu perfil não foi encontrado.</p>';
             }
@@ -98,7 +110,7 @@
         });
     }
 
-    // Listeners do Modal
+    // Listeners do Modal (Salvar/Cancelar)
     if (saveProfileBtn) {
         saveProfileBtn.addEventListener('click', async () => {
             const uidToEdit = editingUidField.value;
@@ -120,7 +132,7 @@
                 await db.collection('usuarios').doc(uidToEdit).update(dataToUpdate);
                 alert("Perfil atualizado com sucesso!");
                 closeEditModal();
-                carregarMeuPerfil(); // Apenas recarrega o perfil
+                carregarMeuPerfil(); 
             } catch (error) {
                 console.error("Erro ao salvar perfil:", error);
                 alert("Ocorreu um erro ao salvar o perfil.");
@@ -134,6 +146,46 @@
     if (closeModalBtns) closeModalBtns.forEach(btn => btn.addEventListener('click', closeEditModal));
     if (modal) {
         modal.addEventListener('click', e => { if (e.target === modal) closeEditModal(); });
+    }
+
+    // --- LÓGICA DE UPLOAD DA FOTO (AGORA AQUI!) ---
+    if (changePhotoBtn && photoFileInput) {
+        changePhotoBtn.addEventListener('click', () => {
+            photoFileInput.click();
+        });
+        photoFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                uploadProfilePhoto(file);
+            }
+        });
+    }
+
+    async function uploadProfilePhoto(file) {
+        const uidToEdit = editingUidField.value;
+        if (!uidToEdit) { alert("Erro: ID do usuário não encontrado para o upload da foto."); return; }
+        if (!file.type.startsWith('image/')) { alert("Por favor, selecione um arquivo de imagem (jpg, png, etc)."); return; }
+        if (file.size > 5 * 1024 * 1024) { alert("O arquivo de imagem é muito grande. O máximo permitido é 5MB."); return; }
+
+        changePhotoBtn.disabled = true;
+        changePhotoBtn.textContent = 'Enviando...';
+        const filePath = `profile_photos/${uidToEdit}/${Date.now()}_${file.name}`;
+        const storageRef = storage.ref(filePath);
+        try {
+            const uploadTask = await storageRef.put(file);
+            const downloadURL = await uploadTask.ref.getDownloadURL();
+            await db.collection('usuarios').doc(uidToEdit).update({ fotoUrl: downloadURL });
+            photoPreview.src = downloadURL; // Atualiza a pré-visualização no modal
+            alert("Foto de perfil atualizada com sucesso!");
+            carregarMeuPerfil(); // Recarrega o perfil para exibir a nova foto no card principal
+        } catch (error) {
+            console.error("Erro no upload da foto:", error);
+            alert("Ocorreu um erro ao enviar a foto. Tente novamente.");
+        } finally {
+            changePhotoBtn.disabled = false;
+            changePhotoBtn.textContent = 'Alterar Foto';
+            photoFileInput.value = '';
+        }
     }
 
     carregarMeuPerfil();

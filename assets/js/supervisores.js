@@ -8,64 +8,66 @@ const firebaseConfig = {
   messagingSenderId: "1041518416343",
   appId: "1:1041518416343:web:0a11c03c205b802ed7bb92"
 };
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-const viewContentArea = document.getElementById('view-content-area');
-const dashboardContent = document.getElementById('supervisor-dashboard-content');
-
-// Função para voltar ao painel principal de cards
-window.showSupervisorDashboard = function() {
-    viewContentArea.style.display = 'none';
-    viewContentArea.innerHTML = ''; // Limpa o conteúdo da view
-    dashboardContent.style.display = 'block';
-};
-
-// Função global para carregar a visualização do formulário de qualquer script filho
-window.loadFormularioView = async function(docId) {
-    dashboardContent.style.display = 'none';
-    viewContentArea.style.display = 'block';
-    viewContentArea.innerHTML = '<div class="loading-spinner"></div>';
-
-    try {
-        const response = await fetch('./formulario-supervisao.html');
-        if (!response.ok) throw new Error('Falha ao carregar o HTML do formulário');
-        viewContentArea.innerHTML = await response.text();
-        
-        // --- INÍCIO DA CORREÇÃO ---
-        // Adiciona o CSS do formulário se ainda não existir na página
-        if (!document.querySelector(`link[data-view-style="formulario-supervisao"]`)) {
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = '../assets/css/formulario-supervisao.css';
-            link.dataset.viewStyle = 'formulario-supervisao';
-            document.head.appendChild(link);
-        }
-        // --- FIM DA CORREÇÃO ---
-        
-        // Passa o ID do documento para o script do formulário
-        window.formSupervisaoInitialDocId = docId;
-
-        // Anexa o script do formulário para executá-lo
-        const script = document.createElement('script');
-        script.src = '../assets/js/formulario-supervisao.js';
-        script.dataset.viewScript = 'formulario-supervisao';
-        document.body.appendChild(script);
-
-    } catch (error) {
-        console.error("Erro ao carregar view do formulário:", error);
-        viewContentArea.innerHTML = `<h2>Erro ao carregar.</h2><button onclick="showSupervisorDashboard()">Voltar</button>`;
-    }
-};
-
-
 document.addEventListener('DOMContentLoaded', function() {
-    if (!auth) return;
-
+    // 1. INICIA O FIREBASE DENTRO DO LISTENER PARA GARANTIR QUE TUDO ESTÁ PRONTO
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    
+    // 2. DECLARA TODAS AS CONSTANTES AQUI DENTRO, APÓS A INICIALIZAÇÃO
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const viewContentArea = document.getElementById('view-content-area');
+    const dashboardContent = document.getElementById('supervisor-dashboard-content');
     const supervisorCardsGrid = document.getElementById('supervisor-cards-grid');
 
+    // Checagem de segurança para garantir que os elementos existem
+    if (!viewContentArea || !dashboardContent || !supervisorCardsGrid) {
+        console.error("Erro crítico: Um ou mais elementos essenciais do HTML não foram encontrados.");
+        return;
+    }
+
+    // Função para voltar ao painel principal de cards
+    window.showSupervisorDashboard = function() {
+        viewContentArea.style.display = 'none';
+        viewContentArea.innerHTML = ''; // Limpa o conteúdo da view
+        dashboardContent.style.display = 'block';
+    };
+
+    // Função global para carregar a visualização do formulário
+    window.loadFormularioView = async function(docId) {
+        dashboardContent.style.display = 'none';
+        viewContentArea.style.display = 'block';
+        viewContentArea.innerHTML = '<div class="loading-spinner"></div>';
+
+        try {
+            const response = await fetch('./formulario-supervisao.html');
+            if (!response.ok) throw new Error('Falha ao carregar o HTML do formulário');
+            viewContentArea.innerHTML = await response.text();
+            
+            if (!document.querySelector(`link[data-view-style="formulario-supervisao"]`)) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = '../assets/css/formulario-supervisao.css';
+                link.dataset.viewStyle = 'formulario-supervisao';
+                document.head.appendChild(link);
+            }
+            
+            window.formSupervisaoInitialDocId = docId;
+
+            const script = document.createElement('script');
+            script.src = '../assets/js/formulario-supervisao.js';
+            script.dataset.viewScript = 'formulario-supervisao';
+            document.body.appendChild(script);
+
+        } catch (error) {
+            console.error("Erro ao carregar view do formulário:", error);
+            viewContentArea.innerHTML = `<h2>Erro ao carregar.</h2><button onclick="showSupervisorDashboard()">Voltar</button>`;
+        }
+    };
+
     const icons = {
-        profile: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
+        profile: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
         list: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>`
     };
 
@@ -122,14 +124,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     auth.onAuthStateChanged(async user => {
         if (user) {
-            const userDoc = await db.collection('usuarios').doc(user.uid).get();
-            if (userDoc.exists) {
-                const funcoes = userDoc.data().funcoes || [];
-                if (funcoes.includes('supervisor') || funcoes.includes('admin')) {
-                    renderSupervisorCards();
+            try {
+                const userDoc = await db.collection('usuarios').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const funcoes = userDoc.data().funcoes || [];
+                    if (funcoes.includes('supervisor') || funcoes.includes('admin')) {
+                        renderSupervisorCards();
+                    } else {
+                        dashboardContent.innerHTML = '<h2>Acesso Negado</h2><p>Esta área é exclusiva para supervisores e administradores.</p>';
+                    }
                 } else {
-                    dashboardContent.innerHTML = '<h2>Acesso Negado</h2><p>Esta área é exclusiva para supervisores e administradores.</p>';
+                     dashboardContent.innerHTML = '<h2>Usuário não encontrado.</h2>';
                 }
+            } catch (error) {
+                console.error("Erro ao buscar usuário:", error);
+                dashboardContent.innerHTML = '<h2>Ocorreu um erro ao verificar suas permissões.</h2>';
             }
         } else {
             window.location.href = '../index.html';

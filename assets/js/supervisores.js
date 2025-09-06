@@ -8,33 +8,33 @@ const firebaseConfig = {
   messagingSenderId: "1041518416343",
   appId: "1:1041518416343:web:0a11c03c205b802ed7bb92"
 };
+let auth;
+let db;
+
 document.addEventListener('DOMContentLoaded', function() {
-    // 1. INICIA O FIREBASE DENTRO DO LISTENER PARA GARANTIR QUE TUDO ESTÁ PRONTO
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
     
-    // 2. DECLARA TODAS AS CONSTANTES AQUI DENTRO, APÓS A INICIALIZAÇÃO
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    // 2. ATRIBUI OS VALORES AQUI DENTRO, TORNANDO-OS ACESSÍVEIS GLOBALMENTE
+    auth = firebase.auth();
+    db = firebase.firestore();
+    
     const viewContentArea = document.getElementById('view-content-area');
     const dashboardContent = document.getElementById('supervisor-dashboard-content');
     const supervisorCardsGrid = document.getElementById('supervisor-cards-grid');
 
-    // Checagem de segurança para garantir que os elementos existem
     if (!viewContentArea || !dashboardContent || !supervisorCardsGrid) {
         console.error("Erro crítico: Um ou mais elementos essenciais do HTML não foram encontrados.");
         return;
     }
 
-    // Função para voltar ao painel principal de cards
     window.showSupervisorDashboard = function() {
         viewContentArea.style.display = 'none';
-        viewContentArea.innerHTML = ''; // Limpa o conteúdo da view
+        viewContentArea.innerHTML = '';
         dashboardContent.style.display = 'block';
     };
 
-    // Função global para carregar a visualização do formulário
     window.loadFormularioView = async function(docId) {
         dashboardContent.style.display = 'none';
         viewContentArea.style.display = 'block';

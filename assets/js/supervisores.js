@@ -11,13 +11,13 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+// Não inicializamos storage aqui, pois será feito no view-meu-perfil.js
 
 window.showSupervisorDashboard = function() {
     document.getElementById('view-content-area').style.display = 'none';
     document.getElementById('supervisor-dashboard-content').style.display = 'block';
 };
 
-// A função de abrir o modal agora será definida no script da view de perfil
 window.openEditModal = null; 
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             const response = await fetch(files.html);
+            if (!response.ok) throw new Error (`HTML não encontrado: ${files.html}`);
             viewContentArea.innerHTML = await response.text();
             
             const existingScript = document.querySelector(`script[data-view-script="${viewName}"]`);
@@ -85,11 +86,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     auth.onAuthStateChanged(async user => {
         if (user) {
-            const userDoc = await db.collection('usuarios').doc(user.uid).get();
-            if (userDoc.exists && userDoc.data().funcoes?.includes('supervisor')) {
-                renderSupervisorCards();
-            } else {
-                dashboardContent.innerHTML = '<h2>Acesso Negado</h2><p>Esta área é exclusiva para supervisores.</p>';
+            try {
+                const userDoc = await db.collection('usuarios').doc(user.uid).get();
+                if (userDoc.exists && userDoc.data().funcoes?.includes('supervisor')) {
+                    renderSupervisorCards();
+                } else {
+                    dashboardContent.innerHTML = '<h2>Acesso Negado</h2><p>Esta área é exclusiva para supervisores.</p>';
+                }
+            } catch (error) {
+                 dashboardContent.innerHTML = '<h2>Erro ao verificar permissões.</h2>';
             }
         } else {
             window.location.href = '../index.html';

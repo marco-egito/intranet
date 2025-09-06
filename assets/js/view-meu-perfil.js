@@ -1,4 +1,4 @@
-// assets/js/view-meu-perfil.js (Versão 1 - Lógica de Visualização)
+// assets/js/view-meu-perfil.js (Versão 2 - Completo com Edição)
 (function() {
     if (!window.firebase || !auth || !db) {
         console.error("Firebase não inicializado.");
@@ -8,6 +8,74 @@
 
     const currentUser = auth.currentUser;
     const gridContainer = document.getElementById('supervisor-grid-container');
+    let fetchedSupervisors = []; // Armazena os dados para usar no modal
+    let isAdmin = false; // Armazena o status de admin do usuário logado
+
+    // --- LÓGICA DO MODAL DE EDIÇÃO ---
+    const modal = document.getElementById('edit-profile-modal');
+    const form = document.getElementById('edit-profile-form');
+    const photoEditSection = document.querySelector('.photo-edit-section');
+
+    function openEditModal(supervisorUid) {
+        const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid);
+        if (!supervisorData) return;
+
+        // Preenche o formulário
+        form.elements['editing-uid'].value = supervisorData.uid;
+        form.elements['edit-formacao'].value = Array.isArray(supervisorData.formacao) ? supervisorData.formacao.join('\n') : supervisorData.formacao || '';
+        form.elements['edit-especializacao'].value = Array.isArray(supervisorData.especializacao) ? supervisorData.especializacao.join('\n') : supervisorData.especializacao || '';
+        form.elements['edit-atuacao'].value = Array.isArray(supervisorData.atuacao) ? supervisorData.atuacao.join('\n') : supervisorData.atuacao || '';
+        form.elements['edit-supervisaoInfo'].value = Array.isArray(supervisorData.supervisaoInfo) ? supervisorData.supervisaoInfo.join('\n') : supervisorData.supervisaoInfo || '';
+        form.elements['edit-diasHorarios'].value = Array.isArray(supervisorData.diasHorarios) ? supervisorData.diasHorarios.join('\n') : supervisorData.diasHorarios || '';
+        
+        // Mostra/oculta a edição de foto para admins
+        photoEditSection.style.display = isAdmin ? 'block' : 'none';
+
+        modal.style.display = 'flex';
+    }
+
+    function closeEditModal() {
+        modal.style.display = 'none';
+        form.reset();
+    }
+
+    async function saveProfileChanges(e) {
+        e.preventDefault();
+        const uid = form.elements['editing-uid'].value;
+        if (!uid) return;
+
+        const updateData = {
+            formacao: form.elements['edit-formacao'].value.split('\n').filter(line => line.trim() !== ''),
+            especializacao: form.elements['edit-especializacao'].value.split('\n').filter(line => line.trim() !== ''),
+            atuacao: form.elements['edit-atuacao'].value.split('\n').filter(line => line.trim() !== ''),
+            supervisaoInfo: form.elements['edit-supervisaoInfo'].value.split('\n').filter(line => line.trim() !== ''),
+            diasHorarios: form.elements['edit-diasHorarios'].value.split('\n').filter(line => line.trim() !== ''),
+        };
+
+        try {
+            await db.collection('usuarios').doc(uid).update(updateData);
+            closeEditModal();
+            loadProfiles(); // Recarrega os perfis para mostrar os dados atualizados
+        } catch (error) {
+            console.error("Erro ao salvar alterações:", error);
+            alert("Não foi possível salvar as alterações.");
+        }
+    }
+    
+    // Adiciona os event listeners uma única vez
+    if(modal) {
+        modal.querySelector('.close-modal-btn').addEventListener('click', closeEditModal);
+        document.getElementById('cancel-edit-btn').addEventListener('click', closeEditModal);
+        document.getElementById('save-profile-btn').addEventListener('click', saveProfileChanges);
+    }
+    gridContainer.addEventListener('click', (e) => {
+        if (e.target && e.target.classList.contains('edit-supervisor-btn')) {
+            const uid = e.target.dataset.uid;
+            openEditModal(uid);
+        }
+    });
+    // --- FIM DA LÓGICA DO MODAL ---
+
 
     async function loadProfiles() {
         if (!currentUser || !gridContainer) return;
@@ -17,30 +85,27 @@
             if (!userDoc.exists) throw new Error("Usuário logado não encontrado.");
             
             const userData = userDoc.data();
-            const isAdmin = userData.funcoes && userData.funcoes.includes('admin');
+            isAdmin = userData.funcoes && userData.funcoes.includes('admin');
 
             let query;
             if (isAdmin) {
-                // Se for admin, busca todos os usuários que são supervisores e não estão inativos.
-                query = db.collection('usuarios')
-                    .where('funcoes', 'array-contains', 'supervisor')
-                    .where('inativo', '==', false)
-                    .orderBy('nome');
+                query = db.collection('usuarios').where('funcoes', 'array-contains', 'supervisor').where('inativo', '==', false).orderBy('nome');
             } else {
-                // Se for apenas supervisor, busca somente o próprio perfil.
                 query = db.collection('usuarios').where(firebase.firestore.FieldPath.documentId(), '==', currentUser.uid);
             }
 
             const snapshot = await query.get();
+            fetchedSupervisors = []; // Limpa o array antigo
 
             if (snapshot.empty) {
                 gridContainer.innerHTML = '<p>Nenhum perfil de supervisor foi encontrado.</p>';
                 return;
             }
 
-            gridContainer.innerHTML = ''; // Limpa o "Carregando..."
-            snapshot.forEach(doc => {
-                const supervisor = { uid: doc.id, ...doc.data() };
+            snapshot.forEach(doc => fetchedSupervisors.push({ uid: doc.id, ...doc.data() }));
+
+            gridContainer.innerHTML = ''; 
+            fetchedSupervisors.forEach(supervisor => {
                 const cardElement = createSupervisorCard(supervisor);
                 gridContainer.appendChild(cardElement);
             });
@@ -60,7 +125,6 @@
             return Array.isArray(data) ? data.map(item => `<li>${item}</li>`).join('') : `<li>${data}</li>`;
         };
 
-        // Lógica para encontrar a foto: usa o campo 'foto' se existir, senão, o primeiro nome.
         const photoName = supervisor.foto || `${supervisor.nome.toLowerCase().split(' ')[0]}.png`;
         const photoUrl = `../assets/img/supervisores/${photoName}`;
 

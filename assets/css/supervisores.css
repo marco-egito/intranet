@@ -50,7 +50,7 @@
 .photo-container img.supervisor-photo {
     position: absolute;
     bottom: 0;
-    left: -50%;
+    left: 80%;
     transform: translateX(-50%);
     width: clamp(100px, 20vw, 500px);
     height: clamp(100px, 20vw, 500px);

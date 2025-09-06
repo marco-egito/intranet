@@ -8,17 +8,17 @@ const firebaseConfig = {
   messagingSenderId: "1041518416343",
   appId: "1:1041518416343:web:0a11c03c205b802ed7bb92"
 };
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+// Função para voltar ao painel principal de cards
 window.showSupervisorDashboard = function() {
     document.getElementById('view-content-area').style.display = 'none';
     document.getElementById('supervisor-dashboard-content').style.display = 'block';
 };
-
-// A função de abrir o modal agora será definida no script da view de perfil
-window.openEditModal = null; 
 
 document.addEventListener('DOMContentLoaded', function() {
     if (!auth) return;
@@ -26,17 +26,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const dashboardContent = document.getElementById('supervisor-dashboard-content');
     const viewContentArea = document.getElementById('view-content-area');
     const supervisorCardsGrid = document.getElementById('supervisor-cards-grid');
-    
+
     const icons = {
         profile: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
         list: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>`
     };
-    
+
     async function loadView(viewName) {
         dashboardContent.style.display = 'none';
         viewContentArea.style.display = 'block';
         viewContentArea.innerHTML = '<div class="loading-spinner"></div>';
-        
+
         const fileMap = {
             'meu_perfil': { html: './view-meu-perfil.html', js: '../assets/js/view-meu-perfil.js' },
             'meus_supervisionados': { html: './view-meus-supervisionados.html', js: '../assets/js/view-meus-supervisionados.js' }
@@ -46,10 +46,10 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch(files.html);
             viewContentArea.innerHTML = await response.text();
-            
+
             const existingScript = document.querySelector(`script[data-view-script="${viewName}"]`);
             if (existingScript) existingScript.remove();
-            
+
             const script = document.createElement('script');
             script.src = files.js;
             script.dataset.viewScript = viewName;
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
             meu_perfil: { titulo: 'Meu Perfil e Edição', descricao: 'Visualize e edite suas informações de perfil.', icon: icons.profile },
             meus_supervisionados: { titulo: 'Meus Supervisionados', descricao: 'Visualize os acompanhamentos que você supervisiona.', icon: icons.list }
         };
-        for(const key in modules) {
+        for (const key in modules) {
             const module = modules[key];
             const card = document.createElement('div');
             card.className = 'module-card';
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
             supervisorCardsGrid.appendChild(card);
         }
     }
-    
+
     supervisorCardsGrid.addEventListener('click', (e) => {
         const card = e.target.closest('.module-card');
         if (card) {
@@ -86,10 +86,15 @@ document.addEventListener('DOMContentLoaded', function() {
     auth.onAuthStateChanged(async user => {
         if (user) {
             const userDoc = await db.collection('usuarios').doc(user.uid).get();
-            if (userDoc.exists && userDoc.data().funcoes?.includes('supervisor', 'adimin')) {
-                renderSupervisorCards();
-            } else {
-                dashboardContent.innerHTML = '<h2>Acesso Negado</h2><p>Esta área é exclusiva para supervisores.</p>';
+            if (userDoc.exists) {
+                const funcoes = userDoc.data().funcoes || [];
+                // --- CORREÇÃO APLICADA AQUI ---
+                // Verifica se o array 'funcoes' inclui 'supervisor' OU 'admin'
+                if (funcoes.includes('supervisor') || funcoes.includes('admin')) {
+                    renderSupervisorCards();
+                } else {
+                    dashboardContent.innerHTML = '<h2>Acesso Negado</h2><p>Esta área é exclusiva para supervisores e administradores.</p>';
+                }
             }
         } else {
             window.location.href = '../index.html';

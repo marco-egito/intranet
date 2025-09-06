@@ -1,3 +1,4 @@
+// assets/js/view-meu-perfil.js (Versão Final Corrigida)
 (function() {
     if (!db || !auth.currentUser) {
         console.error("Firebase não inicializado ou usuário não logado.");
@@ -7,13 +8,40 @@
     const currentUser = auth.currentUser;
     const perfilContainer = document.getElementById('perfil-container');
 
-    /**
-     * Cria o HTML completo para o card de um supervisor.
-     * @param {object} prof - O objeto de dados do profissional vindo do Firestore.
-     * @returns {string} O HTML do card.
-     */
+    // Elementos do Modal de Edição (agora pertencem a este script)
+    const modal = document.getElementById('edit-profile-modal');
+    const saveProfileBtn = document.getElementById('save-profile-btn');
+    const cancelBtn = document.getElementById('cancel-edit-btn');
+    const closeModalBtns = document.querySelectorAll('.close-modal-btn');
+    const editingUidField = document.getElementById('editing-uid');
+
+    // A função de abrir o modal agora é definida e usada aqui
+    window.openEditModal = async function(uid) {
+        if (!uid || !modal) return;
+        editingUidField.value = uid;
+
+        try {
+            const userDoc = await db.collection('usuarios').doc(uid).get();
+            if (!userDoc.exists) { alert("Documento do usuário não foi encontrado."); return; }
+            const data = userDoc.data();
+            document.getElementById('profile-photo-preview').src = data.fotoUrl || '../assets/img/default-user.png';
+            document.getElementById('edit-formacao').value = data.formacao || '';
+            document.getElementById('edit-especializacao').value = (data.especializacao || []).join('\n');
+            document.getElementById('edit-atuacao').value = (data.atuacao || []).join('\n');
+            document.getElementById('edit-supervisaoInfo').value = (data.supervisaoInfo || []).join('\n');
+            document.getElementById('edit-diasHorarios').value = (data.diasHorarios || []).join('\n');
+            modal.style.display = 'flex';
+        } catch (error) {
+            console.error("Erro ao carregar dados do perfil:", error);
+            alert("Não foi possível carregar seus dados para edição.");
+        }
+    };
+
+    function closeEditModal() {
+        if (modal) modal.style.display = 'none';
+    }
+    
     function criarCardSupervisor(prof) {
-        // Gera o HTML para cada seção de lista, apenas se os dados existirem
         const especializacaoHTML = (prof.especializacao || []).map(item => `<li>${item}</li>`).join('');
         const atuacaoHTML = (prof.atuacao || []).map(item => `<li>${item}</li>`).join('');
         const supervisaoHTML = (prof.supervisaoInfo || []).map(item => `<li>${item}</li>`).join('');
@@ -36,7 +64,6 @@
                 </div>
                 <div class="supervisor-card-right">
                     <div class="profile-header">PERFIL</div>
-                    
                     ${prof.formacao ? `<h4>Formação</h4><ul><li>${prof.formacao}</li></ul>` : ''}
                     ${especializacaoHTML ? `<h4>Especialização</h4><ul>${especializacaoHTML}</ul>` : ''}
                     ${atuacaoHTML ? `<h4>Atuação</h4><ul>${atuacaoHTML}</ul>` : ''}
@@ -47,9 +74,6 @@
         `;
     }
 
-    /**
-     * Função principal que busca os dados do supervisor logado e renderiza o perfil.
-     */
     async function carregarMeuPerfil() {
         if (!perfilContainer) return;
         try {
@@ -57,7 +81,7 @@
             if (doc.exists) {
                 perfilContainer.innerHTML = criarCardSupervisor(doc.data());
             } else {
-                perfilContainer.innerHTML = '<p>Seu perfil não foi encontrado no banco de dados.</p>';
+                perfilContainer.innerHTML = '<p>Seu perfil não foi encontrado.</p>';
             }
         } catch (error) {
             console.error("Erro ao carregar perfil:", error);
@@ -65,20 +89,52 @@
         }
     }
 
-    // Adiciona o evento de clique ao botão "Editar Meu Perfil"
     const editButton = document.getElementById('edit-profile-main-btn');
     if (editButton) {
         editButton.addEventListener('click', () => {
-            // A função openEditModal está no script principal do painel (supervisores.js)
-            // e foi anexada ao objeto 'window' para ser acessível aqui.
             if (window.openEditModal) {
                 window.openEditModal(currentUser.uid);
-            } else {
-                console.error("A função openEditModal não foi encontrada.");
             }
         });
     }
 
-    // Inicia o carregamento do perfil
+    // Listeners do Modal
+    if (saveProfileBtn) {
+        saveProfileBtn.addEventListener('click', async () => {
+            const uidToEdit = editingUidField.value;
+            if (!uidToEdit) return;
+            saveProfileBtn.disabled = true;
+            saveProfileBtn.textContent = 'Salvando...';
+            try {
+                const toArray = (textareaId) => {
+                    const text = document.getElementById(textareaId).value;
+                    return text.split('\n').map(line => line.trim()).filter(line => line);
+                };
+                const dataToUpdate = {
+                    formacao: document.getElementById('edit-formacao').value.trim(),
+                    especializacao: toArray('edit-especializacao'),
+                    atuacao: toArray('edit-atuacao'),
+                    supervisaoInfo: toArray('edit-supervisaoInfo'),
+                    diasHorarios: toArray('edit-diasHorarios')
+                };
+                await db.collection('usuarios').doc(uidToEdit).update(dataToUpdate);
+                alert("Perfil atualizado com sucesso!");
+                closeEditModal();
+                carregarMeuPerfil(); // Apenas recarrega o perfil
+            } catch (error) {
+                console.error("Erro ao salvar perfil:", error);
+                alert("Ocorreu um erro ao salvar o perfil.");
+            } finally {
+                saveProfileBtn.disabled = false;
+                saveProfileBtn.textContent = 'Salvar Alterações';
+            }
+        });
+    }
+    if (cancelBtn) cancelBtn.addEventListener('click', closeEditModal);
+    if (closeModalBtns) closeModalBtns.forEach(btn => btn.addEventListener('click', closeEditModal));
+    if (modal) {
+        modal.addEventListener('click', e => { if (e.target === modal) closeEditModal(); });
+    }
+
     carregarMeuPerfil();
 })();

@@ -1,4 +1,4 @@
-// assets/js/view-meu-perfil.js (Versão 2 - Completo com Edição)
+// assets/js/view-meu-perfil.js (Versão 3 - Com modo de visualização)
 (function() {
     if (!window.firebase || !auth || !db) {
         console.error("Firebase não inicializado.");
@@ -8,79 +8,82 @@
 
     const currentUser = auth.currentUser;
     const gridContainer = document.getElementById('supervisor-grid-container');
-    let fetchedSupervisors = []; // Armazena os dados para usar no modal
-    let isAdmin = false; // Armazena o status de admin do usuário logado
+    let fetchedSupervisors = []; 
+    let isAdmin = false; 
 
-    // --- LÓGICA DO MODAL DE EDIÇÃO ---
+    // A lógica do Modal de Edição não precisa de alterações e permanece aqui...
     const modal = document.getElementById('edit-profile-modal');
-    const form = document.getElementById('edit-profile-form');
-    const photoEditSection = document.querySelector('.photo-edit-section');
+    if(modal) { // Verifica se o modal existe na página antes de adicionar listeners
+        const form = document.getElementById('edit-profile-form');
+        const photoEditSection = document.querySelector('.photo-edit-section');
 
-    function openEditModal(supervisorUid) {
-        const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid);
-        if (!supervisorData) return;
+        function openEditModal(supervisorUid) {
+            const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid);
+            if (!supervisorData) return;
 
-        // Preenche o formulário
-        form.elements['editing-uid'].value = supervisorData.uid;
-        form.elements['edit-formacao'].value = Array.isArray(supervisorData.formacao) ? supervisorData.formacao.join('\n') : supervisorData.formacao || '';
-        form.elements['edit-especializacao'].value = Array.isArray(supervisorData.especializacao) ? supervisorData.especializacao.join('\n') : supervisorData.especializacao || '';
-        form.elements['edit-atuacao'].value = Array.isArray(supervisorData.atuacao) ? supervisorData.atuacao.join('\n') : supervisorData.atuacao || '';
-        form.elements['edit-supervisaoInfo'].value = Array.isArray(supervisorData.supervisaoInfo) ? supervisorData.supervisaoInfo.join('\n') : supervisorData.supervisaoInfo || '';
-        form.elements['edit-diasHorarios'].value = Array.isArray(supervisorData.diasHorarios) ? supervisorData.diasHorarios.join('\n') : supervisorData.diasHorarios || '';
-        
-        // Mostra/oculta a edição de foto para admins
-        photoEditSection.style.display = isAdmin ? 'block' : 'none';
-
-        modal.style.display = 'flex';
-    }
-
-    function closeEditModal() {
-        modal.style.display = 'none';
-        form.reset();
-    }
-
-    async function saveProfileChanges(e) {
-        e.preventDefault();
-        const uid = form.elements['editing-uid'].value;
-        if (!uid) return;
-
-        const updateData = {
-            formacao: form.elements['edit-formacao'].value.split('\n').filter(line => line.trim() !== ''),
-            especializacao: form.elements['edit-especializacao'].value.split('\n').filter(line => line.trim() !== ''),
-            atuacao: form.elements['edit-atuacao'].value.split('\n').filter(line => line.trim() !== ''),
-            supervisaoInfo: form.elements['edit-supervisaoInfo'].value.split('\n').filter(line => line.trim() !== ''),
-            diasHorarios: form.elements['edit-diasHorarios'].value.split('\n').filter(line => line.trim() !== ''),
-        };
-
-        try {
-            await db.collection('usuarios').doc(uid).update(updateData);
-            closeEditModal();
-            loadProfiles(); // Recarrega os perfis para mostrar os dados atualizados
-        } catch (error) {
-            console.error("Erro ao salvar alterações:", error);
-            alert("Não foi possível salvar as alterações.");
+            form.elements['editing-uid'].value = supervisorData.uid;
+            form.elements['edit-formacao'].value = Array.isArray(supervisorData.formacao) ? supervisorData.formacao.join('\n') : supervisorData.formacao || '';
+            form.elements['edit-especializacao'].value = Array.isArray(supervisorData.especializacao) ? supervisorData.especializacao.join('\n') : supervisorData.especializacao || '';
+            form.elements['edit-atuacao'].value = Array.isArray(supervisorData.atuacao) ? supervisorData.atuacao.join('\n') : supervisorData.atuacao || '';
+            form.elements['edit-supervisaoInfo'].value = Array.isArray(supervisorData.supervisaoInfo) ? supervisorData.supervisaoInfo.join('\n') : supervisorData.supervisaoInfo || '';
+            form.elements['edit-diasHorarios'].value = Array.isArray(supervisorData.diasHorarios) ? supervisorData.diasHorarios.join('\n') : supervisorData.diasHorarios || '';
+            
+            if (photoEditSection) {
+                photoEditSection.style.display = isAdmin ? 'block' : 'none';
+            }
+            modal.style.display = 'flex';
         }
-    }
-    
-    // Adiciona os event listeners uma única vez
-    if(modal) {
+
+        function closeEditModal() {
+            modal.style.display = 'none';
+            form.reset();
+        }
+
+        async function saveProfileChanges(e) {
+            e.preventDefault();
+            const uid = form.elements['editing-uid'].value;
+            if (!uid) return;
+
+            const updateData = {
+                formacao: form.elements['edit-formacao'].value.split('\n').filter(line => line.trim() !== ''),
+                especializacao: form.elements['edit-especializacao'].value.split('\n').filter(line => line.trim() !== ''),
+                atuacao: form.elements['edit-atuacao'].value.split('\n').filter(line => line.trim() !== ''),
+                supervisaoInfo: form.elements['edit-supervisaoInfo'].value.split('\n').filter(line => line.trim() !== ''),
+                diasHorarios: form.elements['edit-diasHorarios'].value.split('\n').filter(line => line.trim() !== ''),
+            };
+
+            try {
+                await db.collection('usuarios').doc(uid).update(updateData);
+                closeEditModal();
+                loadProfiles();
+            } catch (error) {
+                console.error("Erro ao salvar alterações:", error);
+                alert("Não foi possível salvar as alterações.");
+            }
+        }
+        
         modal.querySelector('.close-modal-btn').addEventListener('click', closeEditModal);
         document.getElementById('cancel-edit-btn').addEventListener('click', closeEditModal);
         document.getElementById('save-profile-btn').addEventListener('click', saveProfileChanges);
+        
+        gridContainer.addEventListener('click', (e) => {
+            if (e.target && e.target.classList.contains('edit-supervisor-btn')) {
+                const uid = e.target.dataset.uid;
+                openEditModal(uid);
+            }
+        });
     }
-    gridContainer.addEventListener('click', (e) => {
-        if (e.target && e.target.classList.contains('edit-supervisor-btn')) {
-            const uid = e.target.dataset.uid;
-            openEditModal(uid);
-        }
-    });
-    // --- FIM DA LÓGICA DO MODAL ---
 
 
     async function loadProfiles() {
         if (!currentUser || !gridContainer) return;
         
         try {
+            // --- INÍCIO DA ALTERAÇÃO ---
+            // Verifica se o script pai definiu o modo de visualização
+            const forceAll = window.PROFILE_VIEW_MODE === 'all';
+            window.PROFILE_VIEW_MODE = null; // Limpa a variável para não afetar outras telas
+
             const userDoc = await db.collection('usuarios').doc(currentUser.uid).get();
             if (!userDoc.exists) throw new Error("Usuário logado não encontrado.");
             
@@ -88,14 +91,16 @@
             isAdmin = userData.funcoes && userData.funcoes.includes('admin');
 
             let query;
-            if (isAdmin) {
+            // A condição agora é: "force o modo todos" OU "o usuário é admin"
+            if (forceAll || isAdmin) {
                 query = db.collection('usuarios').where('funcoes', 'array-contains', 'supervisor').where('inativo', '==', false).orderBy('nome');
             } else {
                 query = db.collection('usuarios').where(firebase.firestore.FieldPath.documentId(), '==', currentUser.uid);
             }
+            // --- FIM DA ALTERAÇÃO ---
 
             const snapshot = await query.get();
-            fetchedSupervisors = []; // Limpa o array antigo
+            fetchedSupervisors = []; 
 
             if (snapshot.empty) {
                 gridContainer.innerHTML = '<p>Nenhum perfil de supervisor foi encontrado.</p>';
@@ -128,6 +133,7 @@
         const photoName = supervisor.foto || `${supervisor.nome.toLowerCase().split(' ')[0]}.png`;
         const photoUrl = `../assets/img/supervisores/${photoName}`;
 
+        // A lógica para criar o card não muda
         card.innerHTML = `
             <div class="supervisor-card-left">
                 <h2>${supervisor.nome || 'Nome Indisponível'}</h2>

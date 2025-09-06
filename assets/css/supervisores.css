@@ -35,3 +35,19 @@
 .modal-body input, .modal-body textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 15px 25px; background-color: #f1f1f1; border-top: 1px solid #ddd; border-radius: 0 0 8px 8px; }
 .edit-supervisor-btn { position: absolute; top: 15px; right: 15px; background-color: #ffc107; color: black; border: none; padding: 6px 10px; font-size: 0.8em; font-weight: bold; border-radius: 4px; cursor: pointer; }
+
+/* --- ESTILO DE GRADE PARA A LISTA DE SUPERVISORES --- */
+
+#supervisor-grid-container {
+    display: grid;
+    /* Tenta criar colunas de no mínimo 400px, preenchendo o espaço. 
+       Em telas maiores, isso resulta em aprox. 3 colunas. 
+       Em telas menores, ele se ajusta automaticamente para 2 ou 1. */
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 25px; /* Espaçamento entre os cards */
+}
+
+/* Ajuste para garantir que os cards não encolham demais */
+.supervisor-card {
+    min-width: 380px;
+}

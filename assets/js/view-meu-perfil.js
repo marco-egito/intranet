@@ -136,52 +136,58 @@
         }
     }
 
-    function createSupervisorCard(supervisor, podeEditar) {
-        const card = document.createElement('div');
-        card.className = 'supervisor-card';
+// ATUALIZE ESTA FUNÇÃO no arquivo assets/js/view-meu-perfil.js
 
-        const toList = (data) => {
-            if (!data) return '<li>Não informado</li>';
-            return Array.isArray(data) ? data.map(item => `<li>${item}</li>`).join('') : `<li>${data}</li>`;
-        };
-        
-        // --- LÓGICA DO CAMINHO RELATIVO ---
-        const pathPrefix = window.location.pathname.includes('/pages/') ? '../' : './';
-        const photoPath = supervisor.fotoUrl ? pathPrefix + supervisor.fotoUrl : pathPrefix + 'assets/img/default-user.png';
+function createSupervisorCard(supervisor, podeEditar) {
+    const card = document.createElement('div');
+    card.className = 'supervisor-card';
 
-        // NOVO: Lógica para exibir campos apenas se existirem
-        const abordagemHtml = supervisor.abordagem ? `<h3>${supervisor.abordagem}</h3>` : '';
-        const crpHtml = supervisor.crp ? `<li><strong>CRP:</strong> ${supervisor.crp}</li>` : '';
-        // FIM DA ALTERAÇÃO
+    const toList = (data) => {
+        if (!data) return '<li>Não informado</li>';
+        return Array.isArray(data) ? data.map(item => `<li>${item}</li>`).join('') : `<li>${data}</li>`;
+    };
+    
+    // --- LÓGICA DO CAMINHO RELATIVO ---
+    const pathPrefix = window.location.pathname.includes('/pages/') ? '../' : './';
+    const photoPath = supervisor.fotoUrl ? pathPrefix + supervisor.fotoUrl : pathPrefix + 'assets/img/default-user.png';
 
-        card.innerHTML = `
-            <div class="supervisor-card-left">
-                <h2>${supervisor.nome || 'Nome Indisponível'}</h2>
-                ${abordagemHtml} <ul class="contact-info">
-                    ${crpHtml} <li><strong>Telefone:</strong> ${supervisor.telefone || 'N/A'}</li>
-                    <li><strong>Email:</strong> ${supervisor.email || 'N/A'}<br>www.eupsico.org.br</li> </ul>
-                <div class="photo-container">
-                    <img src="${photoPath}" alt="Foto de ${supervisor.nome}" class="supervisor-photo" onerror="this.onerror=null;this.src='../assets/img/default-user.png';">
-                    <img src="${pathPrefix}assets/img/logo-branca.png" alt="Logo EuPsico" class="overlay-logo">
-                </div>
+    // NOVO: Lógica para exibir campos apenas se existirem
+    const abordagemHtml = supervisor.abordagem ? `<h3>${supervisor.abordagem}</h3>` : '';
+    const crpHtml = supervisor.crp ? `<li><strong>CRP:</strong> ${supervisor.crp}</li>` : '';
+    // FIM DA ALTERAÇÃO
+
+    // VERSÃO CORRIGIDA DO HTML
+    card.innerHTML = `
+        <div class="supervisor-card-left">
+            <h2>${supervisor.nome || 'Nome Indisponível'}</h2>
+            ${abordagemHtml}
+            <ul class="contact-info">
+                ${crpHtml}
+                <li><strong>Telefone:</strong> ${supervisor.telefone || 'N/A'}</li>
+                <li><strong>Email:</strong> ${supervisor.email || 'N/A'}<br>www.eupsico.org.br</li>
+            </ul>
+            <div class="photo-container">
+                <img src="${photoPath}" alt="Foto de ${supervisor.nome}" class="supervisor-photo" onerror="this.onerror=null;this.src='../assets/img/default-user.png';">
+                <img src="${pathPrefix}assets/img/logo-branca.png" alt="Logo EuPsico" class="overlay-logo">
             </div>
-            <div class="supervisor-card-right">
-                ${podeEditar ? `<button class="edit-supervisor-btn" data-uid="${supervisor.uid}">Editar</button>` : ''}
-                <div class="profile-header">PERFIL PROFISSIONAL</div>
-                <h4>Formação</h4>
-                <ul><li>${supervisor.formacao || 'Não informado'}</li></ul>
-                <h4>Especialização</h4>
-                <ul>${toList(supervisor.especializacao)}</ul>
-                <h4>Áreas de Atuação</h4>
-                <ul>${toList(supervisor.atuacao)}</ul>
-                <h4>Informações de Supervisão</h4>
-                <ul>${toList(supervisor.supervisaoInfo)}</ul>
-                <h4>Dias e Horários</h4>
-                <ul>${toList(supervisor.diasHorarios)}</ul>
-            </div>
-        `;
-        return card;
-    }
+        </div>
+        <div class="supervisor-card-right">
+            ${podeEditar ? `<button class="edit-supervisor-btn" data-uid="${supervisor.uid}">Editar</button>` : ''}
+            <div class="profile-header">PERFIL PROFISSIONAL</div>
+            <h4>Formação</h4>
+            <ul><li>${supervisor.formacao || 'Não informado'}</li></ul>
+            <h4>Especialização</h4>
+            <ul>${toList(supervisor.especializacao)}</ul>
+            <h4>Áreas de Atuação</h4>
+            <ul>${toList(supervisor.atuacao)}</ul>
+            <h4>Informações de Supervisão</h4>
+            <ul>${toList(supervisor.supervisaoInfo)}</ul>
+            <h4>Dias e Horários</h4>
+            <ul>${toList(supervisor.diasHorarios)}</ul>
+        </div>
+    `;
+    return card;
+}
 
     loadProfiles();
 })();

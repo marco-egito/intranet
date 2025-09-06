@@ -13,7 +13,14 @@
 .contact-info { list-style: none; padding: 0; margin: 10px 0; font-size: 0.9em; }
 .contact-info li { margin-bottom: 10px; }
 .photo-container { margin-top: auto; position: relative; text-align: center; }
-.photo-container img.supervisor-photo { width: 150px; height: 150px; border-radius: 50%; border: 4px solid white; object-fit: cover; }
+.photo-container img.supervisor-photo {
+    width: 250px; 
+    height: 250px; 
+    border-radius: 8px; 
+    border: 4px 
+    object-fit: cover;
+    image-rendering: -webkit-optimize-contrast; /* Adicione esta linha */
+}
 .photo-container img.overlay-logo { position: absolute; bottom: 5px; left: 10px; width: 50px; height: auto; }
 .supervisor-card-right { padding: 25px; flex-grow: 1; position: relative; }
 .supervisor-card-right .profile-header { background-color: #04396d; color: white; padding: 10px 15px; border-radius: 5px; text-align: center; font-size: 1.2em; font-weight: bold; letter-spacing: 2px; margin-bottom: 20px; }
@@ -35,3 +42,19 @@
 .modal-body input, .modal-body textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 15px 25px; background-color: #f1f1f1; border-top: 1px solid #ddd; border-radius: 0 0 8px 8px; }
 .edit-supervisor-btn { position: absolute; top: 15px; right: 15px; background-color: #ffc107; color: black; border: none; padding: 6px 10px; font-size: 0.8em; font-weight: bold; border-radius: 4px; cursor: pointer; }
+
+/* --- ESTILO DE GRADE PARA A LISTA DE SUPERVISORES --- */
+
+#supervisor-grid-container {
+    display: grid;
+    /* Tenta criar colunas de no mínimo 400px, preenchendo o espaço. 
+       Em telas maiores, isso resulta em aprox. 3 colunas. 
+       Em telas menores, ele se ajusta automaticamente para 2 ou 1. */
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 25px; /* Espaçamento entre os cards */
+}
+
+/* Ajuste para garantir que os cards não encolham demais */
+.supervisor-card {
+    min-width: 380px;
+}

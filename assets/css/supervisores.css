@@ -62,7 +62,7 @@
     position: absolute; 
     bottom: 5%; 
     left: 5%; 
-    width: 150%; 
+    width: 50%; 
     height: auto;
     object-fit: contain;
 }

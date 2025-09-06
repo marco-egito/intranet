@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
     auth.onAuthStateChanged(async user => {
         if (user) {
             const userDoc = await db.collection('usuarios').doc(user.uid).get();
-            if (userDoc.exists && userDoc.data().funcoes?.includes('supervisor')) {
+            if (userDoc.exists && userDoc.data().funcoes?.includes('supervisor', 'adimin')) {
                 renderSupervisorCards();
             } else {
                 dashboardContent.innerHTML = '<h2>Acesso Negado</h2><p>Esta área é exclusiva para supervisores.</p>';

@@ -147,7 +147,7 @@
                 </ul>
                 <div class="photo-container">
                     <img src="${photoUrl}" alt="Foto de ${supervisor.nome}" class="supervisor-photo" onerror="this.onerror=null;this.src='../assets/img/default-user.png';">
-                    <img src="../assets/img/logo-eupsico.png" alt="Logo EuPsico" class="overlay-logo">
+                    <img src="..assets/img/logo-branca.png" alt="Logo EuPsico" class="overlay-logo">
                 </div>
             </div>
             <div class="supervisor-card-right">

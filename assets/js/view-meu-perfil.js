@@ -22,12 +22,17 @@
 
             form.elements['editing-uid'].value = supervisorData.uid;
 
-            // Preenche o campo de texto com o caminho relativo salvo no DB
             document.getElementById('edit-fotoUrl').value = supervisorData.fotoUrl || '';
 
-            // Constrói o caminho correto para o preview da imagem
             const pathPrefix = window.location.pathname.includes('/pages/') ? '../' : './';
             document.getElementById('profile-photo-preview').src = supervisorData.fotoUrl ? pathPrefix + supervisorData.fotoUrl : pathPrefix + 'assets/img/default-user.png';
+
+            // NOVO: Preenche os novos campos no formulário de edição
+            form.elements['edit-abordagem'].value = supervisorData.abordagem || '';
+            form.elements['edit-crp'].value = supervisorData.crp || '';
+            form.elements['edit-email'].value = supervisorData.email || '';
+            form.elements['edit-telefone'].value = supervisorData.telefone || '';
+            // FIM DA ALTERAÇÃO
 
             form.elements['edit-formacao'].value = supervisorData.formacao || '';
             form.elements['edit-especializacao'].value = Array.isArray(supervisorData.especializacao) ? supervisorData.especializacao.join('\n') : supervisorData.especializacao || '';
@@ -51,9 +56,13 @@
             const uid = form.elements['editing-uid'].value;
             if (!uid) return;
 
-            // Salva apenas o caminho relativo (ex: 'assets/img/ana.png')
+            // NOVO: Adiciona os novos campos ao objeto que será salvo no banco
             const dataToUpdate = {
                 fotoUrl: document.getElementById('edit-fotoUrl').value.trim(),
+                abordagem: form.elements['edit-abordagem'].value.trim(), // NOVO
+                crp: form.elements['edit-crp'].value.trim(),             // NOVO
+                email: form.elements['edit-email'].value.trim(),         // NOVO
+                telefone: form.elements['edit-telefone'].value.trim(),   // NOVO
                 formacao: form.elements['edit-formacao'].value,
                 especializacao: form.elements['edit-especializacao'].value.split('\n').filter(line => line.trim() !== ''),
                 atuacao: form.elements['edit-atuacao'].value.split('\n').filter(line => line.trim() !== ''),
@@ -135,22 +144,22 @@
             if (!data) return '<li>Não informado</li>';
             return Array.isArray(data) ? data.map(item => `<li>${item}</li>`).join('') : `<li>${data}</li>`;
         };
-
+        
         // --- LÓGICA DO CAMINHO RELATIVO ---
-        // 1. Determina o prefixo com base na URL da página atual
         const pathPrefix = window.location.pathname.includes('/pages/') ? '../' : './';
-        // 2. Constrói o caminho completo da imagem para o atributo 'src'
         const photoPath = supervisor.fotoUrl ? pathPrefix + supervisor.fotoUrl : pathPrefix + 'assets/img/default-user.png';
+
+        // NOVO: Lógica para exibir campos apenas se existirem
+        const abordagemHtml = supervisor.abordagem ? `<h3>${supervisor.abordagem}</h3>` : '';
+        const crpHtml = supervisor.crp ? `<li><strong>CRP:</strong> ${supervisor.crp}</li>` : '';
+        // FIM DA ALTERAÇÃO
 
         card.innerHTML = `
             <div class="supervisor-card-left">
                 <h2>${supervisor.nome || 'Nome Indisponível'}</h2>
-                <h3>${supervisor.abordagem || 'Abordagem não informada'}</h3>
-                <ul class="contact-info">
-                    <li><strong>CRP:</strong> ${supervisor.crp || 'N/A'}</li>
-                    <li><strong>Telefone:</strong> ${supervisor.telefone || 'N/A'}</li>
-                    <li><strong>Email:</strong> ${supervisor.email || 'N/A'}</li>
-                </ul>
+                ${abordagemHtml} <ul class="contact-info">
+                    ${crpHtml} <li><strong>Telefone:</strong> ${supervisor.telefone || 'N/A'}</li>
+                    <li><strong>Email:</strong> ${supervisor.email || 'N/A'}<br>www.eupsico.org.br</li> </ul>
                 <div class="photo-container">
                     <img src="${photoPath}" alt="Foto de ${supervisor.nome}" class="supervisor-photo" onerror="this.onerror=null;this.src='../assets/img/default-user.png';">
                     <img src="${pathPrefix}assets/img/logo-branca.png" alt="Logo EuPsico" class="overlay-logo">

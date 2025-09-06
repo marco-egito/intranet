@@ -1,5 +1,5 @@
 <div class="view-container" id="supervisao-view">
-    <button onclick="showSupervisaoDashboard()" class="secondary-action-button">&larr; Voltar</button>
+    <button id="form-view-back-button" class="secondary-action-button">&larr; Voltar</button>
 
     <div id="lista-acompanhamentos-container" style="display: none;">
         <div class="view-header-band"><h1>Meus Acompanhamentos</h1></div>
@@ -17,8 +17,8 @@
                 </select>
             </div>
         </div>
-        <div id="lista-registros">
-            </div>
+
+        <div id="lista-registros"></div>
     </div>
 
     <div id="form-container">
@@ -65,7 +65,7 @@
             <div class="form-group"><label for="fase1-hipoteses">Primeiras hipóteses diagnósticas:</label><textarea id="fase1-hipoteses" name="fase1Hipoteses" rows="3"></textarea></div>
             <div class="section-title">FASE 2: MEIO DA TERAPIA (Aprox. 3 meses)</div>
             <div class="form-group"><label for="fase2-data">Data do preenchimento:</label><input type="date" id="fase2-data" name="fase2Data"></div>
-            <div class="form-group"><label for="fase2-reavaliacao">Reavaliação do foco:</label><textarea id="f2-reavaliacao" name="fase2Reavaliacao" rows="3"></textarea></div>
+            <div class="form-group"><label for="fase2-reavaliacao">Reavaliação do foco:</label><textarea id="fase2-reavaliacao" name="fase2Reavaliacao" rows="3"></textarea></div>
             <div class="form-group"><label for="fase2-progresso">Progresso em direção aos objetivos:</label><textarea id="fase2-progresso" name="fase2Progresso" rows="3"></textarea></div>
             <div class="section-title">FASE 3: PROCESSO DE ALTA (5º e 6º mês)</div>
             <div class="form-group"><label for="fase3-data">Data do preenchimento:</label><input type="date" id="fase3-data" name="fase3Data"></div>

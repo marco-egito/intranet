@@ -1,0 +1,136 @@
+/* --- MODELO DE CARD DE SUPERVISOR V2 --- */
+
+/* O container principal do card */
+.supervisor-card-v2 {
+    font-family: Arial, sans-serif; /* Use a fonte do seu projeto se for diferente */
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 45, 90, 0.1);
+    overflow: hidden;
+    display: flex;
+    max-width: 850px; /* Largura máxima, mas flexível */
+    width: 100%;
+    margin: 20px auto; /* Centraliza o card na grade */
+    border: 1px solid #e0e0e0;
+}
+
+/* Coluna da Esquerda (Sidebar) */
+.supervisor-v2-sidebar {
+    background-color: #38a9e4; /* Azul principal da sua marca */
+    color: white;
+    padding: 2.5rem; /* Espaçamento interno maior */
+    flex: 0 0 280px; /* Largura fixa para a sidebar */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Container da Foto */
+.supervisor-v2-photo {
+    width: 180px; /* Tamanho do container da foto */
+    height: 180px;
+    border-radius: 50%; /* Mantém o círculo, mas de forma mais robusta */
+    border: 5px solid white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    overflow: hidden; /* Garante que a imagem fique dentro do círculo */
+    margin-bottom: 1.5rem;
+}
+
+.supervisor-v2-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* ESSENCIAL: Preenche o espaço sem distorcer a imagem */
+}
+
+/* Títulos na Sidebar */
+.supervisor-v2-sidebar h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.supervisor-v2-sidebar h3 {
+    margin: 0.5rem 0 1.5rem 0;
+    font-size: 0.9rem;
+    font-weight: normal;
+    background-color: #04396d; /* Azul escuro da sua marca */
+    padding: 0.4rem 0.8rem;
+    border-radius: 5px;
+    text-align: center;
+}
+
+/* Informações de Contato */
+.supervisor-v2-contact {
+    width: 100%;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.supervisor-v2-contact li {
+    margin-bottom: 0.8rem;
+    word-wrap: break-word; /* Garante que emails longos não quebrem o layout */
+}
+
+/* Coluna da Direita (Conteúdo Principal) */
+.supervisor-v2-main {
+    padding: 2.5rem;
+    flex-grow: 1; /* Ocupa o restante do espaço */
+    position: relative; /* Para posicionar o botão Editar */
+}
+
+/* Grupo de Detalhes (Formação, Atuação, etc.) */
+.supervisor-v2-main .detail-group {
+    margin-bottom: 2rem;
+}
+
+.supervisor-v2-main h4 {
+    margin: 0 0 0.8rem 0;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #04396d;
+    text-transform: uppercase;
+    border-bottom: 2px solid #38a9e4;
+    padding-bottom: 0.5rem;
+    letter-spacing: 1px;
+}
+
+.supervisor-v2-main ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    color: #333;
+    line-height: 1.6;
+}
+
+.supervisor-v2-main ul li::before {
+    content: '•';
+    color: #38a9e4;
+    font-weight: bold;
+    display: inline-block;
+    width: 1em;
+    margin-left: -1em;
+}
+
+/* Layout para Telas Pequenas (Responsivo) */
+@media (max-width: 800px) {
+    .supervisor-card-v2 {
+        flex-direction: column; /* Empilha as colunas */
+    }
+
+    .supervisor-v2-sidebar {
+        flex-basis: auto; /* Remove a largura fixa */
+        padding: 2rem;
+    }
+
+    .supervisor-v2-main {
+        padding: 2rem;
+    }
+
+    .supervisor-v2-photo {
+        width: 150px; /* Reduz a foto em telas menores */
+        height: 150px;
+    }
+}

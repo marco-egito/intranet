@@ -8,38 +8,26 @@ const firebaseConfig = {
   messagingSenderId: "1041518416343",
   appId: "1:1041518416343:web:0a11c03c205b802ed7bb92"
 };
-// Inicializa apenas uma vez para evitar erros
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
-
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage();
 
-// Funções globais para serem chamadas pelos botões "Voltar" nas views carregadas
 window.showSupervisorDashboard = function() {
-    const dashboardContent = document.getElementById('supervisor-dashboard-content');
-    const viewContentArea = document.getElementById('view-content-area');
-    if(viewContentArea) {
-        viewContentArea.style.display = 'none';
-        viewContentArea.innerHTML = '';
-    }
-    if(dashboardContent) dashboardContent.style.display = 'block';
+    document.getElementById('view-content-area').style.display = 'none';
+    document.getElementById('supervisor-dashboard-content').style.display = 'block';
 };
 
-// Função global para abrir o modal de edição
 window.openEditModal = async function(uid) {
     const modal = document.getElementById('edit-profile-modal');
     const editingUidField = document.getElementById('editing-uid');
     if (!uid || !modal) return;
     editingUidField.value = uid;
-
     try {
         const userDoc = await db.collection('usuarios').doc(uid).get();
         if (!userDoc.exists) { alert("Documento do usuário não foi encontrado."); return; }
         const data = userDoc.data();
-        
         document.getElementById('profile-photo-preview').src = data.fotoUrl || '../assets/img/default-user.png';
         document.getElementById('edit-fotoUrl').value = data.fotoUrl || '';
         document.getElementById('edit-formacao').value = data.formacao || '';
@@ -47,7 +35,6 @@ window.openEditModal = async function(uid) {
         document.getElementById('edit-atuacao').value = (data.atuacao || []).join('\n');
         document.getElementById('edit-supervisaoInfo').value = (data.supervisaoInfo || []).join('\n');
         document.getElementById('edit-diasHorarios').value = (data.diasHorarios || []).join('\n');
-        
         modal.style.display = 'flex';
     } catch (error) {
         console.error("Erro ao carregar dados do perfil:", error);
@@ -77,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function() {
             'meus_supervisionados': { html: './view-meus-supervisionados.html', js: '../assets/js/view-meus-supervisionados.js' }
         };
         const files = fileMap[viewName];
-
         try {
             const response = await fetch(files.html);
             if (!response.ok) throw new Error (`HTML não encontrado: ${files.html}`);
@@ -144,8 +130,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const cancelBtn = document.getElementById('cancel-edit-btn');
     const closeModalBtns = document.querySelectorAll('.close-modal-btn');
     const editingUidField = document.getElementById('editing-uid');
-    const photoFileInput = document.getElementById('photo-file-input');
-    const changePhotoBtn = document.getElementById('change-photo-btn');
 
     if(cancelBtn) cancelBtn.addEventListener('click', () => modal.style.display = 'none');
     if(closeModalBtns) closeModalBtns.forEach(btn => btn.addEventListener('click', () => modal.style.display = 'none'));
@@ -179,7 +163,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Recarrega a view de perfil se ela estiver ativa
                 if (document.querySelector('#perfil-container')) {
                     const script = document.createElement('script');
+                    // Remove o script antigo para garantir a re-execução
+                    const oldScript = document.querySelector('script[data-view-script="meu_perfil"]');
+                    if (oldScript) oldScript.remove();
+                    
                     script.src = '../assets/js/view-meu-perfil.js';
+                    script.dataset.viewScript = 'meu_perfil';
                     document.body.appendChild(script);
                 }
             } catch (error) {
@@ -190,43 +179,5 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveProfileBtn.textContent = 'Salvar Alterações';
             }
         });
-    }
-
-    if (changePhotoBtn && photoFileInput) {
-        changePhotoBtn.addEventListener('click', () => {
-            photoFileInput.click();
-        });
-        photoFileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                uploadProfilePhoto(file);
-            }
-        });
-    }
-
-    async function uploadProfilePhoto(file) {
-        const uidToEdit = editingUidField.value;
-        if (!uidToEdit) { alert("Erro: ID do usuário não encontrado para o upload da foto."); return; }
-        if (!file.type.startsWith('image/')) { alert("Por favor, selecione um arquivo de imagem (jpg, png, etc)."); return; }
-        if (file.size > 5 * 1024 * 1024) { alert("O arquivo de imagem é muito grande. O máximo permitido é 5MB."); return; }
-
-        changePhotoBtn.disabled = true;
-        changePhotoBtn.textContent = 'Enviando...';
-        const filePath = `profile_photos/${uidToEdit}/${Date.now()}_${file.name}`;
-        const storageRef = storage.ref(filePath);
-        try {
-            const uploadTask = await storageRef.put(file);
-            const downloadURL = await uploadTask.ref.getDownloadURL();
-            await db.collection('usuarios').doc(uidToEdit).update({ fotoUrl: downloadURL });
-            document.getElementById('profile-photo-preview').src = downloadURL;
-            alert("Foto de perfil atualizada com sucesso!");
-        } catch (error) {
-            console.error("Erro no upload da foto:", error);
-            alert("Ocorreu um erro ao enviar a foto. Tente novamente.");
-        } finally {
-            changePhotoBtn.disabled = false;
-            changePhotoBtn.textContent = 'Alterar Foto';
-            photoFileInput.value = '';
-        }
     }
 });

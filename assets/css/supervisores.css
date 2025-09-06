@@ -43,14 +43,14 @@
 .contact-info li { margin-bottom: 10px; }
 .photo-container { 
     /*margin-top: auto; */
-    height: 130%;
+    height: 200%;
     position: relative; 
     text-align: center; 
 }
 .photo-container img.supervisor-photo {
     position: absolute;
     bottom: 0;
-    left: 50%;
+    left: 30%;
     transform: translateX(-50%);
     width: clamp(200px, 20vw, 800px);
     height: clamp(200px, 20vw, 800px);

@@ -28,14 +28,14 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // --- CORREÇÃO APLICADA AQUI ---
-    // A função foi renomeada de showSupervisorDashboard para showSupervisaoDashboard
-    window.showSupervisaoDashboard = function() {
+    // Função para voltar para o painel principal (tela com os 2 cards)
+    window.showSupervisorDashboard = function() {
         viewContentArea.style.display = 'none';
         viewContentArea.innerHTML = '';
         dashboardContent.style.display = 'block';
     };
 
+    // Função que carrega a tela do formulário
     window.loadFormularioView = async function(docId) {
         dashboardContent.style.display = 'none';
         viewContentArea.style.display = 'block';
@@ -46,6 +46,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) throw new Error('Falha ao carregar o HTML do formulário');
             viewContentArea.innerHTML = await response.text();
             
+            // Adiciona o listener para o botão Voltar, que agora volta para a lista
+            document.getElementById('form-view-back-button').addEventListener('click', () => loadView('meus_supervisionados'));
+
             if (!document.querySelector(`link[data-view-style="formulario-supervisao"]`)) {
                 const link = document.createElement('link');
                 link.rel = 'stylesheet';
@@ -63,17 +66,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error("Erro ao carregar view do formulário:", error);
-            // --- CORREÇÃO APLICADA AQUI ---
-            // Garante que o botão Voltar chame a função correta
-            viewContentArea.innerHTML = `<h2>Erro ao carregar.</h2><button onclick="showSupervisaoDashboard()">Voltar</button>`;
+            viewContentArea.innerHTML = `<h2>Erro ao carregar.</h2><button onclick="showSupervisorDashboard()">Voltar</button>`;
         }
     };
 
-    const icons = {
-        profile: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
-        list: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>`
-    };
-
+    // Função principal que carrega as "sub-telas" (perfis ou lista de supervisionados)
     async function loadView(viewName) {
         dashboardContent.style.display = 'none';
         viewContentArea.style.display = 'block';
@@ -98,23 +95,23 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.appendChild(script);
         } catch (error) {
             console.error("Erro ao carregar view:", error);
-            // --- CORREÇÃO APLICADA AQUI ---
-            viewContentArea.innerHTML = `<h2>Erro ao carregar.</h2><button onclick="showSupervisaoDashboard()">Voltar</button>`;
+            viewContentArea.innerHTML = `<h2>Erro ao carregar.</h2><button onclick="showSupervisorDashboard()">Voltar</button>`;
         }
     }
 
+    // O resto do arquivo permanece o mesmo...
     function renderSupervisorCards() {
         supervisorCardsGrid.innerHTML = '';
         const modules = {
-            meu_perfil: { titulo: 'Meu Perfil e Edição', descricao: 'Visualize e edite suas informações de perfil.', icon: icons.profile },
-            meus_supervisionados: { titulo: 'Meus Supervisionados', descricao: 'Visualize os acompanhamentos que você supervisiona.', icon: icons.list }
+            meu_perfil: { titulo: 'Meu Perfil e Edição', descricao: 'Visualize e edite suas informações de perfil.' },
+            meus_supervisionados: { titulo: 'Meus Supervisionados', descricao: 'Visualize os acompanhamentos que você supervisiona.' }
         };
         for (const key in modules) {
             const module = modules[key];
             const card = document.createElement('div');
             card.className = 'module-card';
             card.dataset.view = key;
-            card.innerHTML = `<div class="card-icon">${module.icon}</div><div class="card-content"><h3>${module.titulo}</h3><p>${module.descricao}</p></div>`;
+            card.innerHTML = `<div class="card-content"><h3>${module.titulo}</h3><p>${module.descricao}</p></div>`;
             supervisorCardsGrid.appendChild(card);
         }
     }
@@ -135,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (funcoes.includes('supervisor') || funcoes.includes('admin')) {
                         renderSupervisorCards();
                     } else {
-                        dashboardContent.innerHTML = '<h2>Acesso Negado</h2><p>Esta área é exclusiva para supervisores e administradores.</p>';
+                        dashboardContent.innerHTML = '<h2>Acesso Negado</h2>';
                     }
                 } else {
                      dashboardContent.innerHTML = '<h2>Usuário não encontrado.</h2>';

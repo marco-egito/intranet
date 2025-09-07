@@ -1,101 +1,219 @@
-/* assets/css/supervisores.css */
+/* assets/css/supervisores.css (NOVA VERSÃO COMPLETA) */
 
+/* --- ESTRUTURA PRINCIPAL E GRADE --- */
 #supervisor-grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(650px, 1fr));
     gap: 30px;
     margin-top: 20px;
 }
+
 .supervisor-card { 
-    background-color: #fff; 
+    background-color: #ffffff; 
     border-radius: 10px; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1); 
     display: flex; 
     overflow: hidden; 
-    min-height: 550px; }
+    min-height: 700px;
+    font-family: Arial, sans-serif;
+    border: 1px solid #eee;
+}
+
+/* --- COLUNA DA ESQUERDA (AZUL) --- */
 .supervisor-card-left { 
-    background-color: #40b0df; 
+    background-color: #04396d; /* Azul escuro principal */
     color: white; 
     padding: 25px; 
-    width: 250px; 
+    width: 280px; 
     display: flex; 
     flex-direction: column; 
-    flex-shrink: 0; }
-.supervisor-card-left h2 { 
-    font-size: clamp(1.4rem, 2vw, 2rem); /* Título principal */
-    margin: 0; 
-    text-transform: uppercase; }
-.supervisor-card-left h3 { 
-    background-color: #04396d; 
-    font-size: clamp(0.9rem, 1.5vw, 1.2rem); /* Subtítulo */ 
-    padding: 8px; 
-    text-align: center; 
-    border-radius: 5px; 
-    margin: 15px 0; 
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.photo-container {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 20px auto;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid #40b0df; /* Borda azul clara */
+}
+
+.supervisor-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.supervisor-identity h2 {
+    font-size: 1.6rem;
+    margin: 0 0 10px 0; 
+    text-transform: uppercase;
+    font-weight: bold;
+    line-height: 1.2;
+}
+
+.title-box {
+    background-color: #40b0df; /* Azul claro para o box */
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 25px;
     letter-spacing: 1px;
 }
-.contact-info { 
-    list-style: none; 
-    padding: 0; 
-    margin: 10px 0; 
-    font-size: clamp(0.8rem, 1vw, 1rem); /* Informações de contato */
+
+.supervisor-contact {
+    margin-top: auto;
+    font-size: 0.9rem;
+    line-height: 1.5;
 }
-.contact-info li { margin-bottom: 10px; }
-.photo-container { 
-    /*margin-top: auto; */
-    height: 200%;
+
+.supervisor-contact p {
+    margin: 5px 0;
+}
+
+.logo-container {
+    margin-top: 25px;
+    text-align: center;
+}
+
+.logo-container img {
+    width: 100px;
+}
+
+
+/* --- COLUNA DA DIREITA (BRANCA) --- */
+.supervisor-card-right { 
+    padding: 25px; 
+    flex-grow: 1; 
     position: relative; 
-    text-align: center; 
+    background-color: #fff;
 }
-.photo-container img.supervisor-photo {
+
+.profile-header {
+    background-color: #f0f0f0;
+    text-align: right;
+    padding: 5px 15px;
+    margin-bottom: 25px;
+}
+
+.profile-header h3 {
+    color: #04396d;
+    font-size: 1.1rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+    margin: 0;
+    display: inline-block;
+    position: relative;
+    padding-right: 25px;
+}
+
+.profile-header h3::after {
+    content: '';
     position: absolute;
-    bottom: 0;
-    left: 36%;
-   /* transform: translateX(-50%);*/
-    width: clamp(150x, 20vw, 800px);
-    height: clamp(150px, 20vw, 800px);
-    border-radius: 8px; 
-    object-fit: cover;
-    image-rendering: -webkit-optimize-contrast; /* Adicione esta linha */
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 15px;
+    height: 15px;
+    background-color: #f7d000; /* Detalhe amarelo */
 }
-.photo-container img.overlay-logo { 
-    position: absolute; 
-    bottom: 5%; 
-    left: 5%; 
-    width: 50%; 
-    height: auto;
-    object-fit: contain;
+
+.profile-section {
+    margin-bottom: 20px;
 }
-.supervisor-card-right { padding: 25px; flex-grow: 1; position: relative; }
-.supervisor-card-right .profile-header { 
-    background-color: #04396d; 
-    color: white; 
-    padding: 10px 15px; 
-    border-radius: 5px; 
-    text-align: center; 
-    ffont-size: clamp(1rem, 2vw, 1.5rem); /* Cabeçalho do perfil */
-    font-weight: bold; 
-    letter-spacing: 2px; 
-    margin-bottom: 20px; 
-}
-.supervisor-card-right h4 { 
-    font-size: clamp(0.8rem, 1.2vw, 1rem); /* Subtítulo da seção */ 
+
+.profile-section h4 {
+    font-size: 1rem;
     text-transform: uppercase; 
     color: #04396d; 
-    border-bottom: 2px solid #38a9e4; 
-    padding-bottom: 5px; 
-    margin-top: 20px; 
-    margin-bottom: 10px; }
-.supervisor-card-right ul { 
+    border-bottom: 2px solid #40b0df; 
+    padding-bottom: 8px; 
+    margin: 0 0 10px 0;
+    font-weight: bold;
+}
+
+.profile-section ul { 
     list-style: none; 
     padding-left: 0; 
-    font-size: clamp(0.85rem, 1vw, 1rem); /* Lista de informações */ 
-    line-height: 1.6; }
-.supervisor-card-right ul li::before { content: '•'; color: #38a9e4; font-weight: bold; display: inline-block; width: 1em; margin-left: -1em; }
-.loading-spinner { border: 5px solid #f3f3f3; border-top: 5px solid #007bff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 50px auto; }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #333;
+}
 
-/* --- ESTILOS DO MODAL DE EDIÇÃO --- */
+.profile-section ul li {
+    padding-left: 20px;
+    position: relative;
+}
+
+.profile-section ul li::before { 
+    content: '•'; 
+    color: #40b0df; 
+    font-weight: bold; 
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+/* --- BOTÃO DE EDITAR --- */
+.edit-supervisor-btn {
+    position: absolute; 
+    top: 15px; 
+    right: 15px;
+    background-color: #f7d000; /* Amarelo */
+    color: #04396d;
+    border: none;
+    padding: 8px 12px;
+    font-size: 0.85em;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.3s;
+}
+
+.edit-supervisor-btn:hover {
+    background-color: #e0be00;
+}
+
+/* --- GERAL E RESPONSIVIDADE --- */
+.loading-spinner { 
+    border: 5px solid #f3f3f3; 
+    border-top: 5px solid #04396d; 
+    border-radius: 50%; 
+    width: 40px; 
+    height: 40px; 
+    animation: spin 1s linear infinite; 
+    margin: 50px auto; 
+}
+
+@keyframes spin { 
+    0% { transform: rotate(0deg); } 
+    100% { transform: rotate(360deg); } 
+}
+
+@media (max-width: 700px) {
+    #supervisor-grid-container {
+        grid-template-columns: 1fr;
+        min-width: 100%;
+    }
+    .supervisor-card {
+        flex-direction: column;
+        min-height: auto;
+    }
+    .supervisor-card-left {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+/* --- ESTILOS DO MODAL DE EDIÇÃO (sem alterações significativas) --- */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal-content { background-color: #fff; border-radius: 8px; width: 90%; max-width: 700px; max-height: 90vh; display: flex; flex-direction: column; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; background-color: #0d2d4e; color: white; border-radius: 8px 8px 0 0; }
@@ -106,20 +224,3 @@
 .modal-body label { font-weight: bold; display: block; margin-bottom: 5px; }
 .modal-body input, .modal-body textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 15px 25px; background-color: #f1f1f1; border-top: 1px solid #ddd; border-radius: 0 0 8px 8px; }
-.edit-supervisor-btn { position: absolute; top: 15px; right: 15px; background-color: #ffc107; color: black; border: none; padding: 6px 10px; font-size: 0.8em; font-weight: bold; border-radius: 4px; cursor: pointer; }
-
-/* --- ESTILO DE GRADE PARA A LISTA DE SUPERVISORES --- */
-
-#supervisor-grid-container {
-    display: grid;
-    /* Tenta criar colunas de no mínimo 400px, preenchendo o espaço. 
-       Em telas maiores, isso resulta em aprox. 3 colunas. 
-       Em telas menores, ele se ajusta automaticamente para 2 ou 1. */
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    gap: 25px; /* Espaçamento entre os cards */
-}
-
-/* Ajuste para garantir que os cards não encolham demais */
-.supervisor-card {
-    min-width: 380px;
-}

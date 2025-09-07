@@ -1,4 +1,4 @@
-// assets/js/view-meu-perfil.js (Versão Completa para Diagnóstico do Botão)
+// assets/js/view-me-perfil.js (Versão com CRP e Título Editável)
 (function() {
     if (!window.firebase || !firebase.apps.length) {
         console.error("Firebase não inicializado neste ponto.");
@@ -32,6 +32,10 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
             </button>` : '';
 
+        // --- ALTERAÇÃO 1: LÓGICA PARA EXIBIR O CRP E O TÍTULO ---
+        const crpHtml = supervisor.crp ? `<p><strong>CRP:</strong> ${supervisor.crp}</p>` : '';
+        const titleText = supervisor.titulo ? supervisor.titulo.toUpperCase() : 'SUPERVISOR(A)';
+
         card.innerHTML = `
             <div class="supervisor-card-left">
                 <div class="photo-container">
@@ -39,9 +43,10 @@
                 </div>
                 <div class="supervisor-identity">
                     <h2>${supervisor.nome || 'Nome Indisponível'}</h2>
-                    <div class="title-box">SUPERVISOR(A)</div>
+                    <div class="title-box">${titleText}</div>
                 </div>
                 <div class="supervisor-contact">
+                    ${crpHtml}
                     <p><strong>Telefone:</strong> ${supervisor.telefone || 'Não informado'}</p>
                     <p><strong>Email:</strong> ${supervisor.email || 'Não informado'}</p>
                     <p>www.eupsico.org.br</p>
@@ -66,8 +71,6 @@
         return card;
     }
     
-    // --- PONTO PRINCIPAL DA VERIFICAÇÃO ---
-    console.log("Verificando se o modal de edição existe:", modal); // LOG 1
     if(modal) {
         const form = document.getElementById('edit-profile-form');
         const photoEditSection = document.querySelector('.photo-edit-section');
@@ -76,6 +79,10 @@
             const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid);
             if (!supervisorData) return;
             form.elements['editing-uid'].value = supervisorData.uid;
+            
+            // --- ALTERAÇÃO 2: CARREGAR O TÍTULO NO FORMULÁRIO ---
+            form.elements['edit-titulo'].value = supervisorData.titulo || '';
+
             document.getElementById('edit-fotoUrl').value = supervisorData.fotoUrl || '';
             const pathPrefix = window.location.pathname.includes('/pages/') ? '../' : './';
             document.getElementById('profile-photo-preview').src = supervisorData.fotoUrl ? pathPrefix + supervisorData.fotoUrl : pathPrefix + 'assets/img/default-user.png';
@@ -99,8 +106,10 @@
             const uid = form.elements['editing-uid'].value;
             if (!uid) return;
             
-            // Objeto de dados agora está completo
             const dataToUpdate = {
+                // --- ALTERAÇÃO 3: SALVAR O NOVO CAMPO TÍTULO ---
+                titulo: form.elements['edit-titulo'].value.trim(),
+
                 fotoUrl: document.getElementById('edit-fotoUrl').value.trim(),
                 abordagem: form.elements['edit-abordagem'].value.trim(),
                 crp: form.elements['edit-crp'].value.trim(),
@@ -116,7 +125,7 @@
             try {
                 await db.collection('usuarios').doc(uid).update(dataToUpdate);
                 closeEditModal();
-                loadProfiles(auth.currentUser); // Correção da chamada de recarregamento
+                loadProfiles(auth.currentUser);
             } catch (error) {
                 console.error("Erro ao salvar alterações:", error);
                 alert("Não foi possível salvar as alterações.");
@@ -128,7 +137,6 @@
         document.getElementById('save-profile-btn').addEventListener('click', saveProfileChanges);
         
         gridContainer.addEventListener('click', (e) => {
-            console.log("Clique detectado no container dos cards."); // LOG 2
             if (e.target && e.target.closest('.edit-supervisor-btn')) {
                 const button = e.target.closest('.edit-supervisor-btn');
                 const uid = button.dataset.uid;

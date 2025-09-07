@@ -7,31 +7,18 @@
 }
 
 .supervisor-card { 
-    background-color: #04396d; /* O fundo do card base é o azul */
+    background-color: #04396d;
     border-radius: 10px; 
     box-shadow: 0 6px 20px rgba(0,0,0,0.1); 
+    display: flex;
     font-family: Arial, sans-serif;
-    transition: all 0.4s ease-in-out;
     cursor: pointer;
-    position: relative; /* Essencial para o posicionamento da parte direita */
-    z-index: 1; /* Z-index padrão */
 }
-
-/* Quando o card está expandido, ele ganha destaque */
-.supervisor-card.is-expanded {
-    z-index: 10; /* Fica acima dos outros cards */
-}
-
 
 /* --- COLUNA DA ESQUERDA (AZUL) - VISÃO RESUMIDA --- */
 .supervisor-card-left { 
-    color: white; 
-    padding: 25px; 
-    width: 100%;
-    display: flex; 
-    flex-direction: column; 
-    text-align: center;
-    box-sizing: border-box;
+    color: white; padding: 25px; width: 100%; display: flex; 
+    flex-direction: column; text-align: center; box-sizing: border-box;
 }
 .photo-container { width: 150px; height: 150px; margin: 0 auto 20px auto; border-radius: 50%; overflow: hidden; border: 4px solid #40b0df; }
 .supervisor-photo { width: 100%; height: 100%; object-fit: cover; }
@@ -42,30 +29,26 @@
 .logo-container { margin-top: 25px; text-align: center; }
 .logo-container img { width: 100px; }
 
-
-/* --- COLUNA DA DIREITA (BRANCA) - EFEITO OVERLAY --- */
+/* --- COLUNA DA DIREITA (BRANCA) - VISÃO COMPLETA --- */
 .supervisor-card-right { 
     background-color: #fff;
-    border-radius: 0 10px 10px 0;
-    box-shadow: 5px 0px 15px rgba(0,0,0,0.2);
     padding: 25px; 
-    position: absolute; /* Posição absoluta em relação ao .supervisor-card */
-    top: 0;
-    left: 100%; /* Começa do lado de fora, à direita */
-    width: 420px; 
-    height: 100%;
-    box-sizing: border-box;
-    opacity: 0; /* Começa invisível */
-    transform: translateX(20px); /* Começa um pouco deslocado para a direita */
-    transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
-    pointer-events: none; /* Não é clicável quando escondido */
+    flex-grow: 1; 
+    position: relative; 
+    width: 400px;
+    display: none; /* Fica escondida por padrão */
 }
 
-/* Quando o card está expandido, a parte direita aparece */
+/* Exibe a parte direita quando o card está expandido (no painel do supervisor) */
+.supervisor-card.is-expanded {
+    cursor: default; /* Remove a mãozinha no painel do supervisor */
+}
 .supervisor-card.is-expanded .supervisor-card-right {
-    opacity: 1;
-    transform: translateX(0); /* Volta para a posição original */
-    pointer-events: all; /* Torna-se clicável */
+    display: block;
+}
+.supervisor-card.is-expanded .supervisor-card-left {
+    width: 280px;
+    flex-shrink: 0;
 }
 
 /* --- BOTÃO DE EDITAR --- */
@@ -74,14 +57,66 @@
     border: none; padding: 8px 12px; font-size: 0.85em; font-weight: bold; border-radius: 5px;
     cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background-color 0.3s;
 }
-.edit-supervisor-btn:hover { background-color: #e0be00; }
 
-/* --- CABEÇALHO E SEÇÕES DO PERFIL (dentro da parte direita) --- */
+/* --- SEÇÕES DO PERFIL (usado no card e no modal de detalhes) --- */
 .profile-header { background-color: #f0f0f0; text-align: right; padding: 5px 15px; margin-bottom: 25px; }
-.profile-header h3 { color: #04396d; font-size: 1.1rem; font-weight: bold; letter-spacing: 2px; margin: 0; display: inline-block; position: relative; padding-right: 25px; }
-.profile-header h3::after { content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; background-color: #f7d000; }
+.profile-header h3 { color: #04396d; font-size: 1.1rem; font-weight: bold; letter-spacing: 2px; margin: 0; display: inline-block; }
 .profile-section { margin-bottom: 20px; }
 .profile-section h4 { font-size: 1rem; text-transform: uppercase; color: #04396d; border-bottom: 2px solid #40b0df; padding-bottom: 8px; margin: 0 0 10px 0; font-weight: bold; }
 .profile-section ul { list-style: none; padding-left: 0; font-size: 0.95rem; line-height: 1.7; color: #333; }
 .profile-section ul li { padding-left: 20px; position: relative; }
 .profile-section ul li::before { content: '•'; color: #40b0df; font-weight: bold; position: absolute; left: 0; top: 0; }
+
+
+/* --- ESTILOS GERAIS PARA TODOS OS MODAIS (EDIÇÃO E DETALHES) --- */
+.modal-overlay {
+    position: fixed; /* ESSENCIAL PARA FLUTUAR SOBRE A PÁGINA */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000; /* Garante que fique na frente de tudo */
+}
+
+.modal-content {
+    background-color: #fff;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 700px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    background-color: #0d2d4e;
+    color: white;
+    border-radius: 8px 8px 0 0;
+}
+.modal-header h2 { margin: 0; font-size: 1.2em; }
+.close-modal-btn { background: none; border: none; color: white; font-size: 2em; cursor: pointer; line-height: 1; padding: 0; }
+
+.modal-body {
+    padding: 25px;
+    overflow-y: auto;
+}
+
+/* Estilos específicos para o formulário de edição dentro do modal */
+.modal-body .form-group { margin-bottom: 15px; }
+.modal-body label { font-weight: bold; display: block; margin-bottom: 5px; }
+.modal-body input, .modal-body textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box; }
+
+.modal-footer {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 15px 25px; background-color: #f1f1f1;
+    border-top: 1px solid #ddd; border-radius: 0 0 8px 8px;
+}

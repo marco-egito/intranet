@@ -1,33 +1,73 @@
 (function() {
-    if (!window.firebase || !firebase.apps.length) { 
-        console.error("Firebase não inicializado.");
-        return; 
-    }
+    if (!window.firebase || !firebase.apps.length) { return; }
     const auth = firebase.auth();
     const db = firebase.firestore();
     const gridContainer = document.getElementById('supervisor-grid-container');
-    const modal = document.getElementById('edit-profile-modal');
+    const editModal = document.getElementById('edit-profile-modal');
+    
+    // Referência para o novo modal de detalhes
+    const detailsModal = document.getElementById('details-profile-modal');
+
     let fetchedSupervisors = []; 
     let isAdmin = false; 
 
-    // --- LÓGICA DE CLIQUE PARA EXPANDIR O CARD ---
-    // Esta lógica agora fica fora do if(modal), funcionando para todos os usuários.
-    gridContainer.addEventListener('click', (e) => {
-        // Impede a expansão se o clique foi no botão de editar
-        if (e.target.closest('.edit-supervisor-btn')) {
-            return;
-        }
+    // ---- LÓGICA DE CONTROLE DOS MODAIS ----
+
+    // Abre o novo modal de detalhes e preenche com as informações
+    function openDetailsModal(supervisorUid) {
+        if (!detailsModal) return;
+        const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid);
+        if (!supervisorData) return;
         
-        // Se o clique foi em qualquer outra parte do card, expande/recolhe
+        const detailsBody = document.getElementById('details-modal-body');
+        const toList = (data) => {
+            if (!data || data.length === 0) return '<ul><li>Não informado</li></ul>';
+            const items = Array.isArray(data) ? data : [data];
+            return `<ul>${items.map(item => `<li>${item}</li>`).join('')}</ul>`;
+        };
+
+        detailsBody.innerHTML = `
+            <div class="profile-section"><h4>Formação</h4>${toList(supervisorData.formacao)}</div>
+            <div class="profile-section"><h4>Especialização</h4>${toList(supervisorData.especializacao)}</div>
+            <div class="profile-section"><h4>Áreas de Atuação</h4>${toList(supervisorData.atuacao)}</div>
+            <div class="profile-section"><h4>Informações de Supervisão</h4>${toList(supervisorData.supervisaoInfo)}</div>
+            <div class="profile-section"><h4>Dias e Horários</h4>${toList(supervisorData.diasHorarios)}</div>
+        `;
+        detailsModal.style.display = 'flex';
+    }
+
+    // Fecha o modal de detalhes
+    if (detailsModal) {
+        detailsModal.querySelector('.close-modal-btn').addEventListener('click', () => {
+            detailsModal.style.display = 'none';
+        });
+    }
+
+    // ---- LÓGICA PRINCIPAL ----
+
+    // Gerencia todos os cliques no container dos cards
+    gridContainer.addEventListener('click', (e) => {
+        const editButton = e.target.closest('.edit-supervisor-btn');
         const card = e.target.closest('.supervisor-card');
-        if (card) {
-            card.classList.toggle('is-expanded');
+
+        if (editButton) { // Se o clique foi no botão editar
+            e.stopPropagation();
+            const uid = editButton.dataset.uid;
+            openEditModal(uid);
+        } else if (card && window.PROFILE_VIEW_MODE === 'all') { // Se foi no card E estamos na vitrine
+             const uid = card.dataset.uid;
+             openDetailsModal(uid);
         }
     });
 
+
     function createSupervisorCard(supervisor, podeEditar) {
         const card = document.createElement('div');
-        card.className = 'supervisor-card';
+        // Adiciona 'is-expanded' por padrão se NÃO estivermos na vitrine pública
+        card.className = window.PROFILE_VIEW_MODE === 'all' ? 'supervisor-card' : 'supervisor-card is-expanded';
+        card.dataset.uid = supervisor.uid; // Adiciona o UID ao card para referência
+
+        // ... (resto da função é igual)
         const toList = (data) => {
             if (!data) return '<li>Não informado</li>';
             const items = Array.isArray(data) ? data : [data];
@@ -48,51 +88,38 @@
             <div class="supervisor-card-right">
                 ${editButtonHtml}
                 <div class="profile-header"><h3>PERFIL PROFISSIONAL</h3></div>
-                <div class="profile-section"><h4>Formação</h4><ul>${toList(supervisor.formacao)}</ul></div>
-                <div class="profile-section"><h4>Especialização</h4><ul>${toList(supervisor.especializacao)}</ul></div>
-                <div class="profile-section"><h4>Áreas de Atuação</h4><ul>${toList(supervisor.atuacao)}</ul></div>
-                <div class="profile-section"><h4>Informações de Supervisão</h4><ul>${toList(supervisor.supervisaoInfo)}</ul></div>
-                <div class="profile-section"><h4>Dias e Horários</h4><ul>${toList(supervisor.diasHorarios)}</ul></div>
+                <div id="card-details-content">
+                    <div class="profile-section"><h4>Formação</h4><ul>${toList(supervisor.formacao)}</ul></div>
+                    <div class="profile-section"><h4>Especialização</h4><ul>${toList(supervisor.especializacao)}</ul></div>
+                    <div class="profile-section"><h4>Áreas de Atuação</h4><ul>${toList(supervisor.atuacao)}</ul></div>
+                    <div class="profile-section"><h4>Informações de Supervisão</h4><ul>${toList(supervisor.supervisaoInfo)}</ul></div>
+                    <div class="profile-section"><h4>Dias e Horários</h4><ul>${toList(supervisor.diasHorarios)}</ul></div>
+                </div>
             </div>`;
         return card;
     }
     
-    // A lógica de edição só será ativada se o modal existir (para admins/supervisores)
-    if(modal) {
-        // --- LÓGICA DE CLIQUE APENAS PARA O BOTÃO EDITAR ---
-        gridContainer.addEventListener('click', (e) => {
-            const editButton = e.target.closest('.edit-supervisor-btn');
-            if (editButton) {
-                e.stopPropagation(); 
-                const uid = editButton.dataset.uid;
-                openEditModal(uid);
-            }
-        });
-
+    // Lógica do modal de EDIÇÃO
+    if(editModal) {
         const form = document.getElementById('edit-profile-form');
         function openEditModal(supervisorUid) {
-            const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid);
-            if (!supervisorData) return;
-            form.elements['editing-uid'].value = supervisorData.uid;
-            form.elements['edit-titulo'].value = supervisorData.titulo || '';
+            const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid); if (!supervisorData) return;
+            form.elements['editing-uid'].value = supervisorData.uid; form.elements['edit-titulo'].value = supervisorData.titulo || '';
             document.getElementById('edit-fotoUrl').value = supervisorData.fotoUrl || '';
             const pathPrefix = window.location.pathname.includes('/pages/') ? '../' : './';
             document.getElementById('profile-photo-preview').src = supervisorData.fotoUrl ? pathPrefix + supervisorData.fotoUrl : pathPrefix + 'assets/img/default-user.png';
-            form.elements['edit-abordagem'].value = supervisorData.abordagem || '';
-            form.elements['edit-crp'].value = supervisorData.crp || '';
-            form.elements['edit-email'].value = supervisorData.email || '';
-            form.elements['edit-telefone'].value = supervisorData.telefone || '';
+            form.elements['edit-abordagem'].value = supervisorData.abordagem || ''; form.elements['edit-crp'].value = supervisorData.crp || '';
+            form.elements['edit-email'].value = supervisorData.email || ''; form.elements['edit-telefone'].value = supervisorData.telefone || '';
             form.elements['edit-formacao'].value = supervisorData.formacao || '';
-            form.elements['edit-especializacao'].value = Array.isArray(supervisorData.especializacao) ? supervisorData.especializacao.join('\n') : supervisorData.especializacao || '';
-            form.elements['edit-atuacao'].value = Array.isArray(supervisorData.atuacao) ? supervisorData.atuacao.join('\n') : supervisorData.atuacao || '';
-            form.elements['edit-supervisaoInfo'].value = Array.isArray(supervisorData.supervisaoInfo) ? supervisorData.supervisaoInfo.join('\n') : supervisorData.supervisaoInfo || '';
-            form.elements['edit-diasHorarios'].value = Array.isArray(supervisorData.diasHorarios) ? supervisorData.diasHorarios.join('\n') : supervisorData.diasHorarios || '';
-            modal.style.display = 'flex';
+            form.elements['edit-especializacao'].value = Array.isArray(supervisorData.especializacao) ? supervisorData.especializacao.join('\n') : '';
+            form.elements['edit-atuacao'].value = Array.isArray(supervisorData.atuacao) ? supervisorData.atuacao.join('\n') : '';
+            form.elements['edit-supervisaoInfo'].value = Array.isArray(supervisorData.supervisaoInfo) ? supervisorData.supervisaoInfo.join('\n') : '';
+            form.elements['edit-diasHorarios'].value = Array.isArray(supervisorData.diasHorarios) ? supervisorData.diasHorarios.join('\n') : '';
+            editModal.style.display = 'flex';
         }
-        function closeEditModal() { modal.style.display = 'none'; form.reset(); }
+        function closeEditModal() { editModal.style.display = 'none'; form.reset(); }
         async function saveProfileChanges(e) {
-            e.preventDefault();
-            const uid = form.elements['editing-uid'].value; if (!uid) return;
+            e.preventDefault(); const uid = form.elements['editing-uid'].value; if (!uid) return;
             const dataToUpdate = {
                 titulo: form.elements['edit-titulo'].value.trim(), fotoUrl: document.getElementById('edit-fotoUrl').value.trim(),
                 abordagem: form.elements['edit-abordagem'].value.trim(), crp: form.elements['edit-crp'].value.trim(),
@@ -108,7 +135,7 @@
                 closeEditModal(); loadProfiles(auth.currentUser);
             } catch (error) { console.error("Erro ao salvar:", error); alert("Erro ao salvar."); }
         }
-        modal.querySelector('.close-modal-btn').addEventListener('click', closeEditModal);
+        editModal.querySelector('.close-modal-btn').addEventListener('click', closeEditModal);
         document.getElementById('cancel-edit-btn').addEventListener('click', closeEditModal);
         document.getElementById('save-profile-btn').addEventListener('click', saveProfileChanges);
     }
@@ -119,7 +146,17 @@
             const userDoc = await db.collection('usuarios').doc(user.uid).get(); if (!userDoc.exists) throw new Error("Usuário não encontrado.");
             const userData = userDoc.data(); isAdmin = (userData.funcoes || []).includes('admin');
             const podeEditar = isAdmin || (userData.funcoes || []).includes('supervisor');
-            const query = db.collection('usuarios').where('funcoes', 'array-contains', 'supervisor').where('inativo', '==', false).orderBy('nome');
+            
+            let query;
+            // ---- LÓGICA DE VISUALIZAÇÃO ATUALIZADA ----
+            if (window.PROFILE_VIEW_MODE === 'all' || isAdmin) {
+                // Se for a vitrine OU se o usuário for admin, busca todos.
+                query = db.collection('usuarios').where('funcoes', 'array-contains', 'supervisor').where('inativo', '==', false).orderBy('nome');
+            } else {
+                // Senão (supervisor no painel dele), busca apenas o próprio perfil.
+                query = db.collection('usuarios').where(firebase.firestore.FieldPath.documentId(), '==', user.uid);
+            }
+
             const snapshot = await query.get(); fetchedSupervisors = [];
             if (snapshot.empty) { gridContainer.innerHTML = '<p>Nenhum supervisor encontrado.</p>'; return; }
             snapshot.forEach(doc => fetchedSupervisors.push({ uid: doc.id, ...doc.data() }));

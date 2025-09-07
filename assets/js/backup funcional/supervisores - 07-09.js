@@ -1,11 +1,12 @@
+// assets/js/supervisores.js (Versão 6 - Painel do Supervisor Completo)
 const firebaseConfig = {
-    apiKey: "AIzaSyDJqPJjDDIGo7uRewh3pw1SQZOpMgQJs5M",
-    authDomain: "eupsico-agendamentos-d2048.firebaseapp.com",
-    databaseURL: "https://eupsico-agendamentos-d2048-default-rtdb.firebaseio.com",
-    projectId: "eupsico-agendamentos-d2048",
-    storageBucket: "eupsico-agendamentos-d2048.firebasestorage.app",
-    messagingSenderId: "1041518416343",
-    appId: "1:1041518416343:web:0a11c03c205b802ed7bb92"
+  apiKey: "AIzaSyDJqPJjDDIGo7uRewh3pw1SQZOpMgQJs5M",
+  authDomain: "eupsico-agendamentos-d2048.firebaseapp.com",
+  databaseURL: "https://eupsico-agendamentos-d2048-default-rtdb.firebaseio.com",
+  projectId: "eupsico-agendamentos-d2048",
+  storageBucket: "eupsico-agendamentos-d2048.firebasestorage.app",
+  messagingSenderId: "1041518416343",
+  appId: "1:1041518416343:web:0a11c03c205b802ed7bb92"
 };
 let auth;
 let db;
@@ -34,6 +35,41 @@ document.addEventListener('DOMContentLoaded', function() {
         dashboardContent.style.display = 'block';
     };
 
+    // Função que carrega a tela do formulário
+    window.loadFormularioView = async function(docId) {
+        dashboardContent.style.display = 'none';
+        viewContentArea.style.display = 'block';
+        viewContentArea.innerHTML = '<div class="loading-spinner"></div>';
+
+        try {
+            const response = await fetch('./formulario-supervisao.html');
+            if (!response.ok) throw new Error('Falha ao carregar o HTML do formulário');
+            viewContentArea.innerHTML = await response.text();
+            
+            // Adiciona o listener para o botão Voltar, que agora volta para a lista
+            document.getElementById('form-view-back-button').addEventListener('click', () => loadView('meus_supervisionados'));
+
+            if (!document.querySelector(`link[data-view-style="formulario-supervisao"]`)) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = '../assets/css/formulario-supervisao.css';
+                link.dataset.viewStyle = 'formulario-supervisao';
+                document.head.appendChild(link);
+            }
+            
+            window.formSupervisaoInitialDocId = docId;
+
+            const script = document.createElement('script');
+            script.src = '../assets/js/formulario-supervisao.js';
+            script.dataset.viewScript = 'formulario-supervisao';
+            document.body.appendChild(script);
+
+        } catch (error) {
+            console.error("Erro ao carregar view do formulário:", error);
+            viewContentArea.innerHTML = `<h2>Erro ao carregar.</h2><button onclick="showSupervisorDashboard()">Voltar</button>`;
+        }
+    };
+
     // Função principal que carrega as "sub-telas" (perfis ou lista de supervisionados)
     async function loadView(viewName) {
         dashboardContent.style.display = 'none';
@@ -50,13 +86,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch(files.html);
             viewContentArea.innerHTML = await response.text();
 
-            // --- ALTERAÇÃO IMPORTANTE AQUI ---
-            // Ativa o botão "Voltar ao Painel" que foi carregado com o HTML da nova tela.
-            const backButton = document.getElementById('view-back-button');
-            if (backButton) {
-                backButton.addEventListener('click', window.showSupervisorDashboard);
-            }
-
             const existingScript = document.querySelector(`script[data-view-script="${viewName}"]`);
             if (existingScript) existingScript.remove();
 
@@ -70,6 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // O resto do arquivo permanece o mesmo...
     function renderSupervisorCards() {
         supervisorCardsGrid.innerHTML = '';
         const modules = {
@@ -105,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         dashboardContent.innerHTML = '<h2>Acesso Negado</h2>';
                     }
                 } else {
-                        dashboardContent.innerHTML = '<h2>Usuário não encontrado.</h2>';
+                     dashboardContent.innerHTML = '<h2>Usuário não encontrado.</h2>';
                 }
             } catch (error) {
                 console.error("Erro ao buscar usuário:", error);

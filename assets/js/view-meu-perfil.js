@@ -1,6 +1,5 @@
-// assets/js/view-meu-perfil.js (Versão Corrigida e Completa)
+// assets/js/view-meu-perfil.js (Versão Completa para Diagnóstico do Botão)
 (function() {
-    // Garante que o firebase está inicializado antes de usar auth e db
     if (!window.firebase || !firebase.apps.length) {
         console.error("Firebase não inicializado neste ponto.");
         return;
@@ -14,7 +13,6 @@
     let fetchedSupervisors = []; 
     let isAdmin = false; 
 
-    // A função de criar o card permanece a mesma que te enviei anteriormente
     function createSupervisorCard(supervisor, podeEditar) {
         const card = document.createElement('div');
         card.className = 'supervisor-card';
@@ -58,37 +56,18 @@
                 <div class="profile-header">
                     <h3>PERFIL PROFISSIONAL</h3>
                 </div>
-                
-                <div class="profile-section">
-                    <h4>Formação</h4>
-                    <ul>${toList(supervisor.formacao)}</ul>
-                </div>
-                
-                <div class="profile-section">
-                    <h4>Especialização</h4>
-                    <ul>${toList(supervisor.especializacao)}</ul>
-                </div>
-                
-                <div class="profile-section">
-                    <h4>Áreas de Atuação</h4>
-                    <ul>${toList(supervisor.atuacao)}</ul>
-                </div>
-
-                <div class="profile-section">
-                    <h4>Informações de Supervisão</h4>
-                    <ul>${toList(supervisor.supervisaoInfo)}</ul>
-                </div>
-
-                <div class="profile-section">
-                    <h4>Dias e Horários</h4>
-                    <ul>${toList(supervisor.diasHorarios)}</ul>
-                </div>
+                <div class="profile-section"><h4>Formação</h4><ul>${toList(supervisor.formacao)}</ul></div>
+                <div class="profile-section"><h4>Especialização</h4><ul>${toList(supervisor.especializacao)}</ul></div>
+                <div class="profile-section"><h4>Áreas de Atuação</h4><ul>${toList(supervisor.atuacao)}</ul></div>
+                <div class="profile-section"><h4>Informações de Supervisão</h4><ul>${toList(supervisor.supervisaoInfo)}</ul></div>
+                <div class="profile-section"><h4>Dias e Horários</h4><ul>${toList(supervisor.diasHorarios)}</ul></div>
             </div>
         `;
         return card;
     }
     
-    // As funções do modal também permanecem
+    // --- PONTO PRINCIPAL DA VERIFICAÇÃO ---
+    console.log("Verificando se o modal de edição existe:", modal); // LOG 1
     if(modal) {
         const form = document.getElementById('edit-profile-form');
         const photoEditSection = document.querySelector('.photo-edit-section');
@@ -96,7 +75,6 @@
         function openEditModal(supervisorUid) {
             const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid);
             if (!supervisorData) return;
-
             form.elements['editing-uid'].value = supervisorData.uid;
             document.getElementById('edit-fotoUrl').value = supervisorData.fotoUrl || '';
             const pathPrefix = window.location.pathname.includes('/pages/') ? '../' : './';
@@ -110,22 +88,18 @@
             form.elements['edit-atuacao'].value = Array.isArray(supervisorData.atuacao) ? supervisorData.atuacao.join('\n') : supervisorData.atuacao || '';
             form.elements['edit-supervisaoInfo'].value = Array.isArray(supervisorData.supervisaoInfo) ? supervisorData.supervisaoInfo.join('\n') : supervisorData.supervisaoInfo || '';
             form.elements['edit-diasHorarios'].value = Array.isArray(supervisorData.diasHorarios) ? supervisorData.diasHorarios.join('\n') : supervisorData.diasHorarios || '';
-            if (photoEditSection) {
-                photoEditSection.style.display = isAdmin ? 'block' : 'none';
-            }
+            if (photoEditSection) { photoEditSection.style.display = isAdmin ? 'block' : 'none'; }
             modal.style.display = 'flex';
         }
 
-        function closeEditModal() {
-            modal.style.display = 'none';
-            form.reset();
-        }
+        function closeEditModal() { modal.style.display = 'none'; form.reset(); }
 
         async function saveProfileChanges(e) {
             e.preventDefault();
             const uid = form.elements['editing-uid'].value;
             if (!uid) return;
-
+            
+            // Objeto de dados agora está completo
             const dataToUpdate = {
                 fotoUrl: document.getElementById('edit-fotoUrl').value.trim(),
                 abordagem: form.elements['edit-abordagem'].value.trim(),
@@ -142,8 +116,7 @@
             try {
                 await db.collection('usuarios').doc(uid).update(dataToUpdate);
                 closeEditModal();
-                // Chama a função principal de carregamento novamente para atualizar a tela
-                auth.onAuthStateChanged(user => { if(user) loadProfiles(user) });
+                loadProfiles(auth.currentUser); // Correção da chamada de recarregamento
             } catch (error) {
                 console.error("Erro ao salvar alterações:", error);
                 alert("Não foi possível salvar as alterações.");
@@ -155,6 +128,7 @@
         document.getElementById('save-profile-btn').addEventListener('click', saveProfileChanges);
         
         gridContainer.addEventListener('click', (e) => {
+            console.log("Clique detectado no container dos cards."); // LOG 2
             if (e.target && e.target.closest('.edit-supervisor-btn')) {
                 const button = e.target.closest('.edit-supervisor-btn');
                 const uid = button.dataset.uid;
@@ -163,59 +137,45 @@
         });
     }
 
-    // Função de carregamento agora recebe o 'user' como parâmetro
     async function loadProfiles(user) {
         if (!gridContainer) return;
-        
         try {
             const forceAll = window.PROFILE_VIEW_MODE === 'all';
             window.PROFILE_VIEW_MODE = null;
-
             const userDoc = await db.collection('usuarios').doc(user.uid).get();
             if (!userDoc.exists) throw new Error("Usuário logado não encontrado.");
-            
             const userData = userDoc.data();
             const funcoes = userData.funcoes || [];
             isAdmin = funcoes.includes('admin');
             const podeEditar = funcoes.includes('admin') || funcoes.includes('supervisor');
-
             let query;
             if (forceAll || isAdmin) {
                 query = db.collection('usuarios').where('funcoes', 'array-contains', 'supervisor').where('inativo', '==', false).orderBy('nome');
             } else {
                 query = db.collection('usuarios').where(firebase.firestore.FieldPath.documentId(), '==', user.uid);
             }
-
             const snapshot = await query.get();
             fetchedSupervisors = []; 
-
             if (snapshot.empty) {
                 gridContainer.innerHTML = '<p>Nenhum perfil de supervisor foi encontrado.</p>';
                 return;
             }
-
             snapshot.forEach(doc => fetchedSupervisors.push({ uid: doc.id, ...doc.data() }));
-
             gridContainer.innerHTML = ''; 
             fetchedSupervisors.forEach(supervisor => {
                 const cardElement = createSupervisorCard(supervisor, podeEditar);
                 gridContainer.appendChild(cardElement);
             });
-
         } catch (error) {
             console.error("Erro ao carregar perfis:", error);
             gridContainer.innerHTML = '<p style="color:red;">Ocorreu um erro ao carregar os perfis.</p>';
         }
     }
 
-    // --- PONTO PRINCIPAL DA CORREÇÃO ---
-    // Em vez de chamar loadProfiles() diretamente, esperamos o Firebase confirmar o status do login.
     auth.onAuthStateChanged(user => {
         if (user) {
-            // Se o usuário estiver logado, AGORA SIM chamamos a função para carregar os perfis.
             loadProfiles(user);
         } else {
-            // Se o usuário não estiver logado, exibimos uma mensagem clara.
             if(gridContainer) {
                 gridContainer.innerHTML = '<p style="color:red; text-align:center;">Autenticação necessária. Por favor, retorne e faça login.</p>';
             }

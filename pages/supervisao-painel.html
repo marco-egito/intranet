@@ -6,8 +6,10 @@
     <title>Painel de Supervisão - EuPsico</title>
     <link rel="stylesheet" href="../assets/css/painel-style.css">
     <link rel="stylesheet" href="../assets/css/admin-painel-style.css">
+    <link rel="stylesheet" href="../assets/css/supervisores.css">
 </head>
-<body>
+
+<body id="intranet-supervisao-page">
     <div class="admin-panel-container">
         <div id="card-grid-area">
             <div class="view-header-band">
@@ -17,12 +19,25 @@
             <div id="supervisao-modules-grid" class="modules-grid">
                 </div>
         </div>
-        <div id="view-content-area"></div>
+        <div id="view-content-area" style="display: none;">
+            </div>
     </div>
+
+    <div id="details-profile-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Perfil Profissional</h2>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <div id="details-modal-body" class="modal-body">
+                </div>
+        </div>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="../assets/js/supervisao-painel-script.js"></script>
 </body>
 </html>

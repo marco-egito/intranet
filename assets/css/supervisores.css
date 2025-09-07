@@ -1,9 +1,9 @@
-/* assets/css/supervisores.css (NOVA VERSÃO COMPLETA) */
+/* assets/css/supervisores.css (Versão com Card Interativo) */
 
 /* --- ESTRUTURA PRINCIPAL E GRADE --- */
 #supervisor-grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(650px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); /* Colunas mais estreitas para o modo recolhido */
     gap: 30px;
     margin-top: 20px;
 }
@@ -14,213 +14,91 @@
     box-shadow: 0 6px 20px rgba(0,0,0,0.1); 
     display: flex; 
     overflow: hidden; 
-    min-height: 700px;
     font-family: Arial, sans-serif;
     border: 1px solid #eee;
+    transition: all 0.4s ease-in-out; /* Efeito de transição suave */
+    cursor: pointer; /* Muda o cursor para indicar que é clicável */
 }
 
-/* --- COLUNA DA ESQUERDA (AZUL) --- */
+/* Quando o card está expandido, ele ocupa mais espaço */
+.supervisor-card.is-expanded {
+    grid-column: span 2; /* Faz o card ocupar 2 colunas na grade */
+    max-width: 700px;
+}
+@media (max-width: 700px) {
+    .supervisor-card.is-expanded {
+        grid-column: span 1; /* Em telas pequenas, ocupa apenas 1 coluna */
+    }
+}
+
+
+/* --- COLUNA DA ESQUERDA (AZUL) - VISÃO RESUMIDA --- */
 .supervisor-card-left { 
-    background-color: #04396d; /* Azul escuro principal */
+    background-color: #04396d;
     color: white; 
     padding: 25px; 
-    width: 280px; 
+    width: 100%; /* Ocupa 100% da largura no modo recolhido */
+    min-width: 300px; /* Garante uma largura mínima */
     display: flex; 
     flex-direction: column; 
     flex-shrink: 0;
     text-align: center;
+    box-sizing: border-box;
 }
 
 .photo-container {
-    width: 150px;
-    height: 150px;
-    margin: 0 auto 20px auto;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 4px solid #40b0df; /* Borda azul clara */
+    width: 150px; height: 150px; margin: 0 auto 20px auto;
+    border-radius: 50%; overflow: hidden; border: 4px solid #40b0df;
 }
+.supervisor-photo { width: 100%; height: 100%; object-fit: cover; }
 
-.supervisor-photo {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.supervisor-identity h2 {
-    font-size: 1.6rem;
-    margin: 0 0 10px 0; 
-    text-transform: uppercase;
-    font-weight: bold;
-    line-height: 1.2;
-}
+.supervisor-identity h2 { font-size: 1.6rem; margin: 0 0 10px 0; text-transform: uppercase; font-weight: bold; line-height: 1.2; }
 
 .title-box {
-    background-color: #40b0df; /* Azul claro para o box */
-    color: white;
-    padding: 8px 15px;
-    border-radius: 5px;
-    font-size: 1rem;
-    font-weight: bold;
-    display: inline-block;
-    margin-bottom: 25px;
-    letter-spacing: 1px;
+    background-color: #40b0df; color: white; padding: 8px 15px; border-radius: 5px;
+    font-size: 1rem; font-weight: bold; display: inline-block; margin-bottom: 25px; letter-spacing: 1px;
 }
 
-.supervisor-contact {
-    margin-top: auto;
-    font-size: 0.9rem;
-    line-height: 1.5;
-}
-
-.supervisor-contact p {
-    margin: 5px 0;
-}
-
-.logo-container {
-    margin-top: 25px;
-    text-align: center;
-}
-
-.logo-container img {
-    width: 100px;
-}
+.supervisor-contact { margin-top: auto; font-size: 0.9rem; line-height: 1.5; }
+.supervisor-contact p { margin: 5px 0; }
+.logo-container { margin-top: 25px; text-align: center; }
+.logo-container img { width: 100px; }
 
 
-/* --- COLUNA DA DIREITA (BRANCA) --- */
+/* --- COLUNA DA DIREITA (BRANCA) - VISÃO COMPLETA --- */
 .supervisor-card-right { 
     padding: 25px; 
     flex-grow: 1; 
     position: relative; 
     background-color: #fff;
+    width: 400px; /* Largura fixa para a parte de detalhes */
+    display: none; /* COMEÇA ESCONDIDO POR PADRÃO */
 }
 
-.profile-header {
-    background-color: #f0f0f0;
-    text-align: right;
-    padding: 5px 15px;
-    margin-bottom: 25px;
+/* LÓGICA DE EXIBIÇÃO: Mostra a parte da direita quando o card tem a classe 'is-expanded' */
+.supervisor-card.is-expanded .supervisor-card-right {
+    display: block;
 }
 
-.profile-header h3 {
-    color: #04396d;
-    font-size: 1.1rem;
-    font-weight: bold;
-    letter-spacing: 2px;
-    margin: 0;
-    display: inline-block;
-    position: relative;
-    padding-right: 25px;
+/* Ajusta a largura da parte azul quando o card está expandido */
+.supervisor-card.is-expanded .supervisor-card-left {
+    width: 280px;
 }
 
-.profile-header h3::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 15px;
-    height: 15px;
-    background-color: #f7d000; /* Detalhe amarelo */
-}
 
-.profile-section {
-    margin-bottom: 20px;
-}
-
-.profile-section h4 {
-    font-size: 1rem;
-    text-transform: uppercase; 
-    color: #04396d; 
-    border-bottom: 2px solid #40b0df; 
-    padding-bottom: 8px; 
-    margin: 0 0 10px 0;
-    font-weight: bold;
-}
-
-.profile-section ul { 
-    list-style: none; 
-    padding-left: 0; 
-    font-size: 0.95rem;
-    line-height: 1.7;
-    color: #333;
-}
-
-.profile-section ul li {
-    padding-left: 20px;
-    position: relative;
-}
-
-.profile-section ul li::before { 
-    content: '•'; 
-    color: #40b0df; 
-    font-weight: bold; 
-    position: absolute;
-    left: 0;
-    top: 0;
-}
+.profile-header { background-color: #f0f0f0; text-align: right; padding: 5px 15px; margin-bottom: 25px; }
+.profile-header h3 { color: #04396d; font-size: 1.1rem; font-weight: bold; letter-spacing: 2px; margin: 0; display: inline-block; position: relative; padding-right: 25px; }
+.profile-header h3::after { content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; background-color: #f7d000; }
+.profile-section { margin-bottom: 20px; }
+.profile-section h4 { font-size: 1rem; text-transform: uppercase; color: #04396d; border-bottom: 2px solid #40b0df; padding-bottom: 8px; margin: 0 0 10px 0; font-weight: bold; }
+.profile-section ul { list-style: none; padding-left: 0; font-size: 0.95rem; line-height: 1.7; color: #333; }
+.profile-section ul li { padding-left: 20px; position: relative; }
+.profile-section ul li::before { content: '•'; color: #40b0df; font-weight: bold; position: absolute; left: 0; top: 0; }
 
 /* --- BOTÃO DE EDITAR --- */
 .edit-supervisor-btn {
-    position: absolute; 
-    top: 15px; 
-    right: 15px;
-    background-color: #f7d000; /* Amarelo */
-    color: #04396d;
-    border: none;
-    padding: 8px 12px;
-    font-size: 0.85em;
-    font-weight: bold;
-    border-radius: 5px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: background-color 0.3s;
+    position: absolute; top: 15px; right: 15px; background-color: #f7d000; color: #04396d;
+    border: none; padding: 8px 12px; font-size: 0.85em; font-weight: bold; border-radius: 5px;
+    cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background-color 0.3s;
 }
-
-.edit-supervisor-btn:hover {
-    background-color: #e0be00;
-}
-
-/* --- GERAL E RESPONSIVIDADE --- */
-.loading-spinner { 
-    border: 5px solid #f3f3f3; 
-    border-top: 5px solid #04396d; 
-    border-radius: 50%; 
-    width: 40px; 
-    height: 40px; 
-    animation: spin 1s linear infinite; 
-    margin: 50px auto; 
-}
-
-@keyframes spin { 
-    0% { transform: rotate(0deg); } 
-    100% { transform: rotate(360deg); } 
-}
-
-@media (max-width: 700px) {
-    #supervisor-grid-container {
-        grid-template-columns: 1fr;
-        min-width: 100%;
-    }
-    .supervisor-card {
-        flex-direction: column;
-        min-height: auto;
-    }
-    .supervisor-card-left {
-        width: 100%;
-        box-sizing: border-box;
-    }
-}
-
-/* --- ESTILOS DO MODAL DE EDIÇÃO (sem alterações significativas) --- */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background-color: #fff; border-radius: 8px; width: 90%; max-width: 700px; max-height: 90vh; display: flex; flex-direction: column; }
-.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; background-color: #0d2d4e; color: white; border-radius: 8px 8px 0 0; }
-.modal-header h2 { margin: 0; font-size: 1.2em; }
-.close-modal-btn { background: none; border: none; color: white; font-size: 2em; cursor: pointer; }
-.modal-body { padding: 25px; overflow-y: auto; }
-.modal-body .form-group { margin-bottom: 15px; }
-.modal-body label { font-weight: bold; display: block; margin-bottom: 5px; }
-.modal-body input, .modal-body textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box; }
-.modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 15px 25px; background-color: #f1f1f1; border-top: 1px solid #ddd; border-radius: 0 0 8px 8px; }
+.edit-supervisor-btn:hover { background-color: #e0be00; }

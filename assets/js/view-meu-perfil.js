@@ -1,19 +1,19 @@
 (function() {
-    if (!window.firebase || !firebase.apps.length) { return; }
+    if (!window.firebase || !firebase.apps.length) { 
+        console.error("Firebase não está inicializado.");
+        return; 
+    }
     const auth = firebase.auth();
     const db = firebase.firestore();
     const gridContainer = document.getElementById('supervisor-grid-container');
     const editModal = document.getElementById('edit-profile-modal');
-    
-    // Referência para o novo modal de detalhes
     const detailsModal = document.getElementById('details-profile-modal');
 
-    let fetchedSupervisors = []; 
-    let isAdmin = false; 
+    let fetchedSupervisors = [];
+    let isAdmin = false;
 
-    // ---- LÓGICA DE CONTROLE DOS MODAIS ----
+    // --- FUNÇÕES DE CONTROLE DOS MODAIS ---
 
-    // Abre o novo modal de detalhes e preenche com as informações
     function openDetailsModal(supervisorUid) {
         if (!detailsModal) return;
         const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid);
@@ -25,7 +25,6 @@
             const items = Array.isArray(data) ? data : [data];
             return `<ul>${items.map(item => `<li>${item}</li>`).join('')}</ul>`;
         };
-
         detailsBody.innerHTML = `
             <div class="profile-section"><h4>Formação</h4>${toList(supervisorData.formacao)}</div>
             <div class="profile-section"><h4>Especialização</h4>${toList(supervisorData.especializacao)}</div>
@@ -36,38 +35,35 @@
         detailsModal.style.display = 'flex';
     }
 
-    // Fecha o modal de detalhes
     if (detailsModal) {
         detailsModal.querySelector('.close-modal-btn').addEventListener('click', () => {
             detailsModal.style.display = 'none';
         });
     }
 
-    // ---- LÓGICA PRINCIPAL ----
-
-    // Gerencia todos os cliques no container dos cards
+    // --- LÓGICA UNIFICADA DE CLIQUES ---
     gridContainer.addEventListener('click', (e) => {
         const editButton = e.target.closest('.edit-supervisor-btn');
         const card = e.target.closest('.supervisor-card');
 
-        if (editButton) { // Se o clique foi no botão editar
+        if (editButton) {
+            // Se o clique foi no botão editar, abre o modal de edição
             e.stopPropagation();
             const uid = editButton.dataset.uid;
             openEditModal(uid);
-        } else if (card && window.PROFILE_VIEW_MODE === 'all') { // Se foi no card E estamos na vitrine
+        } else if (card && window.PROFILE_VIEW_MODE === 'all') {
+            // Se foi no card E estamos na vitrine pública, abre o modal de detalhes
              const uid = card.dataset.uid;
              openDetailsModal(uid);
         }
+        // Se o clique foi no card no painel do supervisor/admin, não faz nada.
     });
-
 
     function createSupervisorCard(supervisor, podeEditar) {
         const card = document.createElement('div');
-        // Adiciona 'is-expanded' por padrão se NÃO estivermos na vitrine pública
-        card.className = window.PROFILE_VIEW_MODE === 'all' ? 'supervisor-card' : 'supervisor-card is-expanded';
-        card.dataset.uid = supervisor.uid; // Adiciona o UID ao card para referência
+        card.className = 'supervisor-card';
+        card.dataset.uid = supervisor.uid;
 
-        // ... (resto da função é igual)
         const toList = (data) => {
             if (!data) return '<li>Não informado</li>';
             const items = Array.isArray(data) ? data : [data];
@@ -148,7 +144,6 @@
             const podeEditar = isAdmin || (userData.funcoes || []).includes('supervisor');
             
             let query;
-            // ---- LÓGICA DE VISUALIZAÇÃO ATUALIZADA ----
             if (window.PROFILE_VIEW_MODE === 'all' || isAdmin) {
                 // Se for a vitrine OU se o usuário for admin, busca todos.
                 query = db.collection('usuarios').where('funcoes', 'array-contains', 'supervisor').where('inativo', '==', false).orderBy('nome');
@@ -165,7 +160,7 @@
                 const cardElement = createSupervisorCard(supervisor, podeEditar);
                 gridContainer.appendChild(cardElement);
             });
-        } catch (error) { console.error("Erro:", error); gridContainer.innerHTML = '<p style="color:red;">Erro ao carregar perfis.</p>'; }
+        } catch (error) { console.error("Erro ao carregar perfis:", error); gridContainer.innerHTML = '<p style="color:red;">Ocorreu um erro ao carregar perfis.</p>'; }
     }
 
     auth.onAuthStateChanged(user => {

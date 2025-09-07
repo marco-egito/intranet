@@ -6,66 +6,162 @@
     margin-top: 20px;
 }
 
+/* --- ESTILO BASE DO CARD --- */
 .supervisor-card { 
     background-color: #04396d;
     border-radius: 10px; 
     box-shadow: 0 6px 20px rgba(0,0,0,0.1); 
     display: flex;
     font-family: Arial, sans-serif;
+}
+
+/* Na vitrine pública, o card é clicável */
+#intranet-supervisao-page .supervisor-card,
+body:not(#supervisor-panel-page) .supervisor-card {
     cursor: pointer;
 }
 
-/* --- COLUNA DA ESQUERDA (AZUL) - VISÃO RESUMIDA --- */
-.supervisor-card-left { 
-    color: white; padding: 25px; width: 100%; display: flex; 
-    flex-direction: column; text-align: center; box-sizing: border-box;
-}
-.photo-container { width: 150px; height: 150px; margin: 0 auto 20px auto; border-radius: 50%; overflow: hidden; border: 4px solid #40b0df; }
-.supervisor-photo { width: 100%; height: 100%; object-fit: cover; }
-.supervisor-identity h2 { font-size: 1.6rem; margin: 0 0 10px 0; text-transform: uppercase; font-weight: bold; line-height: 1.2; }
-.title-box { background-color: #40b0df; color: white; padding: 8px 15px; border-radius: 5px; font-size: 1rem; font-weight: bold; display: inline-block; margin-bottom: 25px; letter-spacing: 1px; }
-.supervisor-contact { margin-top: auto; font-size: 0.9rem; line-height: 1.5; }
-.supervisor-contact p { margin: 5px 0; }
-.logo-container { margin-top: 25px; text-align: center; }
-.logo-container img { width: 100px; }
 
-/* --- COLUNA DA DIREITA (BRANCA) - VISÃO COMPLETA --- */
+/* --- COLUNA DA ESQUERDA (AZUL) --- */
+.supervisor-card-left { 
+    color: white; 
+    padding: 25px; 
+    width: 100%; 
+    display: flex; 
+    flex-direction: column; 
+    text-align: center; 
+    box-sizing: border-box;
+}
+
+.photo-container { 
+    width: 150px; 
+    height: 150px; 
+    margin: 0 auto 20px auto; 
+    border-radius: 50%; 
+    overflow: hidden; 
+    border: 4px solid #40b0df; 
+}
+.supervisor-photo { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+}
+.supervisor-identity h2 { 
+    font-size: 1.6rem; 
+    margin: 0 0 10px 0; 
+    text-transform: uppercase; 
+    font-weight: bold; 
+    line-height: 1.2; 
+}
+.title-box { 
+    background-color: #40b0df; 
+    color: white; 
+    padding: 8px 15px; 
+    border-radius: 5px; 
+    font-size: 1rem; 
+    font-weight: bold; 
+    display: inline-block; 
+    margin-bottom: 25px; 
+    letter-spacing: 1px; 
+}
+.supervisor-contact { 
+    margin-top: auto; 
+    font-size: 0.9rem; 
+    line-height: 1.5; 
+}
+.supervisor-contact p { 
+    margin: 5px 0; 
+}
+.logo-container { 
+    margin-top: 25px; 
+    text-align: center; 
+}
+.logo-container img { 
+    width: 100px; 
+}
+
+/* --- COLUNA DA DIREITA (BRANCA) --- */
 .supervisor-card-right { 
+    display: none; /* Por padrão (na vitrine), a parte de detalhes é oculta */
+}
+
+
+/* --- COMPORTAMENTO NO PAINEL DO ADMIN/SUPERVISOR --- */
+/* Usando o ID que adicionamos ao body do painel restrito */
+#supervisor-panel-page #supervisor-grid-container {
+    /* Layout de grade para os cards completos e largos */
+    grid-template-columns: repeat(auto-fill, minmax(650px, 1fr));
+}
+#supervisor-panel-page .supervisor-card-right {
+    display: block; /* Mostra a parte de detalhes nesta página */
     background-color: #fff;
     padding: 25px; 
     flex-grow: 1; 
     position: relative; 
     width: 400px;
-    display: none; /* Fica escondida por padrão */
 }
-
-/* Exibe a parte direita quando o card está expandido (no painel do supervisor) */
-.supervisor-card.is-expanded {
-    cursor: default; /* Remove a mãozinha no painel do supervisor */
-}
-.supervisor-card.is-expanded .supervisor-card-right {
-    display: block;
-}
-.supervisor-card.is-expanded .supervisor-card-left {
-    width: 280px;
+#supervisor-panel-page .supervisor-card-left {
+    width: 280px; /* Largura fixa para a parte azul quando o card está completo */
     flex-shrink: 0;
 }
 
+
 /* --- BOTÃO DE EDITAR --- */
 .edit-supervisor-btn {
-    position: absolute; top: 15px; right: 15px; background-color: #f7d000; color: #04396d;
-    border: none; padding: 8px 12px; font-size: 0.85em; font-weight: bold; border-radius: 5px;
-    cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background-color 0.3s;
+    position: absolute; 
+    top: 15px; 
+    right: 15px; 
+    background-color: #f7d000; 
+    color: #04396d;
+    border: none; 
+    padding: 8px 12px; 
+    font-size: 0.85em; 
+    font-weight: bold; 
+    border-radius: 5px;
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    gap: 8px;
 }
 
-/* --- SEÇÕES DO PERFIL (usado no card e no modal de detalhes) --- */
-.profile-header { background-color: #f0f0f0; text-align: right; padding: 5px 15px; margin-bottom: 25px; }
-.profile-header h3 { color: #04396d; font-size: 1.1rem; font-weight: bold; letter-spacing: 2px; margin: 0; display: inline-block; }
-.profile-section { margin-bottom: 20px; }
-.profile-section h4 { font-size: 1rem; text-transform: uppercase; color: #04396d; border-bottom: 2px solid #40b0df; padding-bottom: 8px; margin: 0 0 10px 0; font-weight: bold; }
-.profile-section ul { list-style: none; padding-left: 0; font-size: 0.95rem; line-height: 1.7; color: #333; }
-.profile-section ul li { padding-left: 20px; position: relative; }
-.profile-section ul li::before { content: '•'; color: #40b0df; font-weight: bold; position: absolute; left: 0; top: 0; }
+
+/* --- SEÇÕES DO PERFIL (usado no card e no modal) --- */
+.profile-header h3 { 
+    color: #04396d; 
+    font-size: 1.1rem; 
+    font-weight: bold; 
+}
+.profile-section { 
+    margin-bottom: 20px; 
+}
+.profile-section h4 { 
+    font-size: 1rem; 
+    text-transform: uppercase; 
+    color: #04396d; 
+    border-bottom: 2px solid #40b0df; 
+    padding-bottom: 8px; 
+    margin: 0 0 10px 0; 
+    font-weight: bold; 
+}
+.profile-section ul { 
+    list-style: none; 
+    padding-left: 0; 
+    font-size: 0.95rem; 
+    line-height: 1.7; 
+    color: #333; 
+}
+.profile-section ul li { 
+    padding-left: 20px; 
+    position: relative; 
+}
+.profile-section ul li::before { 
+    content: '•'; 
+    color: #40b0df; 
+    font-weight: bold; 
+    position: absolute; 
+    left: 0; 
+    top: 0; 
+}
 
 
 /* --- ESTILOS GERAIS PARA TODOS OS MODAIS (EDIÇÃO E DETALHES) --- */
@@ -102,21 +198,46 @@
     color: white;
     border-radius: 8px 8px 0 0;
 }
-.modal-header h2 { margin: 0; font-size: 1.2em; }
-.close-modal-btn { background: none; border: none; color: white; font-size: 2em; cursor: pointer; line-height: 1; padding: 0; }
+.modal-header h2 { 
+    margin: 0; 
+    font-size: 1.2em; 
+}
+.close-modal-btn { 
+    background: none; 
+    border: none; 
+    color: white; 
+    font-size: 2em; 
+    cursor: pointer; 
+}
 
-.modal-body {
-    padding: 25px;
-    overflow-y: auto;
+.modal-body { 
+    padding: 25px; 
+    overflow-y: auto; 
 }
 
 /* Estilos específicos para o formulário de edição dentro do modal */
-.modal-body .form-group { margin-bottom: 15px; }
-.modal-body label { font-weight: bold; display: block; margin-bottom: 5px; }
-.modal-body input, .modal-body textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; box-sizing: border-box; }
+.modal-body .form-group { 
+    margin-bottom: 15px; 
+}
+.modal-body label { 
+    font-weight: bold; 
+    display: block; 
+    margin-bottom: 5px; 
+}
+.modal-body input, 
+.modal-body textarea { 
+    width: 100%; 
+    padding: 10px; 
+    border: 1px solid #ccc; 
+    border-radius: 4px; 
+}
 
 .modal-footer {
-    display: flex; justify-content: flex-end; gap: 10px;
-    padding: 15px 25px; background-color: #f1f1f1;
-    border-top: 1px solid #ddd; border-radius: 0 0 8px 8px;
+    display: flex; 
+    justify-content: flex-end; 
+    gap: 10px;
+    padding: 15px 25px; 
+    background-color: #f1f1f1;
+    border-top: 1px solid #ddd; 
+    border-radius: 0 0 8px 8px;
 }

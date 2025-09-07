@@ -1,26 +1,15 @@
-/* --- ESTRUTURA PRINCIPAL E GRADE --- */
+/* (Este CSS é o mesmo da versão anterior, com a adição de regras de flexbox para o modal) */
 #supervisor-grid-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 30px;
     margin-top: 20px;
 }
-
-/* --- ESTILO BASE DO CARD --- */
 .supervisor-card { 
-    background-color: #04396d;
-    border-radius: 10px; 
-    box-shadow: 0 6px 20px rgba(0,0,0,0.1); 
-    display: flex;
-    font-family: Arial, sans-serif;
+    background-color: #04396d; border-radius: 10px; 
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1); display: flex; font-family: Arial, sans-serif;
 }
-
-/* MUDANÇA AQUI: O cursor de clique agora se aplica apenas na página da vitrine */
-#intranet-supervisao-page .supervisor-card {
-    cursor: pointer;
-}
-
-/* --- COLUNA DA ESQUERDA (AZUL) --- */
+#intranet-supervisao-page .supervisor-card { cursor: pointer; }
 .supervisor-card-left { 
     color: white; padding: 25px; width: 100%; display: flex; 
     flex-direction: column; text-align: center; box-sizing: border-box;
@@ -33,37 +22,20 @@
 .supervisor-contact p { margin: 5px 0; }
 .logo-container { margin-top: 25px; text-align: center; }
 .logo-container img { width: 100px; }
+.supervisor-card-right { display: none; }
 
-/* --- COLUNA DA DIREITA (BRANCA) --- */
-.supervisor-card-right { 
-    display: none; /* Por padrão (na vitrine), a parte de detalhes é oculta */
-}
-
-/* --- COMPORTAMENTO NO PAINEL DO ADMIN/SUPERVISOR --- */
-#supervisor-panel-page #supervisor-grid-container {
-    grid-template-columns: repeat(auto-fill, minmax(650px, 1fr));
-}
+#supervisor-panel-page #supervisor-grid-container { grid-template-columns: repeat(auto-fill, minmax(650px, 1fr)); }
 #supervisor-panel-page .supervisor-card-right {
-    display: block;
-    background-color: #fff;
-    padding: 25px; 
-    flex-grow: 1; 
-    position: relative; 
-    width: 400px;
+    display: block; background-color: #fff; padding: 25px; 
+    flex-grow: 1; position: relative; width: 400px;
 }
-#supervisor-panel-page .supervisor-card-left {
-    width: 280px;
-    flex-shrink: 0;
-}
+#supervisor-panel-page .supervisor-card-left { width: 280px; flex-shrink: 0; }
 
-/* --- BOTÃO DE EDITAR --- */
 .edit-supervisor-btn {
     position: absolute; top: 15px; right: 15px; background-color: #f7d000; color: #04396d;
     border: none; padding: 8px 12px; font-size: 0.85em; font-weight: bold; border-radius: 5px;
     cursor: pointer; display: flex; align-items: center; gap: 8px;
 }
-
-/* --- SEÇÕES DO PERFIL (usado no card e no modal) --- */
 .profile-header h3 { color: #04396d; font-size: 1.1rem; font-weight: bold; }
 .profile-section { margin-bottom: 20px; }
 .profile-section h4 { font-size: 1rem; text-transform: uppercase; color: #04396d; border-bottom: 2px solid #40b0df; padding-bottom: 8px; margin: 0 0 10px 0; font-weight: bold; }
@@ -71,30 +43,35 @@
 .profile-section ul li { padding-left: 20px; position: relative; }
 .profile-section ul li::before { content: '•'; color: #40b0df; font-weight: bold; position: absolute; left: 0; top: 0; }
 
-/* --- ESTILOS GERAIS PARA TODOS OS MODAIS --- */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 1000; 
+    background-color: rgba(0, 0, 0, 0.6); display: flex; 
+    align-items: center; justify-content: center; z-index: 1000; 
 }
 .modal-content {
     background-color: #fff; border-radius: 8px; width: 90%; max-width: 700px;
     max-height: 90vh; display: flex; flex-direction: column;
 }
 .modal-header {
-    display: flex; justify-content: space-between; align-items: center;
     padding: 15px 25px; background-color: #0d2d4e; color: white;
     border-radius: 8px 8px 0 0;
+    flex-shrink: 0; /* Impede que o cabeçalho encolha */
 }
 .modal-header h2 { margin: 0; font-size: 1.2em; }
 .close-modal-btn { background: none; border: none; color: white; font-size: 2em; cursor: pointer; }
-.modal-body { padding: 25px; overflow-y: auto; }
+
+/* ---- ALTERAÇÃO PARA A ROLAGEM ---- */
+.modal-body { 
+    padding: 25px; 
+    overflow-y: auto; /* Permite a rolagem vertical */
+    flex-grow: 1; /* Faz o corpo ocupar o espaço restante */
+}
+
+.modal-footer {
+    padding: 15px 25px; background-color: #f1f1f1;
+    border-top: 1px solid #ddd; border-radius: 0 0 8px 8px;
+    flex-shrink: 0; /* Impede que o rodapé encolha */
+}
 .modal-body .form-group { margin-bottom: 15px; }
 .modal-body label { font-weight: bold; display: block; margin-bottom: 5px; }
 .modal-body input, .modal-body textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-.modal-footer {
-    display: flex; justify-content: flex-end; gap: 10px;
-    padding: 15px 25px; background-color: #f1f1f1;
-    border-top: 1px solid #ddd; border-radius: 0 0 8px 8px;
-}

@@ -1,24 +1,24 @@
 (function() {
-    if (!window.firebase || !firebase.apps.length) { 
-        console.error("Firebase não está inicializado.");
-        return; 
-    }
+    if (!window.firebase || !firebase.apps.length) { return; }
     const auth = firebase.auth();
     const db = firebase.firestore();
     const gridContainer = document.getElementById('supervisor-grid-container');
     const editModal = document.getElementById('edit-profile-modal');
     const detailsModal = document.getElementById('details-profile-modal');
-
     let fetchedSupervisors = [];
     let isAdmin = false;
-
-    // --- FUNÇÕES DE CONTROLE DOS MODAIS ---
 
     function openDetailsModal(supervisorUid) {
         if (!detailsModal) return;
         const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid);
         if (!supervisorData) return;
         
+        // --- ALTERAÇÃO AQUI: Atualiza o título do modal ---
+        const modalTitle = detailsModal.querySelector('.modal-header h2');
+        if(modalTitle) {
+            modalTitle.textContent = `Perfil de ${supervisorData.nome}`;
+        }
+
         const detailsBody = document.getElementById('details-modal-body');
         const toList = (data) => {
             if (!data || data.length === 0) return '<ul><li>Não informado</li></ul>';
@@ -30,8 +30,7 @@
             <div class="profile-section"><h4>Especialização</h4>${toList(supervisorData.especializacao)}</div>
             <div class="profile-section"><h4>Áreas de Atuação</h4>${toList(supervisorData.atuacao)}</div>
             <div class="profile-section"><h4>Informações de Supervisão</h4>${toList(supervisorData.supervisaoInfo)}</div>
-            <div class="profile-section"><h4>Dias e Horários</h4>${toList(supervisorData.diasHorarios)}</div>
-        `;
+            <div class="profile-section"><h4>Dias e Horários</h4>${toList(supervisorData.diasHorarios)}</div>`;
         detailsModal.style.display = 'flex';
     }
 
@@ -41,29 +40,22 @@
         });
     }
 
-    // --- LÓGICA UNIFICADA DE CLIQUES ---
     gridContainer.addEventListener('click', (e) => {
         const editButton = e.target.closest('.edit-supervisor-btn');
         const card = e.target.closest('.supervisor-card');
-
         if (editButton) {
-            // Se o clique foi no botão editar, abre o modal de edição
             e.stopPropagation();
             const uid = editButton.dataset.uid;
             openEditModal(uid);
         } else if (card && window.PROFILE_VIEW_MODE === 'all') {
-            // Se foi no card E estamos na vitrine pública, abre o modal de detalhes
              const uid = card.dataset.uid;
              openDetailsModal(uid);
         }
-        // Se o clique foi no card no painel do supervisor/admin, não faz nada.
     });
 
     function createSupervisorCard(supervisor, podeEditar) {
         const card = document.createElement('div');
-        card.className = 'supervisor-card';
-        card.dataset.uid = supervisor.uid;
-
+        card.className = 'supervisor-card'; card.dataset.uid = supervisor.uid;
         const toList = (data) => {
             if (!data) return '<li>Não informado</li>';
             const items = Array.isArray(data) ? data : [data];
@@ -95,9 +87,9 @@
         return card;
     }
     
-    // Lógica do modal de EDIÇÃO
     if(editModal) {
         const form = document.getElementById('edit-profile-form');
+        form.addEventListener('submit', saveProfileChanges); // Adiciona o listener para o submit do formulário
         function openEditModal(supervisorUid) {
             const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid); if (!supervisorData) return;
             form.elements['editing-uid'].value = supervisorData.uid; form.elements['edit-titulo'].value = supervisorData.titulo || '';
@@ -133,7 +125,6 @@
         }
         editModal.querySelector('.close-modal-btn').addEventListener('click', closeEditModal);
         document.getElementById('cancel-edit-btn').addEventListener('click', closeEditModal);
-        document.getElementById('save-profile-btn').addEventListener('click', saveProfileChanges);
     }
 
     async function loadProfiles(user) {
@@ -142,16 +133,12 @@
             const userDoc = await db.collection('usuarios').doc(user.uid).get(); if (!userDoc.exists) throw new Error("Usuário não encontrado.");
             const userData = userDoc.data(); isAdmin = (userData.funcoes || []).includes('admin');
             const podeEditar = isAdmin || (userData.funcoes || []).includes('supervisor');
-            
             let query;
             if (window.PROFILE_VIEW_MODE === 'all' || isAdmin) {
-                // Se for a vitrine OU se o usuário for admin, busca todos.
                 query = db.collection('usuarios').where('funcoes', 'array-contains', 'supervisor').where('inativo', '==', false).orderBy('nome');
             } else {
-                // Senão (supervisor no painel dele), busca apenas o próprio perfil.
                 query = db.collection('usuarios').where(firebase.firestore.FieldPath.documentId(), '==', user.uid);
             }
-
             const snapshot = await query.get(); fetchedSupervisors = [];
             if (snapshot.empty) { gridContainer.innerHTML = '<p>Nenhum supervisor encontrado.</p>'; return; }
             snapshot.forEach(doc => fetchedSupervisors.push({ uid: doc.id, ...doc.data() }));

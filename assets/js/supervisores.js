@@ -105,8 +105,14 @@ document.addEventListener('DOMContentLoaded', function() {
         supervisorCardsGrid.innerHTML = '';
         // --- MUDANÇA 2: Adicionado o novo módulo "Meus Agendamentos" ---
         const modules = {
-            meu_perfil: { titulo: 'Meu Perfil e Edição', descricao: 'Visualize e edite suas informações de perfil.' },
-            meus_supervisionados: { titulo: 'Meus Supervisionados', descricao: 'Visualize os acompanhamentos que você supervisiona.' },
+            meu_perfil: {
+                titulo: 'Meu Perfil e Edição', 
+                descricao: 'Visualize e edite suas informações de perfil.' 
+            },
+            meus_supervisionados: { 
+                titulo: 'Meus Supervisionados', 
+                descricao: 'Visualize os acompanhamentos que você supervisiona.' 
+            },
             meus_agendamentos: { titulo: 'Meus Agendamentos', descricao: 'Visualize os profissionais que agendaram supervisão com você.' }
         };
         for (const key in modules) {

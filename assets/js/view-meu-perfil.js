@@ -12,13 +12,10 @@
         if (!detailsModal) return;
         const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid);
         if (!supervisorData) return;
-        
-        // --- ALTERAÇÃO AQUI: Atualiza o título do modal ---
         const modalTitle = detailsModal.querySelector('.modal-header h2');
         if(modalTitle) {
             modalTitle.textContent = `Perfil de ${supervisorData.nome}`;
         }
-
         const detailsBody = document.getElementById('details-modal-body');
         const toList = (data) => {
             if (!data || data.length === 0) return '<ul><li>Não informado</li></ul>';
@@ -63,7 +60,7 @@
         };
         const pathPrefix = window.location.pathname.includes('/pages/') ? '../' : './';
         const photoPath = supervisor.fotoUrl ? pathPrefix + supervisor.fotoUrl : pathPrefix + 'assets/img/default-user.png';
-        const editButtonHtml = podeEditar ? `<button class="edit-supervisor-btn" data-uid="${supervisor.uid}">Editar <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button>` : '';
+        const editButtonHtml = podeEditar ? `<button class="edit-supervisor-btn" data-uid="${supervisor.uid}">Editar <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button>` : '';
         const crpHtml = supervisor.crp ? `<p><strong>CRP:</strong> ${supervisor.crp}</p>` : '';
         const titleText = supervisor.titulo ? supervisor.titulo.toUpperCase() : 'SUPERVISOR(A)';
         card.innerHTML = `
@@ -87,9 +84,41 @@
         return card;
     }
     
+    // --- INÍCIO DAS ALTERAÇÕES NO MODAL DE EDIÇÃO ---
     if(editModal) {
         const form = document.getElementById('edit-profile-form');
-        form.addEventListener('submit', saveProfileChanges); // Adiciona o listener para o submit do formulário
+        const horariosContainer = document.getElementById('horarios-editor-container');
+        const addHorarioBtn = document.getElementById('add-horario-btn');
+
+        const diasDaSemana = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"];
+
+        // Função que cria a linha de HTML para um horário
+        const createHorarioRow = (horario = {}) => {
+            const row = document.createElement('div');
+            row.className = 'horario-row';
+            const diaOptions = diasDaSemana.map(dia => `<option value="${dia}" ${horario.dia === dia ? 'selected' : ''}>${dia}</option>`).join('');
+            row.innerHTML = `
+                <div class="form-group"><label>Dia</label><select name="horario_dia">${diaOptions}</select></div>
+                <div class="form-group"><label>Início</label><input type="time" name="horario_inicio" value="${horario.inicio || '19:00'}"></div>
+                <div class="form-group"><label>Fim</label><input type="time" name="horario_fim" value="${horario.fim || '20:00'}"></div>
+                <button type="button" class="remove-horario-btn">X</button>`;
+            return row;
+        };
+
+        // Adiciona uma nova linha de horário ao clicar no botão
+        addHorarioBtn.addEventListener('click', () => {
+            horariosContainer.appendChild(createHorarioRow());
+        });
+
+        // Remove a linha de horário ao clicar no botão "X"
+        horariosContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-horario-btn')) {
+                e.target.closest('.horario-row').remove();
+            }
+        });
+        
+        form.addEventListener('submit', saveProfileChanges);
+
         function openEditModal(supervisorUid) {
             const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid); if (!supervisorData) return;
             form.elements['editing-uid'].value = supervisorData.uid; form.elements['edit-titulo'].value = supervisorData.titulo || '';
@@ -102,21 +131,44 @@
             form.elements['edit-especializacao'].value = Array.isArray(supervisorData.especializacao) ? supervisorData.especializacao.join('\n') : '';
             form.elements['edit-atuacao'].value = Array.isArray(supervisorData.atuacao) ? supervisorData.atuacao.join('\n') : '';
             form.elements['edit-supervisaoInfo'].value = Array.isArray(supervisorData.supervisaoInfo) ? supervisorData.supervisaoInfo.join('\n') : '';
-            form.elements['edit-diasHorarios'].value = Array.isArray(supervisorData.diasHorarios) ? supervisorData.diasHorarios.join('\n') : '';
+            
+            // Renderiza o editor de horários com os dados existentes
+            horariosContainer.innerHTML = ''; // Limpa o container
+            if (supervisorData.diasHorarios && Array.isArray(supervisorData.diasHorarios)) {
+                supervisorData.diasHorarios.forEach(horario => {
+                    horariosContainer.appendChild(createHorarioRow(horario));
+                });
+            }
+            
             editModal.style.display = 'flex';
         }
+
         function closeEditModal() { editModal.style.display = 'none'; form.reset(); }
+
         async function saveProfileChanges(e) {
             e.preventDefault(); const uid = form.elements['editing-uid'].value; if (!uid) return;
+            
+            // Coleta os dados dos horários do novo editor dinâmico
+            const novosHorarios = [];
+            const horarioRows = horariosContainer.querySelectorAll('.horario-row');
+            horarioRows.forEach(row => {
+                const dia = row.querySelector('[name="horario_dia"]').value;
+                const inicio = row.querySelector('[name="horario_inicio"]').value;
+                const fim = row.querySelector('[name="horario_fim"]').value;
+                if (dia && inicio && fim) {
+                    novosHorarios.push({ dia, inicio, fim });
+                }
+            });
+
             const dataToUpdate = {
                 titulo: form.elements['edit-titulo'].value.trim(), fotoUrl: document.getElementById('edit-fotoUrl').value.trim(),
                 abordagem: form.elements['edit-abordagem'].value.trim(), crp: form.elements['edit-crp'].value.trim(),
                 email: form.elements['edit-email'].value.trim(), telefone: form.elements['edit-telefone'].value.trim(),
-                formacao: form.elements['edit-formacao'].value,
+                formacao: form.elements['edit-formacao'].value.split('\n').filter(Boolean),
                 especializacao: form.elements['edit-especializacao'].value.split('\n').filter(Boolean),
                 atuacao: form.elements['edit-atuacao'].value.split('\n').filter(Boolean),
                 supervisaoInfo: form.elements['edit-supervisaoInfo'].value.split('\n').filter(Boolean),
-                diasHorarios: form.elements['edit-diasHorarios'].value.split('\n').filter(Boolean),
+                diasHorarios: novosHorarios, // Salva o novo array de objetos de horários
             };
             try {
                 await db.collection('usuarios').doc(uid).update(dataToUpdate);

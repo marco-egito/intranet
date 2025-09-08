@@ -27,14 +27,51 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // Função para voltar para o painel principal (tela com os 2 cards)
     window.showSupervisorDashboard = function() {
         viewContentArea.style.display = 'none';
         viewContentArea.innerHTML = '';
         dashboardContent.style.display = 'block';
     };
 
-    // Função principal que carrega as "sub-telas" (perfis ou lista de supervisionados)
+    // --- FUNÇÃO RESTAURADA ---
+    // Esta função é chamada pela tela "Meus Supervisionados" para abrir uma ficha específica.
+    window.loadFormularioView = async function(docId) {
+        dashboardContent.style.display = 'none';
+        viewContentArea.style.display = 'block';
+        viewContentArea.innerHTML = '<div class="loading-spinner"></div>';
+
+        try {
+            const response = await fetch('./formulario-supervisao.html');
+            if (!response.ok) throw new Error('Falha ao carregar o HTML do formulário');
+            viewContentArea.innerHTML = await response.text();
+            
+            // Ativa o botão "Voltar" dentro do formulário para retornar à lista
+            document.getElementById('form-view-back-button').addEventListener('click', () => loadView('meus_supervisionados'));
+
+            // Carrega o CSS específico do formulário, se ainda não estiver carregado
+            if (!document.querySelector(`link[data-view-style="formulario-supervisao"]`)) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = '../assets/css/formulario-supervisao.css';
+                link.dataset.viewStyle = 'formulario-supervisao';
+                document.head.appendChild(link);
+            }
+            
+            // Define o ID do documento a ser carregado pelo script do formulário
+            window.formSupervisaoInitialDocId = docId;
+
+            // Carrega o script que controla o formulário
+            const script = document.createElement('script');
+            script.src = '../assets/js/formulario-supervisao.js';
+            script.dataset.viewScript = 'formulario-supervisao';
+            document.body.appendChild(script);
+
+        } catch (error) {
+            console.error("Erro ao carregar view do formulário:", error);
+            viewContentArea.innerHTML = `<h2>Erro ao carregar.</h2><button onclick="showSupervisorDashboard()">Voltar</button>`;
+        }
+    };
+
     async function loadView(viewName) {
         dashboardContent.style.display = 'none';
         viewContentArea.style.display = 'block';
@@ -50,8 +87,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch(files.html);
             viewContentArea.innerHTML = await response.text();
 
-            // --- ALTERAÇÃO IMPORTANTE AQUI ---
-            // Ativa o botão "Voltar ao Painel" que foi carregado com o HTML da nova tela.
             const backButton = document.getElementById('view-back-button');
             if (backButton) {
                 backButton.addEventListener('click', window.showSupervisorDashboard);

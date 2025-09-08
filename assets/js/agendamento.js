@@ -1,12 +1,23 @@
 (function() {
-    if (!window.firebase) {
-        console.error("Firebase não inicializado.");
-        return;
+    // --- INÍCIO DA CORREÇÃO: Bloco de inicialização do Firebase ---
+    // Garante que o Firebase esteja pronto antes de qualquer operação
+    const firebaseConfig = {
+        apiKey: "AIzaSyDJqPJjDDIGo7uRewh3pw1SQZOpMgQJs5M",
+        authDomain: "eupsico-agendamentos-d2048.firebaseapp.com",
+        databaseURL: "https://eupsico-agendamentos-d2048-default-rtdb.firebaseio.com",
+        projectId: "eupsico-agendamentos-d2048",
+        storageBucket: "eupsico-agendamentos-d2048.firebasestorage.app",
+        messagingSenderId: "1041518416343",
+        appId: "1:1041518416343:web:0a11c03c205b802ed7bb92"
+    };
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
     }
-    const db = firebase.firestore();
+    // --- FIM DA CORREÇÃO ---
 
+    const db = firebase.firestore();
     const modal = document.getElementById('agendamento-modal');
-    if (!modal) return; // Se o modal não existe, o script não precisa rodar
+    if (!modal) return;
 
     const titleEl = document.getElementById('agendamento-modal-title');
     const supervisorNameEl = document.getElementById('agendamento-supervisor-nome');
@@ -34,7 +45,7 @@
 
         for (let i = 0; i < quantidade; i++) {
             results.push(new Date(date));
-            date.setDate(date.getDate() + 14);
+            date.setDate(date.getDate() + 14); // Mantém a lógica quinzenal
         }
         return results;
     }
@@ -54,10 +65,8 @@
     
     function renderDates(horariosDisponiveis) {
         datasContainer.innerHTML = '';
-        
         const availableSlots = horariosDisponiveis.filter(slot => (slot.capacity - slot.booked) > 0);
 
-        // --- MUDANÇA: Mensagem melhorada quando não há vagas ---
         if (availableSlots.length === 0) {
             datasContainer.innerHTML = `
                 <p style="text-align: center; font-weight: bold;">
@@ -101,20 +110,21 @@
         confirmBtn.style.display = 'inline-block';
         nomeProfissionalInput.value = '';
         contatoProfissionalInput.value = '';
-        datasContainer.innerHTML = '<div class="loading-spinner"></div>'; // Spinner em vez de texto
+        datasContainer.innerHTML = '<div class="loading-spinner"></div>'; // Ícone de carregamento
         modal.style.display = 'flex';
 
-        // --- MUDANÇA: Adicionado Try/Catch para tratamento de erros ---
         try {
             let potentialSlots = [];
             if (currentSupervisorData.diasHorarios && Array.isArray(currentSupervisorData.diasHorarios)) {
                 currentSupervisorData.diasHorarios.forEach(horario => {
-                    const dates = getNextDates(horario.dia, 5);
-                    dates.forEach(date => {
-                        const [h, m] = horario.inicio.split(':');
-                        date.setHours(h, m, 0, 0);
-                        potentialSlots.push({ date, horario });
-                    });
+                    if (horario && horario.dia && horario.inicio && horario.fim) {
+                        const dates = getNextDates(horario.dia, 5);
+                        dates.forEach(date => {
+                            const [h, m] = horario.inicio.split(':');
+                            date.setHours(h, m, 0, 0);
+                            potentialSlots.push({ date, horario });
+                        });
+                    }
                 });
             }
             
@@ -140,7 +150,6 @@
     }
     
     async function handleConfirmAgendamento() {
-        // ... (Esta função continua a mesma da versão anterior)
         const nome = nomeProfissionalInput.value.trim();
         const contato = contatoProfissionalInput.value.trim();
         const selectedRadio = datasContainer.querySelector('input[name="data_agendamento"]:checked');
@@ -189,7 +198,7 @@
     
     if (modal) {
         modal.querySelector('.close-modal-btn').addEventListener('click', () => modal.style.display = 'none');
-        cancelBtn.addEventListener('click', () => modal.style.display = 'none');
+        modal.querySelector('#agendamento-cancel-btn').addEventListener('click', () => modal.style.display = 'none');
         confirmBtn.addEventListener('click', handleConfirmAgendamento);
     }
     

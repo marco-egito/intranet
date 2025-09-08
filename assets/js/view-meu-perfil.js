@@ -19,15 +19,31 @@
         const detailsBody = document.getElementById('details-modal-body');
         const toList = (data) => {
             if (!data || data.length === 0) return '<ul><li>Não informado</li></ul>';
+            // Corrigido para lidar com strings que podem ser campos únicos como 'Formação'
             const items = Array.isArray(data) ? data : [data];
             return `<ul>${items.map(item => `<li>${item}</li>`).join('')}</ul>`;
         };
+
+        // --- INÍCIO DA CORREÇÃO ---
+        // Lógica específica para formatar o array de objetos de horários
+        let horariosHtml = '<ul><li>Nenhum horário informado</li></ul>';
+        if (supervisorData.diasHorarios && Array.isArray(supervisorData.diasHorarios) && supervisorData.diasHorarios.length > 0) {
+            horariosHtml = '<ul>';
+            supervisorData.diasHorarios.forEach(horario => {
+                if (horario && horario.dia && horario.inicio && horario.fim) {
+                    horariosHtml += `<li>${horario.dia}: ${horario.inicio} - ${horario.fim}</li>`;
+                }
+            });
+            horariosHtml += '</ul>';
+        }
+        // --- FIM DA CORREÇÃO ---
+
         detailsBody.innerHTML = `
             <div class="profile-section"><h4>Formação</h4>${toList(supervisorData.formacao)}</div>
             <div class="profile-section"><h4>Especialização</h4>${toList(supervisorData.especializacao)}</div>
             <div class="profile-section"><h4>Áreas de Atuação</h4>${toList(supervisorData.atuacao)}</div>
             <div class="profile-section"><h4>Informações de Supervisão</h4>${toList(supervisorData.supervisaoInfo)}</div>
-            <div class="profile-section"><h4>Dias e Horários</h4>${toList(supervisorData.diasHorarios)}</div>`;
+            <div class="profile-section"><h4>Dias e Horários</h4>${horariosHtml}</div>`; // Usa a nova variável formatada
         detailsModal.style.display = 'flex';
     }
 
@@ -84,15 +100,11 @@
         return card;
     }
     
-    // --- INÍCIO DAS ALTERAÇÕES NO MODAL DE EDIÇÃO ---
     if(editModal) {
         const form = document.getElementById('edit-profile-form');
         const horariosContainer = document.getElementById('horarios-editor-container');
         const addHorarioBtn = document.getElementById('add-horario-btn');
-
         const diasDaSemana = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"];
-
-        // Função que cria a linha de HTML para um horário
         const createHorarioRow = (horario = {}) => {
             const row = document.createElement('div');
             row.className = 'horario-row';
@@ -104,21 +116,15 @@
                 <button type="button" class="remove-horario-btn">X</button>`;
             return row;
         };
-
-        // Adiciona uma nova linha de horário ao clicar no botão
         addHorarioBtn.addEventListener('click', () => {
             horariosContainer.appendChild(createHorarioRow());
         });
-
-        // Remove a linha de horário ao clicar no botão "X"
         horariosContainer.addEventListener('click', (e) => {
             if (e.target.classList.contains('remove-horario-btn')) {
                 e.target.closest('.horario-row').remove();
             }
         });
-        
         form.addEventListener('submit', saveProfileChanges);
-
         function openEditModal(supervisorUid) {
             const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid); if (!supervisorData) return;
             form.elements['editing-uid'].value = supervisorData.uid; form.elements['edit-titulo'].value = supervisorData.titulo || '';
@@ -127,28 +133,21 @@
             document.getElementById('profile-photo-preview').src = supervisorData.fotoUrl ? pathPrefix + supervisorData.fotoUrl : pathPrefix + 'assets/img/default-user.png';
             form.elements['edit-abordagem'].value = supervisorData.abordagem || ''; form.elements['edit-crp'].value = supervisorData.crp || '';
             form.elements['edit-email'].value = supervisorData.email || ''; form.elements['edit-telefone'].value = supervisorData.telefone || '';
-            form.elements['edit-formacao'].value = supervisorData.formacao || '';
+            form.elements['edit-formacao'].value = Array.isArray(supervisorData.formacao) ? supervisorData.formacao.join('\n') : supervisorData.formacao || '';
             form.elements['edit-especializacao'].value = Array.isArray(supervisorData.especializacao) ? supervisorData.especializacao.join('\n') : '';
             form.elements['edit-atuacao'].value = Array.isArray(supervisorData.atuacao) ? supervisorData.atuacao.join('\n') : '';
             form.elements['edit-supervisaoInfo'].value = Array.isArray(supervisorData.supervisaoInfo) ? supervisorData.supervisaoInfo.join('\n') : '';
-            
-            // Renderiza o editor de horários com os dados existentes
-            horariosContainer.innerHTML = ''; // Limpa o container
+            horariosContainer.innerHTML = '';
             if (supervisorData.diasHorarios && Array.isArray(supervisorData.diasHorarios)) {
                 supervisorData.diasHorarios.forEach(horario => {
                     horariosContainer.appendChild(createHorarioRow(horario));
                 });
             }
-            
             editModal.style.display = 'flex';
         }
-
         function closeEditModal() { editModal.style.display = 'none'; form.reset(); }
-
         async function saveProfileChanges(e) {
             e.preventDefault(); const uid = form.elements['editing-uid'].value; if (!uid) return;
-            
-            // Coleta os dados dos horários do novo editor dinâmico
             const novosHorarios = [];
             const horarioRows = horariosContainer.querySelectorAll('.horario-row');
             horarioRows.forEach(row => {
@@ -159,7 +158,6 @@
                     novosHorarios.push({ dia, inicio, fim });
                 }
             });
-
             const dataToUpdate = {
                 titulo: form.elements['edit-titulo'].value.trim(), fotoUrl: document.getElementById('edit-fotoUrl').value.trim(),
                 abordagem: form.elements['edit-abordagem'].value.trim(), crp: form.elements['edit-crp'].value.trim(),
@@ -168,7 +166,7 @@
                 especializacao: form.elements['edit-especializacao'].value.split('\n').filter(Boolean),
                 atuacao: form.elements['edit-atuacao'].value.split('\n').filter(Boolean),
                 supervisaoInfo: form.elements['edit-supervisaoInfo'].value.split('\n').filter(Boolean),
-                diasHorarios: novosHorarios, // Salva o novo array de objetos de horários
+                diasHorarios: novosHorarios,
             };
             try {
                 await db.collection('usuarios').doc(uid).update(dataToUpdate);

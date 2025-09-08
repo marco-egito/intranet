@@ -40,16 +40,21 @@
                         <div id="datas-disponiveis-container"><p>Calculando datas...</p></div>
                     </div>
                     <hr>
-                    <p><strong>Preencha seus dados para confirmar:</strong></p>
+                    <p><strong>Seus dados (preenchidos automaticamente):</strong></p>
                     <div class="form-group">
                         <label for="agendamento-profissional-nome">Seu Nome Completo</label>
-                        <input type="text" id="agendamento-profissional-nome" placeholder="Digite seu nome">
+                        <input type="text" id="agendamento-profissional-nome" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="agendamento-profissional-email">Seu Email</label>
+                        <input type="email" id="agendamento-profissional-email" readonly>
                     </div>
                     <div class="form-group">
-                        <label for="agendamento-profissional-contato">Seu Email ou Telefone (WhatsApp)</label>
-                        <input type="text" id="agendamento-profissional-contato" placeholder="Seu melhor contato">
+                        <label for="agendamento-profissional-telefone">Seu Telefone (WhatsApp)</label>
+                        <input type="tel" id="agendamento-profissional-telefone" readonly>
                     </div>
-                </div>
+                    </div>
                 <div id="agendamento-step-2" style="display: none; text-align: center;">
                     <h4 style="color: #27ae60;">Agendamento realizado com sucesso!</h4>
                     <p>Você receberá uma confirmação em breve.</p>

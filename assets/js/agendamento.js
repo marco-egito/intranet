@@ -85,15 +85,7 @@
             const horarioInfo = `${slot.horario.dia} - ${slot.horario.inicio}`;
             const vagasRestantes = slot.capacity - slot.booked;
             const radioId = `date-${index}`;
-
-            const optionHtml = `
-                <div class="date-option">
-                    <input type="radio" id="${radioId}" name="data_agendamento" value="${date.toISOString()}">
-                    <label for="${radioId}">
-                        <strong>${formattedDate}</strong> (${horarioInfo})
-                        <span>Vagas restantes: ${vagasRestantes}</span>
-                    </label>
-                </div>`;
+            const optionHtml = `<div class="date-option"> <input type="radio" id="${radioId}" name="data_agendamento" value="${date.toISOString()}"> <label for="${radioId}"> <strong>${formattedDate}</strong> (${horarioInfo}) <span>Vagas restantes: ${vagasRestantes}</span> </label> </div>`;
             datasContainer.innerHTML += optionHtml;
         });
         confirmBtn.disabled = false;
@@ -108,9 +100,10 @@
         step1.style.display = 'block';
         step2.style.display = 'none';
         confirmBtn.style.display = 'inline-block';
+        confirmBtn.disabled = false;
         nomeProfissionalInput.value = '';
         contatoProfissionalInput.value = '';
-        datasContainer.innerHTML = '<div class="loading-spinner"></div>'; // Ícone de carregamento
+        datasContainer.innerHTML = '<div class="loading-spinner"></div>';
         modal.style.display = 'flex';
 
         try {
@@ -181,7 +174,8 @@
                 transaction.set(newDocRef, {
                     supervisorUid: currentSupervisorData.uid, supervisorNome: currentSupervisorData.nome,
                     dataAgendamento: dataAgendamento, profissionalNome: nome,
-                    profissionalContato: contato, criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+                    profissionalContato: contato,
+                    criadoEm: new Date() // --- CORREÇÃO: Usando data do cliente para evitar erro ---
                 });
             });
             step1.style.display = 'none';

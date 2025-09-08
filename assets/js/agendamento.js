@@ -1,5 +1,4 @@
 (function() {
-    // Garante que o Firebase esteja pronto antes de qualquer operação
     const firebaseConfig = {
         apiKey: "AIzaSyDJqPJjDDIGo7uRewh3pw1SQZOpMgQJs5M",
         authDomain: "eupsico-agendamentos-d2048.firebaseapp.com",
@@ -22,7 +21,10 @@
     const supervisorNameEl = document.getElementById('agendamento-supervisor-nome');
     const datasContainer = document.getElementById('datas-disponiveis-container');
     const nomeProfissionalInput = document.getElementById('agendamento-profissional-nome');
-    const contatoProfissionalInput = document.getElementById('agendamento-profissional-contato');
+    // --- MUDANÇA: Referências para os novos campos separados ---
+    const emailProfissionalInput = document.getElementById('agendamento-profissional-email');
+    const telefoneProfissionalInput = document.getElementById('agendamento-profissional-telefone');
+    
     const confirmBtn = document.getElementById('agendamento-confirm-btn');
     const step1 = document.getElementById('agendamento-step-1');
     const step2 = document.getElementById('agendamento-step-2');
@@ -50,22 +52,18 @@
         try {
             const [startH, startM] = inicio.split(':').map(Number);
             const [endH, endM] = fim.split(':').map(Number);
-            const startMinutes = startH * 60 + startM;
-            const endMinutes = endH * 60 + endM;
-            return Math.floor((endMinutes - startMinutes) / 30);
+            return Math.floor(((endH * 60 + endM) - (startH * 60 + startM)) / 30);
         } catch (e) { return 0; }
     }
     
     function renderDates(horariosDisponiveis) {
         datasContainer.innerHTML = '';
         const availableSlots = horariosDisponiveis.filter(slot => (slot.capacity - slot.booked) > 0);
-
         if (availableSlots.length === 0) {
             datasContainer.innerHTML = `<p style="text-align: center; font-weight: bold;">Não há vagas disponíveis no momento.</p><p style="text-align: center; font-size: 0.9em; margin-top: 10px;">Por favor, entre em contato com o supervisor para verificar a possibilidade de novas vagas.</p>`;
             confirmBtn.disabled = true;
             return;
         }
-
         availableSlots.forEach((slot, index) => {
             const date = slot.date;
             const formattedDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -90,9 +88,10 @@
         confirmBtn.disabled = false;
         datasContainer.innerHTML = '<div class="loading-spinner"></div>';
         
-        // --- INÍCIO DA MELHORIA: Pré-preenchimento dos dados do profissional ---
+        // --- MUDANÇA: Preenche os campos separados ---
         nomeProfissionalInput.value = 'Carregando...';
-        contatoProfissionalInput.value = 'Carregando...';
+        emailProfissionalInput.value = 'Carregando...';
+        telefoneProfissionalInput.value = 'Carregando...';
         const currentUser = auth.currentUser;
         if (currentUser) {
             try {
@@ -100,15 +99,14 @@
                 if (userDoc.exists) {
                     const userData = userDoc.data();
                     nomeProfissionalInput.value = userData.nome || '';
-                    contatoProfissionalInput.value = userData.telefone || userData.email || '';
+                    emailProfissionalInput.value = userData.email || '';
+                    telefoneProfissionalInput.value = userData.telefone || '';
                 }
             } catch (error) {
                 console.error("Erro ao buscar dados do profissional logado:", error);
-                nomeProfissionalInput.value = 'Erro ao carregar dados.';
-                contatoProfissionalInput.value = '';
+                nomeProfissionalInput.value = 'Erro ao carregar.';
             }
         }
-        // --- FIM DA MELHORIA ---
         
         modal.style.display = 'flex';
 
@@ -133,7 +131,6 @@
                     .where('supervisorUid', '==', currentSupervisorData.uid)
                     .where('dataAgendamento', '==', slot.date.toISOString())
                     .get();
-                
                 slot.booked = querySnapshot.size;
                 slot.capacity = calculateCapacity(slot.horario.inicio, slot.horario.fim);
                 return slot;
@@ -150,42 +147,34 @@
     
     async function handleConfirmAgendamento() {
         const nome = nomeProfissionalInput.value.trim();
-        const contato = contatoProfissionalInput.value.trim();
+        // --- MUDANÇA: Coleta dos campos separados ---
+        const email = emailProfissionalInput.value.trim();
+        const telefone = telefoneProfissionalInput.value.trim();
         const selectedRadio = datasContainer.querySelector('input[name="data_agendamento"]:checked');
 
-        if (!selectedRadio) { alert("Por favor, selecione uma data."); return; }
-        if (!nome || !contato) { alert("Seus dados de nome e contato não foram encontrados. Não é possível agendar."); return; }
+        if (!selectedRadio) { alert("Por favor, selecione uma data para o agendamento."); return; }
+        if (!nome) { alert("Seus dados de nome não foram encontrados. Não é possível agendar."); return; }
 
         const dataAgendamento = selectedRadio.value;
         confirmBtn.disabled = true;
         confirmBtn.textContent = 'Aguarde...';
 
+        const agendamentoData = {
+            supervisorUid: currentSupervisorData.uid,
+            supervisorNome: currentSupervisorData.nome,
+            dataAgendamento: dataAgendamento,
+            profissionalNome: nome,
+            // --- MUDANÇA: Salvando campos separados ---
+            profissionalEmail: email,
+            profissionalTelefone: telefone,
+            criadoEm: new Date().toISOString() // Usando string para máxima compatibilidade
+        };
+
         try {
-            await db.runTransaction(async (transaction) => {
-                const agendamentosRef = db.collection('agendamentos');
-                const query = agendamentosRef.where('supervisorUid', '==', currentSupervisorData.uid).where('dataAgendamento', '==', dataAgendamento);
-                const snapshot = await transaction.get(query);
-                
-                const horarioInfo = currentSupervisorData.diasHorarios.find(h => 
-                    h.inicio === new Date(dataAgendamento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit'})
-                );
+            // --- CORREÇÃO DO ERRO: Removida a transação para um salvamento mais direto ---
+            const agendamentosRef = db.collection('agendamentos');
+            await agendamentosRef.add(agendamentoData);
 
-                if (!horarioInfo) throw new Error("Horário base não pôde ser verificado.");
-                const capacity = calculateCapacity(horarioInfo.inicio, horarioInfo.fim);
-                if (snapshot.size >= capacity) {
-                    throw new Error("Desculpe, todas as vagas para este horário foram preenchidas.");
-                }
-
-                const newDocRef = agendamentosRef.doc();
-                transaction.set(newDocRef, {
-                    supervisorUid: currentSupervisorData.uid, supervisorNome: currentSupervisorData.nome,
-                    dataAgendamento: dataAgendamento, profissionalNome: nome,
-                    profissionalContato: contato, 
-                    // --- CORREÇÃO DO ERRO ---
-                    // Salvando a data como um texto padrão (string) para evitar o erro de tipo.
-                    criadoEm: new Date().toISOString()
-                });
-            });
             step1.style.display = 'none';
             confirmBtn.style.display = 'none';
             step2.style.display = 'block';

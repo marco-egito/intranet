@@ -123,8 +123,7 @@
 }
 
 /* --- ESTILOS PARA OS BOTÕES DO MODAL --- */
-.modal-footer .action-button,
-.modal-footer .secondary-action-button {
+.modal-footer .action-button {
     padding: 10px 20px;
     font-size: 1em;
     font-weight: bold;
@@ -141,6 +140,8 @@
     background-color: #04396d;
     color: white;
     border-color: #04396d;
+    padding: 10px 20px;
+    font-size: 1em;
 }
 
 .modal-footer .secondary-action-button:hover {

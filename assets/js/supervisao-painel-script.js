@@ -1,4 +1,3 @@
-// (Este é o código completo para este arquivo, com a adição da linha window.PROFILE_VIEW_MODE)
 const firebaseConfig = {
     apiKey: "AIzaSyDJqPJjDDIGo7uRewh3pw1SQZOpMgQJs5M",
     authDomain: "eupsico-agendamentos-d2048.firebaseapp.com",
@@ -35,8 +34,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const files = fileMap[viewName];
         if (!files) { console.error(`View "${viewName}" não encontrada.`); return; }
         
-        // --- ALTERAÇÃO IMPORTANTE AQUI ---
-        // Define que esta é a visualização "vitrine", para mostrar todos os perfis.
         if (viewName === 'perfis_supervisores') {
             window.PROFILE_VIEW_MODE = 'all'; 
         }
@@ -53,8 +50,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!htmlResponse.ok) throw new Error(`Erro ao carregar HTML: ${files.html}`);
             viewContentArea.innerHTML = await htmlResponse.text();
             
-            const backButton = document.getElementById('view-back-button');
-            if (backButton) { backButton.addEventListener('click', showSupervisaoDashboard); }
+            // --- ALTERAÇÃO IMPORTANTE AQUI ---
+            // Procura pelos dois possíveis IDs de botão "Voltar" e ativa o que encontrar.
+            const backButton = document.getElementById('view-back-button') || document.getElementById('form-view-back-button');
+            if (backButton) {
+                backButton.addEventListener('click', showSupervisaoDashboard);
+            }
 
             if (mode) { window.formSupervisaoMode = mode; }
 
@@ -77,6 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderSupervisaoCards() {
         if (!supervisaoModulesGrid) return;
         supervisaoModulesGrid.innerHTML = '';
+        // Ícones omitidos para simplicidade, mas a lógica é a mesma
         const supervisaoModules = {
             nova_ficha: { titulo: 'Ficha de Supervisão', descricao: 'Clique aqui para preencher uma nova ficha.', view: 'formulario_supervisao', mode: 'new' },
             visualizar: { titulo: 'Acompanhamentos', descricao: 'Visualize todas as fichas que você preencheu.', view: 'formulario_supervisao', mode: 'list' },
@@ -107,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     currentUserData = userDoc.data();
                     renderSupervisaoCards();
                 }
-            } catch(error) { console.error("Erro:", error); }
+            } catch(error) { console.error("Erro ao verificar permissões:", error); }
         } else { window.location.href = '../index.html'; }
     });
 });

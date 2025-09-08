@@ -87,7 +87,6 @@
     box-sizing: border-box;
 }
 
-/* --- INÍCIO DA ALTERAÇÃO: ESTILOS PARA O EDITOR DE HORÁRIOS --- */
 .horario-row {
     display: flex;
     gap: 10px;
@@ -122,5 +121,45 @@
     line-height: 30px;
     text-align: center;
     padding: 0;
+}
+
+/* --- INÍCIO DA ALTERAÇÃO: ESTILOS PARA OS BOTÕES DO MODAL --- */
+/* Base para TODOS os botões no rodapé do modal para garantir o mesmo tamanho */
+.modal-footer .action-button,
+.modal-footer .secondary-action-button {
+    padding: 10px 20px;
+    font-size: 1em;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 2px solid transparent; /* Borda base transparente */
+    transition: all 0.2s ease-in-out;
+    min-width: 150px; /* Garante uma largura mínima igual */
+    text-align: center;
+}
+
+/* Estilo do botão PRIMÁRIO (Azul - Salvar) */
+/* No seu projeto, este é o .secondary-action-button */
+.modal-footer .secondary-action-button {
+    background-color: #04396d; /* Mesmo azul do card */
+    color: white;
+    border-color: #04396d;
+}
+
+.modal-footer .secondary-action-button:hover {
+    background-color: #065299; /* Um tom mais claro para o hover */
+    border-color: #065299;
+}
+
+/* Estilo do botão SECUNDÁRIO (Borda Azul - Cancelar) */
+/* No seu projeto, este é o .action-button */
+.modal-footer .action-button {
+    background-color: #fff;
+    color: #04396d;
+    border-color: #04396d;
+}
+
+.modal-footer .action-button:hover {
+    background-color: #f0f0f0; /* Um cinza bem claro para o hover */
 }
 /* --- FIM DA ALTERAÇÃO --- */

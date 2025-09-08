@@ -33,8 +33,6 @@ document.addEventListener('DOMContentLoaded', function() {
         dashboardContent.style.display = 'block';
     };
 
-    // --- FUNÇÃO RESTAURADA ---
-    // Esta função é chamada pela tela "Meus Supervisionados" para abrir uma ficha específica.
     window.loadFormularioView = async function(docId) {
         dashboardContent.style.display = 'none';
         viewContentArea.style.display = 'block';
@@ -45,10 +43,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) throw new Error('Falha ao carregar o HTML do formulário');
             viewContentArea.innerHTML = await response.text();
             
-            // Ativa o botão "Voltar" dentro do formulário para retornar à lista
             document.getElementById('form-view-back-button').addEventListener('click', () => loadView('meus_supervisionados'));
 
-            // Carrega o CSS específico do formulário, se ainda não estiver carregado
             if (!document.querySelector(`link[data-view-style="formulario-supervisao"]`)) {
                 const link = document.createElement('link');
                 link.rel = 'stylesheet';
@@ -57,10 +53,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.head.appendChild(link);
             }
             
-            // Define o ID do documento a ser carregado pelo script do formulário
             window.formSupervisaoInitialDocId = docId;
 
-            // Carrega o script que controla o formulário
             const script = document.createElement('script');
             script.src = '../assets/js/formulario-supervisao.js';
             script.dataset.viewScript = 'formulario-supervisao';
@@ -77,9 +71,11 @@ document.addEventListener('DOMContentLoaded', function() {
         viewContentArea.style.display = 'block';
         viewContentArea.innerHTML = '<div class="loading-spinner"></div>';
 
+        // --- MUDANÇA 1: Adicionado o mapeamento para a nova tela de agendamentos ---
         const fileMap = {
             'meu_perfil': { html: './view-meu-perfil.html', js: '../assets/js/view-meu-perfil.js' },
-            'meus_supervisionados': { html: './view-meus-supervisionados.html', js: '../assets/js/view-meus-supervisionados.js' }
+            'meus_supervisionados': { html: './view-meus-supervisionados.html', js: '../assets/js/view-meus-supervisionados.js' },
+            'meus_agendamentos': { html: './view-meus-agendamentos.html', js: '../assets/js/view-meus-agendamentos.js' }
         };
         const files = fileMap[viewName];
 
@@ -107,9 +103,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderSupervisorCards() {
         supervisorCardsGrid.innerHTML = '';
+        // --- MUDANÇA 2: Adicionado o novo módulo "Meus Agendamentos" ---
         const modules = {
             meu_perfil: { titulo: 'Meu Perfil e Edição', descricao: 'Visualize e edite suas informações de perfil.' },
-            meus_supervisionados: { titulo: 'Meus Supervisionados', descricao: 'Visualize os acompanhamentos que você supervisiona.' }
+            meus_supervisionados: { titulo: 'Meus Supervisionados', descricao: 'Visualize os acompanhamentos que você supervisiona.' },
+            meus_agendamentos: { titulo: 'Meus Agendamentos', descricao: 'Visualize os profissionais que agendaram supervisão com você.' }
         };
         for (const key in modules) {
             const module = modules[key];
@@ -140,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         dashboardContent.innerHTML = '<h2>Acesso Negado</h2>';
                     }
                 } else {
-                        dashboardContent.innerHTML = '<h2>Usuário não encontrado.</h2>';
+                    dashboardContent.innerHTML = '<h2>Usuário não encontrado.</h2>';
                 }
             } catch (error) {
                 console.error("Erro ao buscar usuário:", error);

@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 titulo: 'Intranet Supervisão', 
                 descricao: 'Preencha e visualize suas fichas de acompanhamento.', 
                 url: './pages/supervisao-painel.html', 
-                roles: ['admin', 'atendimento'],
+                roles: ['admin', 'atendimento','supervisor'],
                 professions: ['Psicólogo', 'Psicopedagoga', 'Musicoterapeuta']
             },
         };

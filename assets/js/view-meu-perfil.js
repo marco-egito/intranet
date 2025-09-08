@@ -7,19 +7,27 @@
     const detailsModal = document.getElementById('details-profile-modal');
     // --- MUDANÇA: Referência ao novo modal de agendamento ---
     const agendamentoModal = document.getElementById('agendamento-modal');
-    let fetchedSupervisors = [];
+
+    // A variável global window.fetchedSupervisors é criada aqui para ser usada por outros scripts
+    window.fetchedSupervisors = []; 
     let isAdmin = false;
 
     // --- NOVA FUNÇÃO para abrir o modal de agendamento ---
     function openAgendamentoModal(supervisorUid) {
-        if (!agendamentoModal) return;
-        const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid);
+        if (!agendamentoModal) {
+            console.error("O modal de agendamento não foi encontrado no HTML.");
+            return;
+        }
+        const supervisorData = window.fetchedSupervisors.find(s => s.uid === supervisorUid);
         if (!supervisorData) return;
 
-        // Preenche o nome do supervisor no modal
-        agendamentoModal.querySelector('#agendamento-supervisor-nome').textContent = supervisorData.nome;
-        
-        // (A lógica para calcular as datas e vagas entrará aqui no próximo passo)
+        // Limpa e prepara o modal de agendamento para ser exibido
+        if (window.agendamentoController) {
+            // Chama a função principal do nosso futuro script agendamento.js
+            window.agendamentoController.open(supervisorData);
+        } else {
+            console.error("O controller de agendamento (agendamento.js) não foi encontrado.");
+        }
         
         detailsModal.style.display = 'none'; // Esconde o modal de detalhes
         agendamentoModal.style.display = 'flex'; // Mostra o modal de agendamento
@@ -28,7 +36,7 @@
 
     function openDetailsModal(supervisorUid) {
         if (!detailsModal) return;
-        const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid);
+        const supervisorData = window.fetchedSupervisors.find(s => s.uid === supervisorUid);
         if (!supervisorData) return;
         
         const modalTitle = detailsModal.querySelector('.modal-header h2');
@@ -157,7 +165,7 @@
         });
         form.addEventListener('submit', saveProfileChanges);
         function openEditModal(supervisorUid) {
-            const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid); if (!supervisorData) return;
+            const supervisorData = window.fetchedSupervisors.find(s => s.uid === supervisorUid); if (!supervisorData) return;
             form.elements['editing-uid'].value = supervisorData.uid; form.elements['edit-titulo'].value = supervisorData.titulo || '';
             document.getElementById('edit-fotoUrl').value = supervisorData.fotoUrl || '';
             const pathPrefix = window.location.pathname.includes('/pages/') ? '../' : './';
@@ -216,11 +224,12 @@
             } else {
                 query = db.collection('usuarios').where(firebase.firestore.FieldPath.documentId(), '==', user.uid);
             }
-            const snapshot = await query.get(); fetchedSupervisors = [];
+            const snapshot = await query.get(); 
+            window.fetchedSupervisors = []; // Limpa e preenche a variável global
             if (snapshot.empty) { gridContainer.innerHTML = '<p>Nenhum supervisor encontrado.</p>'; return; }
-            snapshot.forEach(doc => fetchedSupervisors.push({ uid: doc.id, ...doc.data() }));
+            snapshot.forEach(doc => window.fetchedSupervisors.push({ uid: doc.id, ...doc.data() }));
             gridContainer.innerHTML = '';
-            fetchedSupervisors.forEach(supervisor => {
+            window.fetchedSupervisors.forEach(supervisor => {
                 const cardElement = createSupervisorCard(supervisor, podeEditar);
                 gridContainer.appendChild(cardElement);
             });

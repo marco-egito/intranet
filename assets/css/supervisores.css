@@ -124,7 +124,7 @@
 }
 
 /* --- INÍCIO DA ALTERAÇÃO: ESTILOS PARA OS BOTÕES DO MODAL --- */
-/* Base para TODOS os botões no rodapé do modal para garantir o mesmo tamanho */
+/* Base para TODOS os botões no rodapé do modal */
 .modal-footer .action-button,
 .modal-footer .secondary-action-button {
     padding: 10px 20px;
@@ -132,22 +132,23 @@
     font-weight: bold;
     border-radius: 5px;
     cursor: pointer;
-    border: 2px solid transparent; /* Borda base transparente */
+    border: 2px solid transparent;
     transition: all 0.2s ease-in-out;
-    min-width: 150px; /* Garante uma largura mínima igual */
+    width: 180px; /* ALTERAÇÃO: Define uma largura fixa para ambos */
     text-align: center;
+    box-sizing: border-box; /* Garante que padding não afete a largura final */
 }
 
 /* Estilo do botão PRIMÁRIO (Azul - Salvar) */
 /* No seu projeto, este é o .secondary-action-button */
 .modal-footer .secondary-action-button {
-    background-color: #04396d; /* Mesmo azul do card */
+    background-color: #04396d;
     color: white;
     border-color: #04396d;
 }
 
 .modal-footer .secondary-action-button:hover {
-    background-color: #065299; /* Um tom mais claro para o hover */
+    background-color: #065299;
     border-color: #065299;
 }
 
@@ -160,6 +161,6 @@
 }
 
 .modal-footer .action-button:hover {
-    background-color: #f0f0f0; /* Um cinza bem claro para o hover */
+    background-color: #f0f0f0;
 }
 /* --- FIM DA ALTERAÇÃO --- */

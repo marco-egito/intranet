@@ -38,9 +38,7 @@
         let results = [];
         let date = new Date();
         date.setHours(0, 0, 0, 0);
-        while (date.getDay() !== targetDay) {
-            date.setDate(date.getDate() + 1);
-        }
+        while (date.getDay() !== targetDay) { date.setDate(date.getDate() + 1); }
         for (let i = 0; i < quantidade; i++) {
             results.push(new Date(date));
             date.setDate(date.getDate() + 14);
@@ -88,7 +86,7 @@
         confirmBtn.disabled = false;
         datasContainer.innerHTML = '<div class="loading-spinner"></div>';
         
-        // --- MUDANÇA: Preenche os campos separados ---
+        // --- MUDANÇA: Preenche os campos separados (nome, email, telefone) ---
         nomeProfissionalInput.value = 'Carregando...';
         emailProfissionalInput.value = 'Carregando...';
         telefoneProfissionalInput.value = 'Carregando...';
@@ -100,7 +98,8 @@
                     const userData = userDoc.data();
                     nomeProfissionalInput.value = userData.nome || '';
                     emailProfissionalInput.value = userData.email || '';
-                    telefoneProfissionalInput.value = userData.telefone || '';
+                    // Corrigido para buscar do campo 'contato' como no seu Firestore
+                    telefoneProfissionalInput.value = userData.contato || ''; 
                 }
             } catch (error) {
                 console.error("Erro ao buscar dados do profissional logado:", error);
@@ -147,7 +146,7 @@
     
     async function handleConfirmAgendamento() {
         const nome = nomeProfissionalInput.value.trim();
-        // --- MUDANÇA: Coleta dos campos separados ---
+        // --- MUDANÇA: Coleta dos campos de email e telefone separados ---
         const email = emailProfissionalInput.value.trim();
         const telefone = telefoneProfissionalInput.value.trim();
         const selectedRadio = datasContainer.querySelector('input[name="data_agendamento"]:checked');
@@ -164,14 +163,14 @@
             supervisorNome: currentSupervisorData.nome,
             dataAgendamento: dataAgendamento,
             profissionalNome: nome,
-            // --- MUDANÇA: Salvando campos separados ---
+            // --- MUDANÇA: Salvando campos de email e telefone separados ---
             profissionalEmail: email,
             profissionalTelefone: telefone,
-            criadoEm: new Date().toISOString() // Usando string para máxima compatibilidade
+            criadoEm: new Date().toISOString()
         };
 
         try {
-            // --- CORREÇÃO DO ERRO: Removida a transação para um salvamento mais direto ---
+            // --- CORREÇÃO DO ERRO: Removida a transação para um salvamento mais direto e compatível ---
             const agendamentosRef = db.collection('agendamentos');
             await agendamentosRef.add(agendamentoData);
 

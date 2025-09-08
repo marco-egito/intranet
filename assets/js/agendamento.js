@@ -10,7 +10,6 @@
     const titleEl = document.getElementById('agendamento-modal-title');
     const supervisorNameEl = document.getElementById('agendamento-supervisor-nome');
     const datasContainer = document.getElementById('datas-disponiveis-container');
-    const horarioBaseInfoEl = document.getElementById('horario-base-info');
     const nomeProfissionalInput = document.getElementById('agendamento-profissional-nome');
     const contatoProfissionalInput = document.getElementById('agendamento-profissional-contato');
     const confirmBtn = document.getElementById('agendamento-confirm-btn');
@@ -18,11 +17,10 @@
     const step1 = document.getElementById('agendamento-step-1');
     const step2 = document.getElementById('agendamento-step-2');
 
-    let currentSupervisor = null;
+    let currentSupervisorData = null;
 
     // --- Funções de Lógica ---
 
-    // Calcula as próximas N ocorrências de um dia da semana
     function getNextDates(diaDaSemana, quantidade) {
         const weekMap = { "domingo": 0, "segunda-feira": 1, "terça-feira": 2, "quarta-feira": 3, "quinta-feira": 4, "sexta-feira": 5, "sábado": 6 };
         const targetDay = weekMap[diaDaSemana.toLowerCase()];
@@ -32,20 +30,17 @@
         let date = new Date();
         date.setHours(0, 0, 0, 0);
 
-        // Avança até o próximo dia da semana alvo
         while (date.getDay() !== targetDay) {
             date.setDate(date.getDate() + 1);
         }
 
-        // Gera as próximas N datas quinzenais
         for (let i = 0; i < quantidade; i++) {
             results.push(new Date(date));
-            date.setDate(date.getDate() + 14); // Pula 14 dias
+            date.setDate(date.getDate() + 14); // Pula 14 dias para ser quinzenal
         }
         return results;
     }
 
-    // Calcula a capacidade máxima de um horário (em vagas de 30 min)
     function calculateCapacity(inicio, fim) {
         const [startH, startM] = inicio.split(':').map(Number);
         const [endH, endM] = fim.split(':').map(Number);
@@ -54,28 +49,27 @@
         return Math.floor((endMinutes - startMinutes) / 30);
     }
     
-    // Renderiza as opções de data no modal
     function renderDates(horariosDisponiveis) {
-        datasContainer.innerHTML = ''; // Limpa o container
+        datasContainer.innerHTML = '';
         
-        if (horariosDisponiveis.length === 0) {
+        const availableSlots = horariosDisponiveis.filter(slot => (slot.capacity - slot.booked) > 0);
+
+        if (availableSlots.length === 0) {
             datasContainer.innerHTML = '<p>Nenhuma data disponível para agendamento no momento.</p>';
             confirmBtn.disabled = true;
             return;
         }
 
-        horariosDisponiveis.forEach((slot, index) => {
+        availableSlots.forEach((slot, index) => {
             const date = slot.date;
             const formattedDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const horarioInfo = `${slot.horario.dia} das ${slot.horario.inicio} às ${slot.horario.fim}`;
+            const horarioInfo = `${slot.horario.dia} - ${slot.horario.inicio}`;
             const vagasRestantes = slot.capacity - slot.booked;
 
             const radioId = `date-${index}`;
-            const disabled = vagasRestantes <= 0 ? 'disabled' : '';
-
             const optionHtml = `
-                <div class="date-option ${disabled}">
-                    <input type="radio" id="${radioId}" name="data_agendamento" value="${date.toISOString()}" ${disabled}>
+                <div class="date-option">
+                    <input type="radio" id="${radioId}" name="data_agendamento" value="${date.toISOString()}">
                     <label for="${radioId}">
                         <strong>${formattedDate}</strong> (${horarioInfo})
                         <span>Vagas restantes: ${vagasRestantes}</span>
@@ -87,17 +81,15 @@
         confirmBtn.disabled = false;
     }
 
-    // Função principal que abre e prepara o modal de agendamento
-    async function open(supervisorUid) {
-        currentSupervisor = window.fetchedSupervisors.find(s => s.uid === supervisorUid);
-        if (!currentSupervisor) {
-            alert("Erro: Supervisor não encontrado.");
+    async function open(supervisorData) {
+        currentSupervisorData = supervisorData;
+        if (!currentSupervisorData) {
+            alert("Erro: Dados do supervisor não foram fornecidos.");
             return;
         }
 
-        // Resetar o modal para o estado inicial
         titleEl.textContent = `Agendar Supervisão`;
-        supervisorNameEl.textContent = currentSupervisor.nome;
+        supervisorNameEl.textContent = currentSupervisorData.nome;
         step1.style.display = 'block';
         step2.style.display = 'none';
         confirmBtn.style.display = 'inline-block';
@@ -106,22 +98,22 @@
         datasContainer.innerHTML = '<p>Calculando datas disponíveis...</p>';
         modal.style.display = 'flex';
 
-        // 1. Calcular as datas base
         let potentialSlots = [];
-        currentSupervisor.diasHorarios.forEach(horario => {
-            const dates = getNextDates(horario.dia, 5); // Gera as próximas 5 ocorrências quinzenais
-            dates.forEach(date => {
-                const [h, m] = horario.inicio.split(':');
-                date.setHours(h, m, 0, 0);
-                potentialSlots.push({ date, horario });
+        if (currentSupervisorData.diasHorarios && Array.isArray(currentSupervisorData.diasHorarios)) {
+            currentSupervisorData.diasHorarios.forEach(horario => {
+                const dates = getNextDates(horario.dia, 5); // Gera as próximas 5 ocorrências quinzenais
+                dates.forEach(date => {
+                    const [h, m] = horario.inicio.split(':');
+                    date.setHours(h, m, 0, 0);
+                    potentialSlots.push({ date, horario });
+                });
             });
-        });
-
-        // 2. Verificar a disponibilidade de cada data no Firestore
+        }
+        
         const agendamentosRef = db.collection('agendamentos');
         const slotChecks = potentialSlots.map(async slot => {
             const querySnapshot = await agendamentosRef
-                .where('supervisorUid', '==', currentSupervisor.uid)
+                .where('supervisorUid', '==', currentSupervisorData.uid)
                 .where('dataAgendamento', '==', slot.date.toISOString())
                 .get();
             
@@ -134,56 +126,43 @@
         renderDates(finalSlots);
     }
     
-    // Função para salvar o agendamento
     async function handleConfirmAgendamento() {
         const nome = nomeProfissionalInput.value.trim();
         const contato = contatoProfissionalInput.value.trim();
         const selectedRadio = datasContainer.querySelector('input[name="data_agendamento"]:checked');
 
-        if (!selectedRadio) {
-            alert("Por favor, selecione uma data para o agendamento.");
-            return;
-        }
-        if (!nome || !contato) {
-            alert("Por favor, preencha seu nome e contato.");
-            return;
-        }
+        if (!selectedRadio) { alert("Por favor, selecione uma data para o agendamento."); return; }
+        if (!nome || !contato) { alert("Por favor, preencha seu nome e contato."); return; }
 
         const dataAgendamento = selectedRadio.value;
         confirmBtn.disabled = true;
         confirmBtn.textContent = 'Aguarde...';
 
         try {
-            // Usa uma transação para garantir que não haja agendamentos duplicados
             await db.runTransaction(async (transaction) => {
                 const agendamentosRef = db.collection('agendamentos');
                 const query = agendamentosRef
-                    .where('supervisorUid', '==', currentSupervisor.uid)
+                    .where('supervisorUid', '==', currentSupervisorData.uid)
                     .where('dataAgendamento', '==', dataAgendamento);
                 
                 const snapshot = await transaction.get(query);
                 
-                const horarioInfo = currentSupervisor.diasHorarios.find(h => {
-                     return getNextDates(h.dia, 10).some(d => {
-                        const [hr, min] = h.inicio.split(':');
-                        d.setHours(hr, min, 0, 0);
-                        return d.toISOString() === dataAgendamento;
-                    });
-                });
+                const horarioInfo = currentSupervisorData.diasHorarios.find(h => 
+                    h.inicio === new Date(dataAgendamento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit'})
+                );
 
-                if (!horarioInfo) throw new Error("Horário base não encontrado.");
+                if (!horarioInfo) throw new Error("Horário base não pôde ser verificado.");
 
                 const capacity = calculateCapacity(horarioInfo.inicio, horarioInfo.fim);
 
                 if (snapshot.size >= capacity) {
-                    throw new Error("Desculpe, todas as vagas para este horário foram preenchidas.");
+                    throw new Error("Desculpe, todas as vagas para este horário foram preenchidas enquanto você decidia.");
                 }
 
-                // Se houver vagas, cria o novo agendamento
                 const newDocRef = agendamentosRef.doc();
                 transaction.set(newDocRef, {
-                    supervisorUid: currentSupervisor.uid,
-                    supervisorNome: currentSupervisor.nome,
+                    supervisorUid: currentSupervisorData.uid,
+                    supervisorNome: currentSupervisorData.nome,
                     dataAgendamento: dataAgendamento,
                     profissionalNome: nome,
                     profissionalContato: contato,
@@ -204,14 +183,12 @@
         }
     }
     
-    // --- Event Listeners ---
     if (modal) {
         modal.querySelector('.close-modal-btn').addEventListener('click', () => modal.style.display = 'none');
         cancelBtn.addEventListener('click', () => modal.style.display = 'none');
         confirmBtn.addEventListener('click', handleConfirmAgendamento);
     }
     
-    // Expõe a função "open" globalmente para ser chamada por outros scripts
     window.agendamentoController = {
         open: open
     };

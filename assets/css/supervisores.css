@@ -56,11 +56,13 @@
     padding: 15px 25px; background-color: #0d2d4e; color: white;
     border-radius: 8px 8px 0 0;
     flex-shrink: 0; /* Impede que o cabeçalho encolha */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 .modal-header h2 { margin: 0; font-size: 1.2em; }
 .close-modal-btn { background: none; border: none; color: white; font-size: 2em; cursor: pointer; }
 
-/* ---- ALTERAÇÃO PARA A ROLAGEM ---- */
 .modal-body { 
     padding: 25px; 
     overflow-y: auto; /* Permite a rolagem vertical */
@@ -71,7 +73,54 @@
     padding: 15px 25px; background-color: #f1f1f1;
     border-top: 1px solid #ddd; border-radius: 0 0 8px 8px;
     flex-shrink: 0; /* Impede que o rodapé encolha */
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
 }
 .modal-body .form-group { margin-bottom: 15px; }
 .modal-body label { font-weight: bold; display: block; margin-bottom: 5px; }
-.modal-body input, .modal-body textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+.modal-body input, .modal-body textarea, .modal-body select { 
+    width: 100%; 
+    padding: 10px; 
+    border: 1px solid #ccc; 
+    border-radius: 4px; 
+    box-sizing: border-box;
+}
+
+/* --- INÍCIO DA ALTERAÇÃO: ESTILOS PARA O EDITOR DE HORÁRIOS --- */
+.horario-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+}
+.horario-row .form-group {
+    margin-bottom: 0;
+    flex-grow: 1;
+}
+.horario-row label {
+    font-size: 0.8em;
+    margin-bottom: 2px;
+    color: #555;
+}
+.horario-row select, .horario-row input {
+    padding: 8px;
+}
+.horario-row .remove-horario-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    flex-shrink: 0;
+    line-height: 30px;
+    text-align: center;
+    padding: 0;
+}
+/* --- FIM DA ALTERAÇÃO --- */

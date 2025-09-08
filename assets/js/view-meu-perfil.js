@@ -5,51 +5,91 @@
     const gridContainer = document.getElementById('supervisor-grid-container');
     const editModal = document.getElementById('edit-profile-modal');
     const detailsModal = document.getElementById('details-profile-modal');
+    // --- MUDANÇA: Referência ao novo modal de agendamento ---
+    const agendamentoModal = document.getElementById('agendamento-modal');
     let fetchedSupervisors = [];
     let isAdmin = false;
+
+    // --- NOVA FUNÇÃO para abrir o modal de agendamento ---
+    function openAgendamentoModal(supervisorUid) {
+        if (!agendamentoModal) return;
+        const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid);
+        if (!supervisorData) return;
+
+        // Preenche o nome do supervisor no modal
+        agendamentoModal.querySelector('#agendamento-supervisor-nome').textContent = supervisorData.nome;
+        
+        // (A lógica para calcular as datas e vagas entrará aqui no próximo passo)
+        
+        detailsModal.style.display = 'none'; // Esconde o modal de detalhes
+        agendamentoModal.style.display = 'flex'; // Mostra o modal de agendamento
+    }
+
 
     function openDetailsModal(supervisorUid) {
         if (!detailsModal) return;
         const supervisorData = fetchedSupervisors.find(s => s.uid === supervisorUid);
         if (!supervisorData) return;
+        
         const modalTitle = detailsModal.querySelector('.modal-header h2');
         if(modalTitle) {
             modalTitle.textContent = `Perfil de ${supervisorData.nome}`;
         }
+
         const detailsBody = document.getElementById('details-modal-body');
         const toList = (data) => {
             if (!data || data.length === 0) return '<ul><li>Não informado</li></ul>';
-            // Corrigido para lidar com strings que podem ser campos únicos como 'Formação'
             const items = Array.isArray(data) ? data : [data];
             return `<ul>${items.map(item => `<li>${item}</li>`).join('')}</ul>`;
         };
 
-        // --- INÍCIO DA CORREÇÃO ---
-        // Lógica específica para formatar o array de objetos de horários
         let horariosHtml = '<ul><li>Nenhum horário informado</li></ul>';
         if (supervisorData.diasHorarios && Array.isArray(supervisorData.diasHorarios) && supervisorData.diasHorarios.length > 0) {
             horariosHtml = '<ul>';
             supervisorData.diasHorarios.forEach(horario => {
-                if (horario && horario.dia && horario.inicio && horario.fim) {
+                if(horario.dia && horario.inicio && horario.fim) {
                     horariosHtml += `<li>${horario.dia}: ${horario.inicio} - ${horario.fim}</li>`;
                 }
             });
             horariosHtml += '</ul>';
         }
-        // --- FIM DA CORREÇÃO ---
 
         detailsBody.innerHTML = `
             <div class="profile-section"><h4>Formação</h4>${toList(supervisorData.formacao)}</div>
             <div class="profile-section"><h4>Especialização</h4>${toList(supervisorData.especializacao)}</div>
             <div class="profile-section"><h4>Áreas de Atuação</h4>${toList(supervisorData.atuacao)}</div>
             <div class="profile-section"><h4>Informações de Supervisão</h4>${toList(supervisorData.supervisaoInfo)}</div>
-            <div class="profile-section"><h4>Dias e Horários</h4>${horariosHtml}</div>`; // Usa a nova variável formatada
+            <div class="profile-section">
+                <h4>Dias e Horários para Supervisão</h4>
+                ${horariosHtml}
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="action-button" id="agendar-supervisao-btn" data-supervisor-uid="${supervisorUid}">Agendar Supervisão</button>
+            </div>
+        `;
         detailsModal.style.display = 'flex';
     }
 
     if (detailsModal) {
         detailsModal.querySelector('.close-modal-btn').addEventListener('click', () => {
             detailsModal.style.display = 'none';
+        });
+
+        // --- MUDANÇA: Adiciona um listener de clique dentro do modal de detalhes ---
+        detailsModal.addEventListener('click', (e) => {
+            if (e.target.id === 'agendar-supervisao-btn') {
+                const supervisorUid = e.target.dataset.supervisorUid;
+                openAgendamentoModal(supervisorUid);
+            }
+        });
+    }
+
+    if (agendamentoModal) {
+        agendamentoModal.querySelector('.close-modal-btn').addEventListener('click', () => {
+            agendamentoModal.style.display = 'none';
+        });
+        agendamentoModal.querySelector('#agendamento-cancel-btn').addEventListener('click', () => {
+            agendamentoModal.style.display = 'none';
         });
     }
 
@@ -90,12 +130,7 @@
                 ${editButtonHtml}
                 <div class="profile-header"><h3>PERFIL PROFISSIONAL</h3></div>
                 <div id="card-details-content">
-                    <div class="profile-section"><h4>Formação</h4><ul>${toList(supervisor.formacao)}</ul></div>
-                    <div class="profile-section"><h4>Especialização</h4><ul>${toList(supervisor.especializacao)}</ul></div>
-                    <div class="profile-section"><h4>Áreas de Atuação</h4><ul>${toList(supervisor.atuacao)}</ul></div>
-                    <div class="profile-section"><h4>Informações de Supervisão</h4><ul>${toList(supervisor.supervisaoInfo)}</ul></div>
-                    <div class="profile-section"><h4>Dias e Horários</h4><ul>${toList(supervisor.diasHorarios)}</ul></div>
-                </div>
+                    </div>
             </div>`;
         return card;
     }
@@ -116,13 +151,9 @@
                 <button type="button" class="remove-horario-btn">X</button>`;
             return row;
         };
-        addHorarioBtn.addEventListener('click', () => {
-            horariosContainer.appendChild(createHorarioRow());
-        });
+        addHorarioBtn.addEventListener('click', () => { horariosContainer.appendChild(createHorarioRow()); });
         horariosContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-horario-btn')) {
-                e.target.closest('.horario-row').remove();
-            }
+            if (e.target.classList.contains('remove-horario-btn')) { e.target.closest('.horario-row').remove(); }
         });
         form.addEventListener('submit', saveProfileChanges);
         function openEditModal(supervisorUid) {
@@ -139,9 +170,7 @@
             form.elements['edit-supervisaoInfo'].value = Array.isArray(supervisorData.supervisaoInfo) ? supervisorData.supervisaoInfo.join('\n') : '';
             horariosContainer.innerHTML = '';
             if (supervisorData.diasHorarios && Array.isArray(supervisorData.diasHorarios)) {
-                supervisorData.diasHorarios.forEach(horario => {
-                    horariosContainer.appendChild(createHorarioRow(horario));
-                });
+                supervisorData.diasHorarios.forEach(horario => { horariosContainer.appendChild(createHorarioRow(horario)); });
             }
             editModal.style.display = 'flex';
         }
@@ -154,9 +183,7 @@
                 const dia = row.querySelector('[name="horario_dia"]').value;
                 const inicio = row.querySelector('[name="horario_inicio"]').value;
                 const fim = row.querySelector('[name="horario_fim"]').value;
-                if (dia && inicio && fim) {
-                    novosHorarios.push({ dia, inicio, fim });
-                }
+                if (dia && inicio && fim) { novosHorarios.push({ dia, inicio, fim }); }
             });
             const dataToUpdate = {
                 titulo: form.elements['edit-titulo'].value.trim(), fotoUrl: document.getElementById('edit-fotoUrl').value.trim(),

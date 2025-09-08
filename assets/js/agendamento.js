@@ -5,21 +5,19 @@
     }
     const db = firebase.firestore();
 
-    // --- Elementos do DOM do Modal de Agendamento ---
     const modal = document.getElementById('agendamento-modal');
+    if (!modal) return; // Se o modal não existe, o script não precisa rodar
+
     const titleEl = document.getElementById('agendamento-modal-title');
     const supervisorNameEl = document.getElementById('agendamento-supervisor-nome');
     const datasContainer = document.getElementById('datas-disponiveis-container');
     const nomeProfissionalInput = document.getElementById('agendamento-profissional-nome');
     const contatoProfissionalInput = document.getElementById('agendamento-profissional-contato');
     const confirmBtn = document.getElementById('agendamento-confirm-btn');
-    const cancelBtn = document.getElementById('agendamento-cancel-btn');
     const step1 = document.getElementById('agendamento-step-1');
     const step2 = document.getElementById('agendamento-step-2');
 
     let currentSupervisorData = null;
-
-    // --- Funções de Lógica ---
 
     function getNextDates(diaDaSemana, quantidade) {
         const weekMap = { "domingo": 0, "segunda-feira": 1, "terça-feira": 2, "quarta-feira": 3, "quinta-feira": 4, "sexta-feira": 5, "sábado": 6 };
@@ -36,17 +34,22 @@
 
         for (let i = 0; i < quantidade; i++) {
             results.push(new Date(date));
-            date.setDate(date.getDate() + 14); // Pula 14 dias para ser quinzenal
+            date.setDate(date.getDate() + 14);
         }
         return results;
     }
 
     function calculateCapacity(inicio, fim) {
-        const [startH, startM] = inicio.split(':').map(Number);
-        const [endH, endM] = fim.split(':').map(Number);
-        const startMinutes = startH * 60 + startM;
-        const endMinutes = endH * 60 + endM;
-        return Math.floor((endMinutes - startMinutes) / 30);
+        try {
+            const [startH, startM] = inicio.split(':').map(Number);
+            const [endH, endM] = fim.split(':').map(Number);
+            const startMinutes = startH * 60 + startM;
+            const endMinutes = endH * 60 + endM;
+            return Math.floor((endMinutes - startMinutes) / 30);
+        } catch (e) {
+            console.error("Erro ao calcular capacidade para o horário:", {inicio, fim});
+            return 0;
+        }
     }
     
     function renderDates(horariosDisponiveis) {
@@ -54,8 +57,15 @@
         
         const availableSlots = horariosDisponiveis.filter(slot => (slot.capacity - slot.booked) > 0);
 
+        // --- MUDANÇA: Mensagem melhorada quando não há vagas ---
         if (availableSlots.length === 0) {
-            datasContainer.innerHTML = '<p>Nenhuma data disponível para agendamento no momento.</p>';
+            datasContainer.innerHTML = `
+                <p style="text-align: center; font-weight: bold;">
+                    Não há vagas disponíveis no momento.
+                </p>
+                <p style="text-align: center; font-size: 0.9em; margin-top: 10px;">
+                    Por favor, entre em contato com o supervisor para verificar a possibilidade de novas vagas.
+                </p>`;
             confirmBtn.disabled = true;
             return;
         }
@@ -65,8 +75,8 @@
             const formattedDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
             const horarioInfo = `${slot.horario.dia} - ${slot.horario.inicio}`;
             const vagasRestantes = slot.capacity - slot.booked;
-
             const radioId = `date-${index}`;
+
             const optionHtml = `
                 <div class="date-option">
                     <input type="radio" id="${radioId}" name="data_agendamento" value="${date.toISOString()}">
@@ -74,8 +84,7 @@
                         <strong>${formattedDate}</strong> (${horarioInfo})
                         <span>Vagas restantes: ${vagasRestantes}</span>
                     </label>
-                </div>
-            `;
+                </div>`;
             datasContainer.innerHTML += optionHtml;
         });
         confirmBtn.disabled = false;
@@ -83,10 +92,7 @@
 
     async function open(supervisorData) {
         currentSupervisorData = supervisorData;
-        if (!currentSupervisorData) {
-            alert("Erro: Dados do supervisor não foram fornecidos.");
-            return;
-        }
+        if (!currentSupervisorData) { alert("Erro: Dados do supervisor não foram fornecidos."); return; }
 
         titleEl.textContent = `Agendar Supervisão`;
         supervisorNameEl.textContent = currentSupervisorData.nome;
@@ -95,38 +101,46 @@
         confirmBtn.style.display = 'inline-block';
         nomeProfissionalInput.value = '';
         contatoProfissionalInput.value = '';
-        datasContainer.innerHTML = '<p>Calculando datas disponíveis...</p>';
+        datasContainer.innerHTML = '<div class="loading-spinner"></div>'; // Spinner em vez de texto
         modal.style.display = 'flex';
 
-        let potentialSlots = [];
-        if (currentSupervisorData.diasHorarios && Array.isArray(currentSupervisorData.diasHorarios)) {
-            currentSupervisorData.diasHorarios.forEach(horario => {
-                const dates = getNextDates(horario.dia, 5); // Gera as próximas 5 ocorrências quinzenais
-                dates.forEach(date => {
-                    const [h, m] = horario.inicio.split(':');
-                    date.setHours(h, m, 0, 0);
-                    potentialSlots.push({ date, horario });
+        // --- MUDANÇA: Adicionado Try/Catch para tratamento de erros ---
+        try {
+            let potentialSlots = [];
+            if (currentSupervisorData.diasHorarios && Array.isArray(currentSupervisorData.diasHorarios)) {
+                currentSupervisorData.diasHorarios.forEach(horario => {
+                    const dates = getNextDates(horario.dia, 5);
+                    dates.forEach(date => {
+                        const [h, m] = horario.inicio.split(':');
+                        date.setHours(h, m, 0, 0);
+                        potentialSlots.push({ date, horario });
+                    });
                 });
-            });
-        }
-        
-        const agendamentosRef = db.collection('agendamentos');
-        const slotChecks = potentialSlots.map(async slot => {
-            const querySnapshot = await agendamentosRef
-                .where('supervisorUid', '==', currentSupervisorData.uid)
-                .where('dataAgendamento', '==', slot.date.toISOString())
-                .get();
+            }
             
-            slot.booked = querySnapshot.size;
-            slot.capacity = calculateCapacity(slot.horario.inicio, slot.horario.fim);
-            return slot;
-        });
+            const agendamentosRef = db.collection('agendamentos');
+            const slotChecks = potentialSlots.map(async slot => {
+                const querySnapshot = await agendamentosRef
+                    .where('supervisorUid', '==', currentSupervisorData.uid)
+                    .where('dataAgendamento', '==', slot.date.toISOString())
+                    .get();
+                
+                slot.booked = querySnapshot.size;
+                slot.capacity = calculateCapacity(slot.horario.inicio, slot.horario.fim);
+                return slot;
+            });
 
-        const finalSlots = await Promise.all(slotChecks);
-        renderDates(finalSlots);
+            const finalSlots = await Promise.all(slotChecks);
+            renderDates(finalSlots);
+        } catch (error) {
+            console.error("Erro ao calcular datas disponíveis:", error);
+            datasContainer.innerHTML = `<p style="color: red;">Ocorreu um erro ao buscar os horários. Tente novamente mais tarde.</p>`;
+            confirmBtn.disabled = true;
+        }
     }
     
     async function handleConfirmAgendamento() {
+        // ... (Esta função continua a mesma da versão anterior)
         const nome = nomeProfissionalInput.value.trim();
         const contato = contatoProfissionalInput.value.trim();
         const selectedRadio = datasContainer.querySelector('input[name="data_agendamento"]:checked');
@@ -141,10 +155,7 @@
         try {
             await db.runTransaction(async (transaction) => {
                 const agendamentosRef = db.collection('agendamentos');
-                const query = agendamentosRef
-                    .where('supervisorUid', '==', currentSupervisorData.uid)
-                    .where('dataAgendamento', '==', dataAgendamento);
-                
+                const query = agendamentosRef.where('supervisorUid', '==', currentSupervisorData.uid).where('dataAgendamento', '==', dataAgendamento);
                 const snapshot = await transaction.get(query);
                 
                 const horarioInfo = currentSupervisorData.diasHorarios.find(h => 
@@ -152,28 +163,21 @@
                 );
 
                 if (!horarioInfo) throw new Error("Horário base não pôde ser verificado.");
-
                 const capacity = calculateCapacity(horarioInfo.inicio, horarioInfo.fim);
-
                 if (snapshot.size >= capacity) {
                     throw new Error("Desculpe, todas as vagas para este horário foram preenchidas enquanto você decidia.");
                 }
 
                 const newDocRef = agendamentosRef.doc();
                 transaction.set(newDocRef, {
-                    supervisorUid: currentSupervisorData.uid,
-                    supervisorNome: currentSupervisorData.nome,
-                    dataAgendamento: dataAgendamento,
-                    profissionalNome: nome,
-                    profissionalContato: contato,
-                    criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+                    supervisorUid: currentSupervisorData.uid, supervisorNome: currentSupervisorData.nome,
+                    dataAgendamento: dataAgendamento, profissionalNome: nome,
+                    profissionalContato: contato, criadoEm: firebase.firestore.FieldValue.serverTimestamp()
                 });
             });
-
             step1.style.display = 'none';
             confirmBtn.style.display = 'none';
             step2.style.display = 'block';
-
         } catch (error) {
             console.error("Erro ao agendar:", error);
             alert("Não foi possível realizar o agendamento. " + error.message);

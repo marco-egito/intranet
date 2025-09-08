@@ -122,26 +122,42 @@
     padding: 0;
 }
 
-/* --- ESTILOS PARA OS BOTÕES DO MODAL --- */
+/* --- INÍCIO DA ALTERAÇÃO: ESTILOS PARA OS BOTÕES DO MODAL --- */
+
+/* Estilo do botão SECUNDÁRIO (Cancelar) - No seu projeto: .action-button */
 .modal-footer .action-button {
+    background-color: #fff;
+    color: #04396d;
+    border: 2px solid #04396d;
     padding: 10px 20px;
     font-size: 1em;
     font-weight: bold;
     border-radius: 5px;
     cursor: pointer;
-    border: 2px solid transparent;
     transition: all 0.2s ease-in-out;
-    width: 180px;
     text-align: center;
     box-sizing: border-box;
+    width: 150px !important; /* Força a largura para 150px */
 }
 
+.modal-footer .action-button:hover {
+    background-color: #f0f0f0;
+}
+
+/* Estilo do botão PRIMÁRIO (Salvar) - No seu projeto: .secondary-action-button */
 .modal-footer .secondary-action-button {
     background-color: #04396d;
     color: white;
-    border-color: #04396d;
+    border: 2px solid #04396d;
     padding: 10px 20px;
     font-size: 1em;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    text-align: center;
+    box-sizing: border-box;
+    width: 150px !important; /* Força a largura para 150px */
 }
 
 .modal-footer .secondary-action-button:hover {
@@ -149,12 +165,4 @@
     border-color: #065299;
 }
 
-.modal-footer .action-button {
-    background-color: #fff;
-    color: #04396d;
-    border-color: #04396d;
-}
-
-.modal-footer .action-button:hover {
-    background-color: #f0f0f0;
-}
+/* --- FIM DA ALTERAÇÃO --- */

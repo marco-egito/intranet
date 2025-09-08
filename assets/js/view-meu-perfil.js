@@ -10,29 +10,24 @@
     window.fetchedSupervisors = []; 
     let isAdmin = false;
 
-    // --- CORREÇÃO 1: LÓGICA DE AGENDAMENTO MOVIDA PARA SEU PRÓPRIO ARQUIVO ---
-    // Esta função agora apenas chama o controller global que definiremos em agendamento.js
     function openAgendamentoModal(supervisorUid) {
         if (!agendamentoModal) {
             console.error("O modal de agendamento não foi encontrado no HTML.");
             return;
         }
-        
-        // Encontra os dados completos do supervisor para passar para o controller
         const supervisorData = window.fetchedSupervisors.find(s => s.uid === supervisorUid);
-        if (!supervisorData) {
-            alert("Erro: Não foi possível encontrar os dados do supervisor.");
-            return;
-        }
+        if (!supervisorData) return;
 
         if (window.agendamentoController) {
-            detailsModal.style.display = 'none'; // Esconde o modal de detalhes
-            window.agendamentoController.open(supervisorData); // Abre e controla o modal de agendamento
+            window.agendamentoController.open(supervisorData);
         } else {
             console.error("O controller de agendamento (agendamento.js) não foi encontrado.");
-            alert("Erro ao iniciar o agendamento. O script de agendamento não foi carregado.");
         }
+        
+        detailsModal.style.display = 'none';
+        agendamentoModal.style.display = 'flex';
     }
+
 
     function openDetailsModal(supervisorUid) {
         if (!detailsModal) return;
@@ -92,8 +87,12 @@
     }
 
     if (agendamentoModal) {
-        agendamentoModal.querySelector('.close-modal-btn').addEventListener('click', () => { agendamentoModal.style.display = 'none'; });
-        agendamentoModal.querySelector('#agendamento-cancel-btn').addEventListener('click', () => { agendamentoModal.style.display = 'none'; });
+        agendamentoModal.querySelector('.close-modal-btn').addEventListener('click', () => {
+            agendamentoModal.style.display = 'none';
+        });
+        agendamentoModal.querySelector('#agendamento-cancel-btn').addEventListener('click', () => {
+            agendamentoModal.style.display = 'none';
+        });
     }
 
     gridContainer.addEventListener('click', (e) => {
@@ -118,15 +117,21 @@
             const items = Array.isArray(data) ? data : [data];
             return items.map(item => `<li>${item}</li>`).join('');
         };
-        
-        // --- CORREÇÃO 2: LÓGICA PARA EXIBIR DETALHES NO PAINEL DO ADMIN ---
+
+        // --- INÍCIO DA CORREÇÃO ---
+        // Cria o HTML dos detalhes apenas se não estivermos na vitrine pública
         let detailsHtml = '';
-        // Se NÃO estivermos na vitrine pública (ou seja, no painel do admin/supervisor), preenchemos os detalhes.
         if (window.PROFILE_VIEW_MODE !== 'all') {
-             let horariosHtmlCard = '<li>Não informado</li>';
-             if (supervisor.diasHorarios && Array.isArray(supervisor.diasHorarios) && supervisor.diasHorarios.length > 0) {
-                horariosHtmlCard = supervisor.diasHorarios.map(h => `<li>${h.dia}: ${h.inicio} - ${h.fim}</li>`).join('');
-             }
+            let horariosHtmlCard = '<li>Não informado</li>';
+            if (supervisor.diasHorarios && Array.isArray(supervisor.diasHorarios)) {
+                horariosHtmlCard = supervisor.diasHorarios.map(h => {
+                    if (h && h.dia && h.inicio && h.fim) {
+                        return `<li>${h.dia}: ${h.inicio} - ${h.fim}</li>`;
+                    }
+                    return ''; // Retorna string vazia para objetos malformados
+                }).join('');
+            }
+            if (!horariosHtmlCard) horariosHtmlCard = '<li>Não informado</li>';
 
             detailsHtml = `
                 <div class="profile-section"><h4>Formação</h4><ul>${toList(supervisor.formacao)}</ul></div>
@@ -136,6 +141,7 @@
                 <div class="profile-section"><h4>Dias e Horários</h4><ul>${horariosHtmlCard}</ul></div>
             `;
         }
+        // --- FIM DA CORREÇÃO ---
 
         const pathPrefix = window.location.pathname.includes('/pages/') ? '../' : './';
         const photoPath = supervisor.fotoUrl ? pathPrefix + supervisor.fotoUrl : pathPrefix + 'assets/img/default-user.png';
@@ -165,13 +171,66 @@
         const horariosContainer = document.getElementById('horarios-editor-container');
         const addHorarioBtn = document.getElementById('add-horario-btn');
         const diasDaSemana = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"];
-        const createHorarioRow = (horario = {}) => { /* ... (código inalterado) ... */ return document.createElement('div'); };
-        addHorarioBtn.addEventListener('click', () => { /* ... */ });
-        horariosContainer.addEventListener('click', (e) => { /* ... */ });
+        const createHorarioRow = (horario = {}) => {
+            const row = document.createElement('div');
+            row.className = 'horario-row';
+            const diaOptions = diasDaSemana.map(dia => `<option value="${dia}" ${horario.dia === dia ? 'selected' : ''}>${dia}</option>`).join('');
+            row.innerHTML = `
+                <div class="form-group"><label>Dia</label><select name="horario_dia">${diaOptions}</select></div>
+                <div class="form-group"><label>Início</label><input type="time" name="horario_inicio" value="${horario.inicio || '19:00'}"></div>
+                <div class="form-group"><label>Fim</label><input type="time" name="horario_fim" value="${horario.fim || '20:00'}"></div>
+                <button type="button" class="remove-horario-btn">X</button>`;
+            return row;
+        };
+        addHorarioBtn.addEventListener('click', () => { horariosContainer.appendChild(createHorarioRow()); });
+        horariosContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-horario-btn')) { e.target.closest('.horario-row').remove(); }
+        });
         form.addEventListener('submit', saveProfileChanges);
-        function openEditModal(supervisorUid) { /* ... (código inalterado) ... */ }
-        function closeEditModal() { /* ... */ }
-        async function saveProfileChanges(e) { /* ... (código inalterado) ... */ }
+        function openEditModal(supervisorUid) {
+            const supervisorData = window.fetchedSupervisors.find(s => s.uid === supervisorUid); if (!supervisorData) return;
+            form.elements['editing-uid'].value = supervisorData.uid; form.elements['edit-titulo'].value = supervisorData.titulo || '';
+            document.getElementById('edit-fotoUrl').value = supervisorData.fotoUrl || '';
+            const pathPrefix = window.location.pathname.includes('/pages/') ? '../' : './';
+            document.getElementById('profile-photo-preview').src = supervisorData.fotoUrl ? pathPrefix + supervisorData.fotoUrl : pathPrefix + 'assets/img/default-user.png';
+            form.elements['edit-abordagem'].value = supervisorData.abordagem || ''; form.elements['edit-crp'].value = supervisorData.crp || '';
+            form.elements['edit-email'].value = supervisorData.email || ''; form.elements['edit-telefone'].value = supervisorData.telefone || '';
+            form.elements['edit-formacao'].value = Array.isArray(supervisorData.formacao) ? supervisorData.formacao.join('\n') : supervisorData.formacao || '';
+            form.elements['edit-especializacao'].value = Array.isArray(supervisorData.especializacao) ? supervisorData.especializacao.join('\n') : '';
+            form.elements['edit-atuacao'].value = Array.isArray(supervisorData.atuacao) ? supervisorData.atuacao.join('\n') : '';
+            form.elements['edit-supervisaoInfo'].value = Array.isArray(supervisorData.supervisaoInfo) ? supervisorData.supervisaoInfo.join('\n') : '';
+            horariosContainer.innerHTML = '';
+            if (supervisorData.diasHorarios && Array.isArray(supervisorData.diasHorarios)) {
+                supervisorData.diasHorarios.forEach(horario => { horariosContainer.appendChild(createHorarioRow(horario)); });
+            }
+            editModal.style.display = 'flex';
+        }
+        function closeEditModal() { editModal.style.display = 'none'; form.reset(); }
+        async function saveProfileChanges(e) {
+            e.preventDefault(); const uid = form.elements['editing-uid'].value; if (!uid) return;
+            const novosHorarios = [];
+            const horarioRows = horariosContainer.querySelectorAll('.horario-row');
+            horarioRows.forEach(row => {
+                const dia = row.querySelector('[name="horario_dia"]').value;
+                const inicio = row.querySelector('[name="horario_inicio"]').value;
+                const fim = row.querySelector('[name="horario_fim"]').value;
+                if (dia && inicio && fim) { novosHorarios.push({ dia, inicio, fim }); }
+            });
+            const dataToUpdate = {
+                titulo: form.elements['edit-titulo'].value.trim(), fotoUrl: document.getElementById('edit-fotoUrl').value.trim(),
+                abordagem: form.elements['edit-abordagem'].value.trim(), crp: form.elements['edit-crp'].value.trim(),
+                email: form.elements['edit-email'].value.trim(), telefone: form.elements['edit-telefone'].value.trim(),
+                formacao: form.elements['edit-formacao'].value.split('\n').filter(Boolean),
+                especializacao: form.elements['edit-especializacao'].value.split('\n').filter(Boolean),
+                atuacao: form.elements['edit-atuacao'].value.split('\n').filter(Boolean),
+                supervisaoInfo: form.elements['edit-supervisaoInfo'].value.split('\n').filter(Boolean),
+                diasHorarios: novosHorarios,
+            };
+            try {
+                await db.collection('usuarios').doc(uid).update(dataToUpdate);
+                closeEditModal(); loadProfiles(auth.currentUser);
+            } catch (error) { console.error("Erro ao salvar:", error); alert("Erro ao salvar."); }
+        }
         editModal.querySelector('.close-modal-btn').addEventListener('click', closeEditModal);
         document.getElementById('cancel-edit-btn').addEventListener('click', closeEditModal);
     }
